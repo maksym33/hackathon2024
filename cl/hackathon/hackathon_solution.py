@@ -19,10 +19,10 @@ from cl.convince.llms.gpt.gpt_llm import GptLlm
 from cl.convince.prompts.formatted_prompt import FormattedPrompt
 from cl.convince.retrievers.annotating_retriever import AnnotatingRetriever
 from cl.convince.retrievers.retrieval import Retrieval
-from cl.hackathon2024.hackathon_input import HackathonInput
-from cl.hackathon2024.hackathon_output import HackathonOutput
-from cl.hackathon2024.hackathon_solution_key import HackathonSolutionKey
-from cl.hackathon2024.hackathon_trade_list_key import HackathonTradeListKey
+from cl.hackathon.hackathon_input import HackathonInput
+from cl.hackathon.hackathon_output import HackathonOutput
+from cl.hackathon.hackathon_solution_key import HackathonSolutionKey
+from cl.hackathon.hackathon_trade_list_key import HackathonTradeListKey
 from cl.runtime import Context, RecordMixin
 from cl.runtime.log.exceptions.user_error import UserError
 from cl.tradeentry.entries.amount_entry import AmountEntry

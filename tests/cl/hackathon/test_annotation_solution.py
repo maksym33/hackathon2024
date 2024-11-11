@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from cl.hackathon2024.annotation_solution import AnnotationSolution
+from cl.hackathon.annotation_solution import AnnotationSolution
 from cl.runtime.context.testing_context import TestingContext
 from cl.runtime.settings.preload_settings import PreloadSettings
 

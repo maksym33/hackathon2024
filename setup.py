@@ -11,11 +11,11 @@ install_requires = [
 ]
 
 # Third-party requirements
-with open('./tools/cl/hackathon2024/package_requirements.txt') as hackathon2024_package_requirements:
-    install_requires.extend(line.strip() for line in hackathon2024_package_requirements.readlines())
+with open('./tools/cl/hackathon/package_requirements.txt') as hackathon_package_requirements:
+    install_requires.extend(line.strip() for line in hackathon_package_requirements.readlines())
 
 setuptools.setup(
-    name='hackathon2024',
+    name='hackathon',
     version='0.0.1',
     author='The Project Contributors',
     description='2024 QuantMinds-CompatibL TradeEntry Hackathon',
@@ -23,13 +23,13 @@ setuptools.setup(
     long_description=readme,
     long_description_content_type='text/markdown',
     install_requires=install_requires,
-    url='https://github.com/compatibl/hackathon2024',
+    url='https://github.com/compatibl/hackathon',
     project_urls={
-        'Source Code': 'https://github.com/compatibl/hackathon2024',
+        'Source Code': 'https://github.com/compatibl/hackathon',
     },
     packages=setuptools.find_namespace_packages(
         where='.',
-        include=['cl.hackathon2024', 'cl.hackathon2024.*'],
+        include=['cl.hackathon', 'cl.hackathon.*'],
         exclude=['tests', 'tests.*']
     ),
     package_dir={'': '.'},

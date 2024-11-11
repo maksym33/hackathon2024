@@ -14,7 +14,7 @@
 
 from dataclasses import dataclass
 
-from cl.hackathon2024.hackathon_output_key import HackathonOutputKey
+from cl.hackathon.hackathon_output_key import HackathonOutputKey
 from cl.runtime import RecordMixin
 from cl.runtime.records.dataclasses_extensions import missing
 

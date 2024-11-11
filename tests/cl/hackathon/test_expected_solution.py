@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from cl.hackathon2024.expected_solution import ExpectedSolution
-from cl.hackathon2024.hackathon_input import HackathonInput
-from cl.hackathon2024.hackathon_output import HackathonOutput
-from cl.hackathon2024.hackathon_output_key import HackathonOutputKey
+from cl.hackathon.expected_solution import ExpectedSolution
+from cl.hackathon.hackathon_input import HackathonInput
+from cl.hackathon.hackathon_output import HackathonOutput
+from cl.hackathon.hackathon_output_key import HackathonOutputKey
 from cl.runtime.context.testing_context import TestingContext
 from cl.runtime.log.exceptions.user_error import UserError
 from cl.runtime.settings.preload_settings import PreloadSettings

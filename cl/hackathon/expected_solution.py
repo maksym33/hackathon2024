@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-from cl.hackathon2024.hackathon_solution import HackathonSolution
+from cl.hackathon.hackathon_solution import HackathonSolution
 
 
 @dataclass(slots=True, kw_only=True)

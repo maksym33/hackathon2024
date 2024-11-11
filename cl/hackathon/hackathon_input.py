@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-from cl.hackathon2024.hackathon_input_key import HackathonInputKey
+from cl.hackathon.hackathon_input_key import HackathonInputKey
 from cl.runtime import RecordMixin
 from cl.runtime.records.dataclasses_extensions import missing
 

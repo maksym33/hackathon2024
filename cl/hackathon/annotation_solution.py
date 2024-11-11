@@ -19,7 +19,7 @@ from cl.convince.llms.gpt.gpt_llm import GptLlm
 from cl.convince.prompts.formatted_prompt import FormattedPrompt
 from cl.convince.retrievers.annotating_retriever import AnnotatingRetriever
 from cl.convince.retrievers.retrieval import Retrieval
-from cl.hackathon2024.hackathon_solution import HackathonSolution
+from cl.hackathon.hackathon_solution import HackathonSolution
 from cl.runtime import Context
 from cl.runtime.log.exceptions.user_error import UserError
 from cl.tradeentry.entries.amount_entry import AmountEntry

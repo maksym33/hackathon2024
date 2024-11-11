@@ -12,11 +12,11 @@ default:
     - cl.runtime
     - cl.convince
     - cl.tradeentry
-    - cl.hackathon2024
+    - cl.hackathon
     - stubs.cl.runtime
     - stubs.cl.convince
     - stubs.cl.tradeentry
-    - stubs.cl.hackathon2024
+    - stubs.cl.hackathon
 
   # Database settings (documented in ContextSettings class)
   runtime_context_db_class: cl.runtime.db.sql.sqlite_db.SqliteDb
