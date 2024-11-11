@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from cl.hackathon.expected_solution import ExpectedSolution
+from cl.hackathon.expected_results import ExpectedResults
 from cl.hackathon.hackathon_input import HackathonInput
 from cl.hackathon.hackathon_output import HackathonOutput
 from cl.hackathon.hackathon_output_key import HackathonOutputKey
@@ -21,26 +21,26 @@ from cl.runtime.log.exceptions.user_error import UserError
 from cl.runtime.settings.preload_settings import PreloadSettings
 
 
-def test_expected_solution():
-    """Test ExpectedSolution preload."""
+def test_expected_results():
+    """Test ExpectedResults preload."""
 
     with TestingContext() as context:
 
         # Save records from preload directory to DB and execute run_configure on all preloaded Config records
         PreloadSettings.instance().save_and_configure()
 
-        # Ensure there is only one ExpectedSolution record
-        solutions = list(context.load_all(ExpectedSolution))
+        # Ensure there is only one ExpectedResults record
+        solutions = list(context.load_all(ExpectedResults))
         if len(solutions) == 0:
-            raise UserError("No ExpectedSolution records found, cannot proceed with scoring.")
+            raise UserError("No ExpectedResults records found, cannot proceed with scoring.")
         elif len(solutions) > 1:
-            raise UserError(f"{len(solutions)} ExpectedSolution records are found, only one should be present.")
+            raise UserError(f"{len(solutions)} ExpectedResults records are found, only one should be present.")
         else:
-            expected_solution = solutions[0]
+            expected_results = solutions[0]
 
         # Check its identifier
-        if expected_solution.solution_id != "Expected":
-            raise UserError(f"ExpectedSolution identifier is '{expected_solution.solution_id}', must be 'Expected'.")
+        if expected_results.solution_id != "ExpectedResults":
+            raise UserError(f"ExpectedResults identifier is '{expected_results.solution_id}', must be 'Expected'.")
 
         # Get inputs and sort by trade_id
         inputs = context.load_all(HackathonInput)
@@ -49,9 +49,9 @@ def test_expected_solution():
         # Ensure there is an output for each input assigned to the expected solution
         for input in inputs:
             # Get expected output key for the input
-            expected_solution_key = expected_solution.get_key()
+            expected_results_key = expected_results.get_key()
             trade_id = input.trade_id
-            output_key = HackathonOutputKey(solution=expected_solution_key, trade_id=trade_id)
+            output_key = HackathonOutputKey(solution=expected_results_key, trade_id=trade_id)
 
             # Check if the output is present
             output = context.load_one(HackathonOutput, output_key, is_record_optional=True)

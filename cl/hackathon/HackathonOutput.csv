@@ -1,3 +1,3 @@
 ﻿solution,trade_id,entry_text
-Expected,1,Sell 10y SOFR swap at 3.45%
-Expected,2,"Swap Details, Notional - USD10,000,000,000, Bank pays - 6M USD Term SOFR, semi-annual, act/360, Bank receives - USD fixed 3.45%, semi-annual, act/360, Notional exchange -  None, Start date - 10 November 2009, Tenor - 5y"
+ExpectedResults,1,Sell 10y SOFR swap at 3.45%
+ExpectedResults,2,"Swap Details, Notional - USD10,000,000,000, Bank pays - 6M USD Term SOFR, semi-annual, act/360, Bank receives - USD fixed 3.45%, semi-annual, act/360, Notional exchange -  None, Start date - 10 November 2009, Tenor - 5y"

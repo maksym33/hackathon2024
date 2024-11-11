@@ -17,5 +17,5 @@ from cl.hackathon.hackathon_solution import HackathonSolution
 
 
 @dataclass(slots=True, kw_only=True)
-class ExpectedSolution(HackathonSolution):
+class ExpectedResults(HackathonSolution):
     """Solution key under which the expected (correct) outputs are recorded."""
