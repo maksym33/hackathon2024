@@ -23,10 +23,7 @@ from cl.runtime.records.dataclasses_extensions import missing
 class HackathonOutput(HackathonOutputKey, RecordMixin[HackathonOutputKey]):
     """Output fields for a single hackathon trade obtained using the specified solution."""
 
-    def get_key(self) -> HackathonOutputKey:
-        return HackathonOutputKey(solution=self.solution, input=self.input)
-
-    input_text: str = missing()
+    entry_text: str = missing()
     """Trade entry text for the specified trade."""
 
     score_pct: float | None = None
@@ -81,3 +78,6 @@ class HackathonOutput(HackathonOutputKey, RecordMixin[HackathonOutputKey]):
 
     leg_2_pay_freq: str | None = None
     """Payment frequency."""  # TODO: Specify format
+
+    def get_key(self) -> HackathonOutputKey:
+        return HackathonOutputKey(solution=self.solution, trade_id=self.trade_id)

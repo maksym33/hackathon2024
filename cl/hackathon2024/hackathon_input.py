@@ -22,8 +22,8 @@ from cl.runtime.records.dataclasses_extensions import missing
 class HackathonInput(HackathonInputKey, RecordMixin[HackathonInputKey]):
     """Input text for a single hackathon trade."""
 
-    input_text: str = missing()
-    """Input text for a single hackathon trade."""
+    entry_text: str = missing()
+    """Trade entry text for the specified trade."""
 
     def get_key(self) -> HackathonInputKey:
         return HackathonInputKey(trade_id=self.trade_id)

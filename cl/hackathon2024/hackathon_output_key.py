@@ -28,7 +28,7 @@ class HackathonOutputKey(KeyMixin):
     solution: HackathonSolutionKey = missing()
     """Solution that generated the output."""
 
-    input: HackathonInputKey = missing()
+    trade_id: int = missing()
     """Input for which the the output was generated."""
 
     @classmethod
