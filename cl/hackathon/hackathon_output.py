@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import datetime as dt
 from dataclasses import dataclass
 from cl.hackathon.hackathon_output_key import HackathonOutputKey
 from cl.runtime import RecordMixin
@@ -78,4 +77,4 @@ class HackathonOutput(HackathonOutputKey, RecordMixin[HackathonOutputKey]):
     """Receive leg fixed rate in percent (omit for a floating leg)."""
 
     def get_key(self) -> HackathonOutputKey:
-        return HackathonOutputKey(solution=self.solution, trade_id=self.trade_id)
+        return HackathonOutputKey(solution=self.solution, trade_group=self.trade_group, trade_id=self.trade_id)

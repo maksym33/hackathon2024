@@ -14,6 +14,8 @@
 
 from dataclasses import dataclass
 from typing import Type
+
+from cl.hackathon.hackathon_trade_group_key import HackathonTradeGroupKey
 from cl.runtime.records.dataclasses_extensions import missing
 from cl.runtime.records.key_mixin import KeyMixin
 
@@ -22,8 +24,11 @@ from cl.runtime.records.key_mixin import KeyMixin
 class HackathonInputKey(KeyMixin):
     """Input text for a single hackathon trade."""
 
+    trade_group: HackathonTradeGroupKey = missing()
+    """Trade group for which trade_id is defined (trade_id is unique within the group)."""
+
     trade_id: int = missing()
-    """Unique trade identifier in integer format."""
+    """Unique trade identifier within the trade group."""
 
     @classmethod
     def get_key_type(cls) -> Type:

@@ -17,6 +17,7 @@ from typing import Type
 
 from cl.hackathon.hackathon_input_key import HackathonInputKey
 from cl.hackathon.hackathon_solution_key import HackathonSolutionKey
+from cl.hackathon.hackathon_trade_group_key import HackathonTradeGroupKey
 from cl.runtime.records.dataclasses_extensions import missing
 from cl.runtime.records.key_mixin import KeyMixin
 
@@ -28,8 +29,11 @@ class HackathonOutputKey(KeyMixin):
     solution: HackathonSolutionKey = missing()
     """Solution that generated the output."""
 
+    trade_group: HackathonTradeGroupKey = missing()
+    """Trade group for which trade_id is defined (trade_id is unique within the group)."""
+
     trade_id: int = missing()
-    """Input for which the the output was generated."""
+    """Unique trade identifier within the trade group."""
 
     @classmethod
     def get_key_type(cls) -> Type:

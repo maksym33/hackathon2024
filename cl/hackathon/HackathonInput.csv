@@ -1,6 +1,6 @@
-﻿trade_id,entry_text
-1,Sell 10y SOFR swap at 3.45%
-2,"Notional: 10m
+﻿trade_group,trade_id,entry_text
+Preview,1,Sell 10y SOFR swap at 3.45%
+Preview,2,"Notional: 10m
 Client pays: 6M Term SOFR, semi-annual, act/360
 Client receives: 3.45%, semi-annual, 30/360
 Start date: 10 November 2009

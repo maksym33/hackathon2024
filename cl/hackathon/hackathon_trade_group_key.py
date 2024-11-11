@@ -13,17 +13,18 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-from cl.hackathon.hackathon_input_key import HackathonInputKey
-from cl.runtime import RecordMixin
+from typing import Type
 from cl.runtime.records.dataclasses_extensions import missing
+from cl.runtime.records.key_mixin import KeyMixin
 
 
 @dataclass(slots=True, kw_only=True)
-class HackathonInput(HackathonInputKey, RecordMixin[HackathonInputKey]):
-    """Input text for a single hackathon trade."""
+class HackathonTradeGroupKey(KeyMixin):
+    """Identifies a trade group."""
 
-    entry_text: str = missing()
-    """Trade entry text for the specified trade."""
+    trade_group_id: str = missing()
+    """Unique trade group identifier."""
 
-    def get_key(self) -> HackathonInputKey:
-        return HackathonInputKey(trade_group=self.trade_group, trade_id=self.trade_id)
+    @classmethod
+    def get_key_type(cls) -> Type:
+        return HackathonTradeGroupKey

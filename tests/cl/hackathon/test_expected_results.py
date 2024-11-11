@@ -31,12 +31,12 @@ def test_expected_results():
 
         # Ensure there is only one ExpectedResults record
         solutions = list(context.load_all(ExpectedResults))
-        if len(solutions) == 0:
-            raise UserError("No ExpectedResults records found, cannot proceed with scoring.")
-        elif len(solutions) > 1:
-            raise UserError(f"{len(solutions)} ExpectedResults records are found, only one should be present.")
-        else:
+        if len(solutions) == 1:
             expected_results = solutions[0]
+        elif len(solutions) == 0:
+            raise UserError("No ExpectedResults records found, cannot proceed with scoring.")
+        else:
+            raise UserError(f"{len(solutions)} ExpectedResults records are found, only one should be present.")
 
         # Check its identifier
         if expected_results.solution_id != "ExpectedResults":
@@ -44,16 +44,17 @@ def test_expected_results():
 
         # Get inputs and sort by trade_id
         inputs = context.load_all(HackathonInput)
+        inputs = [input for input in inputs if input.trade_group == expected_results.trade_group]
         inputs = sorted(inputs, key=lambda item: item.trade_id)
 
         # Ensure there is an output for each input assigned to the expected solution
         for input in inputs:
-            # Get expected output key for the input
-            expected_results_key = expected_results.get_key()
-            trade_id = input.trade_id
-            output_key = HackathonOutputKey(solution=expected_results_key, trade_id=trade_id)
-
             # Check if the output is present
+            output_key = HackathonOutputKey(
+                solution=expected_results.get_key(),
+                trade_group=input.trade_group,
+                trade_id=input.trade_id,
+            )
             output = context.load_one(HackathonOutput, output_key, is_record_optional=True)
             if output is None:
                 raise UserError(f"Expected output record is not found for trade_id={input_key.trade_id}")
