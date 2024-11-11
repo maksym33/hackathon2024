@@ -27,8 +27,6 @@ default:
 
   # Preload directories to include (documented in PreloadSettings class)
   runtime_preload_dirs:
-    - preloads/cl
-    - preloads/stubs
     - cl
 
   # Default LLms for TradeEntry (documented in TradeEntrySettings class)
