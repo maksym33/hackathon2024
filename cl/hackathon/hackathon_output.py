@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import datetime as dt
 from dataclasses import dataclass
-
 from cl.hackathon.hackathon_output_key import HackathonOutputKey
 from cl.runtime import RecordMixin
 from cl.runtime.records.dataclasses_extensions import missing
@@ -26,58 +26,56 @@ class HackathonOutput(HackathonOutputKey, RecordMixin[HackathonOutputKey]):
     entry_text: str = missing()
     """Trade entry text for the specified trade."""
 
-    score_pct: float | None = None
-    """Ratio of correct outputs expressed in percent."""
-
-    notional_amount: float | None = None
-    """Notional amount of the swap."""
-
-    notional_currency: str | None = None  # TODO: schedule
-    """Currency of the notional amount."""
-
     effective_date: str | None = None
-    """Effective date in ISO-8601 yyyy-mm-dd string format."""
+    """Effective date in ISO-8601 yyyy-mm-dd format (omit if not specified)."""
 
     maturity_date: str | None = None
-    """Maturity date in ISO-8601 yyyy-mm-dd string format."""
+    """Maturity date in ISO-8601 yyyy-mm-dd string format (omit if not specified)."""
 
-    leg_1_float_freq: str | None = None
-    """Frequency at which floating interest accrues."""
+    tenor_years: int | None = None
+    """Tenor in whole years, for example 10 for a 10 year swap (omit if not specified)."""
 
-    leg_1_float_index: str | None = None
-    """Floating interest rate index ('float_spread' is added to the index fixing)."""
+    pay_leg_notional: float | None = None
+    """Pay leg notional amount."""
 
-    leg_1_float_spread_bp: float | None = None
-    """Spread over the interest rate index in basis points."""
+    pay_leg_ccy: str | None = None
+    """Pay leg payment currency in 3-letter ISO-4217 format, for example USD."""
 
-    leg_1_fixed_rate_pct: float | None = None
-    """Fixed rate in percent."""
+    pay_leg_freq_months: int | None = None
+    """Pay leg payment frequency in months, for example 3."""
 
-    leg_1_pay_receive: str | None = None
-    """Flag indicating if we pay or receive payments or periodic coupons for a trade or leg. 
-    Values 'Pay' or 'Receive'."""
+    pay_leg_basis: str | None = None
+    """Pay leg daycount basis as specified, for example act/360."""
 
-    leg_1_pay_freq: str | None = None
-    """Payment frequency."""  # TODO: Specify format
+    pay_leg_float_index: str | None = None
+    """Pay leg floating interest rate index as specified, e.g., '3m Term SOFR' (omit for a fixed leg)."""
 
-    leg_2_float_freq: str | None = None
-    """Frequency at which floating interest accrues."""
+    pay_leg_float_spread_bp: float | None = None
+    """Receive leg spread in basis points, for example 30 (omit for a fixed leg, 0 or omit if not specified)."""
 
-    leg_2_float_index: str | None = None
-    """Floating interest rate index ('float_spread' is added to the index fixing)."""
+    pay_leg_fixed_rate_pct: float | None = None
+    """Pay leg fixed rate in percent, for example 3.45 (omit for a floating leg)."""
 
-    leg_2_float_spread_bp: float | None = None
-    """Spread over the interest rate index in basis points."""
+    rec_leg_notional: float | None = None
+    """Receive leg notional amount, for example 10000000."""
 
-    leg_2_fixed_rate_pct: float | None = None
-    """Fixed rate in percent."""
+    rec_leg_ccy: str | None = None
+    """Receive leg payment currency in 3-letter ISO-4217 format, for example USD."""
 
-    leg_2_pay_receive: str | None = None
-    """Flag indicating if we pay or receive payments or periodic coupons for a trade or leg. 
-    Values 'Pay' or 'Receive'."""
+    rec_leg_freq_months: int | None = None
+    """Pay leg payment frequency in months, for example 3."""
 
-    leg_2_pay_freq: str | None = None
-    """Payment frequency."""  # TODO: Specify format
+    rec_leg_basis: str | None = None
+    """Pay leg daycount basis as specified, for example act/360."""
+
+    rec_leg_float_index: str | None = None
+    """Receive leg floating interest rate index as specified, e.g., '3m Term SOFR' (omit for a fixed leg)."""
+
+    rec_leg_float_spread_bp: float | None = None
+    """Receive leg spread in basis points, for example 30 (omit for a fixed leg, 0 or omit if not specified)."""
+
+    rec_leg_fixed_rate_pct: float | None = None
+    """Receive leg fixed rate in percent (omit for a floating leg)."""
 
     def get_key(self) -> HackathonOutputKey:
         return HackathonOutputKey(solution=self.solution, trade_id=self.trade_id)

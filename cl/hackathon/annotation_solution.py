@@ -19,6 +19,7 @@ from cl.convince.llms.gpt.gpt_llm import GptLlm
 from cl.convince.prompts.formatted_prompt import FormattedPrompt
 from cl.convince.retrievers.annotating_retriever import AnnotatingRetriever
 from cl.convince.retrievers.retrieval import Retrieval
+from cl.hackathon.hackathon_output import HackathonOutput
 from cl.hackathon.hackathon_solution import HackathonSolution
 from cl.runtime import Context
 from cl.runtime.log.exceptions.user_error import UserError
@@ -49,7 +50,7 @@ class AnnotationSolution(HackathonSolution):
     parameter_annotation_prompt: str = missing()
     """Prompt to surround the specified parameter in curly braces."""
 
-    pay_receive_description: str = "The words Buy or Sell, or the words Pay or Receive"
+    pay_rec_description: str = "The words Buy or Sell, or the words Pay or Receive"
     """Description of the trade side parameter to use with parameter annotation prompt."""
 
     maturity_description: str = "Either maturity date as a date, or tenor (length) as the number of years and/or months"
@@ -93,12 +94,12 @@ class AnnotationSolution(HackathonSolution):
 
         # Pay or receive flag
         if extracted_pay_receive := retriever.retrieve(input_text=leg_description,
-                                                       param_description=self.pay_receive_description,
+                                                       param_description=self.pay_rec_description,
                                                        is_required=False):
             pay_receive = PayReceiveEntry(description=extracted_pay_receive)
             pay_receive.run_generate()
-            if pay_receive_key := pay_receive.pay_receive:
-                entry_dict['pay_receive'] = pay_receive_key.pay_receive_id
+            if pay_rec_key := pay_receive.pay_receive:
+                entry_dict['pay_receive'] = pay_rec_key.pay_rec_id
 
         # Payment Frequency
         if extracted_pay_freq := retriever.retrieve(input_text=leg_description,
@@ -150,12 +151,12 @@ class AnnotationSolution(HackathonSolution):
 
         # Pay or receive flag
         if extracted_pay_receive := retriever.retrieve(input_text=leg_description,
-                                                       param_description=self.pay_receive_description,
+                                                       param_description=self.pay_rec_description,
                                                        is_required=False):
             pay_receive = PayReceiveEntry(description=extracted_pay_receive)
             pay_receive.run_generate()
-            if pay_receive_key := pay_receive.pay_receive:
-                entry_dict['pay_receive'] = pay_receive_key.pay_receive_id
+            if pay_rec_key := pay_receive.pay_receive:
+                entry_dict['pay_receive'] = pay_rec_key.pay_rec_id
 
         # Payment Frequency
         if extracted_pay_freq := retriever.retrieve(input_text=leg_description,
@@ -250,7 +251,7 @@ class AnnotationSolution(HackathonSolution):
 
     def run_generate(self) -> None:
 
-        trade = HackathonNonCallableSwap(trade_id='trade identifier')  # TODO: Remove stub id
+        trade = HackathonOutput(trade_id='trade identifier')  # TODO: Remove stub id
 
         trade_parameters = self._retrieve_trade_parameters()
 
@@ -266,44 +267,39 @@ class AnnotationSolution(HackathonSolution):
                             f"Leg descriptions:\n"
                             f"{' '.join(leg_descriptions)}")
 
-        leg1_description = leg_descriptions[0]
-        leg1_type = AnyLegEntry(description=leg1_description).determine_leg_type(self.leg_type_prompt)
-        if leg1_type == 'Floating':
-            leg_entry_dict = self._float_leg_entry_to_dict(leg1_description)
-            trade.leg_1_pay_receive = leg_entry_dict.get('pay_receive')
-            trade.leg_1_pay_freq = leg_entry_dict.get('pay_freq')
-            trade.leg_1_float_freq = leg_entry_dict.get('float_freq')
-            trade.leg_1_float_index = leg_entry_dict.get('float_index')
-            trade.leg_1_float_spread_bp = leg_entry_dict.get('float_spread')
-
-        elif leg1_type == 'Fixed':
-            leg_entry_dict = self._fixed_leg_entry_to_dict(leg1_description)
-            trade.leg_1_pay_receive = leg_entry_dict.get('pay_receive')
-            trade.leg_1_pay_freq = leg_entry_dict.get('pay_freq')
-            trade.leg_1_fixed_rate_pct = leg_entry_dict.get('fixed_rate')
-
-        else:
-            raise UserError(f"Undefined leg type: {leg1_type}")
-
-        leg2_description = leg_descriptions[1]
-        leg2_type = AnyLegEntry(description=leg2_description).determine_leg_type(self.leg_type_prompt)
-        if leg2_type == 'Floating':
-            leg_entry_dict = self._float_leg_entry_to_dict(leg2_description)
-            trade.leg_2_pay_receive = leg_entry_dict.get('pay_receive')
-            trade.leg_2_pay_freq = leg_entry_dict.get('pay_freq')
-            trade.leg_2_float_freq = leg_entry_dict.get('float_freq')
-            trade.leg_2_float_index = leg_entry_dict.get('float_index')
-            trade.leg_2_float_spread_bp = leg_entry_dict.get('float_spread')
-
-        elif leg2_type == 'Fixed':
-            leg_entry_dict = self._fixed_leg_entry_to_dict(leg2_description)
-            trade.leg_2_pay_receive = leg_entry_dict.get('pay_receive')
-            trade.leg_2_pay_freq = leg_entry_dict.get('pay_freq')
-            trade.leg_2_fixed_rate_pct = leg_entry_dict.get('fixed_rate')
-
-        else:
-            raise UserError(f"Undefined leg type: {leg2_type}")
+        for leg_description in leg_descriptions:
+            self._populate_leg(trade, leg_description)
 
         Context.current().save_one(trade)
-        self.trade = trade.get_key()
         Context.current().save_one(self)
+
+    def _populate_leg(self, trade: HackathonOutput, description: str):
+        leg_type = AnyLegEntry(description=description).determine_leg_type(self.leg_type_prompt)
+        if leg_type == 'Floating':
+            leg_entry_dict = self._float_leg_entry_to_dict(description)
+            pay_receive = leg_entry_dict.get('pay_receive')
+            if pay_receive == "Pay":
+                trade.pay_leg_pay_freq = leg_entry_dict.get('pay_freq')
+                trade.pay_leg_float_freq = leg_entry_dict.get('float_freq')
+                trade.pay_leg_float_index = leg_entry_dict.get('float_index')
+                trade.pay_leg_float_spread_bp = leg_entry_dict.get('float_spread')
+            elif pay_receive == "Receive":
+                trade.rec_leg_pay_freq = leg_entry_dict.get('pay_freq')
+                trade.rec_leg_float_freq = leg_entry_dict.get('float_freq')
+                trade.rec_leg_float_index = leg_entry_dict.get('float_index')
+                trade.rec_leg_float_spread_bp = leg_entry_dict.get('float_spread')
+            else:
+                raise UserError(f"Unknown value of pay_receive parameter: {pay_receive}")
+        elif leg_type == 'Fixed':
+            leg_entry_dict = self._fixed_leg_entry_to_dict(description)
+            pay_receive = leg_entry_dict.get('pay_receive')
+            if pay_receive == "Pay":
+                trade.pay_leg_pay_freq = leg_entry_dict.get('pay_freq')
+                trade.pay_leg_fixed_rate_pct = leg_entry_dict.get('fixed_rate')
+            elif pay_receive == "Receive":
+                trade.rec_leg_pay_freq = leg_entry_dict.get('pay_freq')
+                trade.rec_leg_fixed_rate_pct = leg_entry_dict.get('fixed_rate')
+            else:
+                raise UserError(f"Unknown value of pay_receive parameter: {pay_receive}")
+        else:
+            raise UserError(f"Undefined leg type: {leg_type}")
