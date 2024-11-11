@@ -1,0 +1,36 @@
+﻿solution_id,trade_list,legs_annotation_prompt,leg_type_prompt,parameter_annotation_prompt
+DefaultAnnotationSolution,,"In this text, surround information about each leg in curly brackets. Make no other changes
+to the text. Take into account the following:
+
+- Only one set of curly brackets per leg should be present, surrounding the information specific to the leg
+- Include information about who pays the leg
+- Do not surround with curly brackets any text that is not specific to a single leg
+- Do not miss any information from the original text
+
+Text:
+```
+{input_text}
+```
+
+Enclose you output text in triple backticks.","You will be given the input below in the form of description of trade entry leg.
+
+Return only JSON with following keys:
+* LegType - enum with values Floating and Fixed
+
+Description of trade entry leg:
+```
+{input_text}
+```","You will be provided with an input text and a description of a parameter.
+Your goal is to surround each piece of information about this parameter you find in the input text by curly braces.
+Use multiple non-nested pairs of opening and closing curly braces if you find more than one piece of information.
+
+You must reply with JSON formatted strictly according to the JSON specification in which all values are strings.
+The JSON must have the following keys:
+
+{{
+    ""success"": <Y if at least one piece of information was found and N otherwise. This parameter is required.>
+    ""annotated_text"": ""<The input text where each piece of information about this parameter is surrounded by curly braces. There should be no changes other than adding curly braces, even to whitespace. Leave this field empty in case of failure.>,""
+    ""justification"": ""<Justification for your annotations in case of success or the reason why you were not able to find the parameter in case of failure.>""
+}}
+Input text: ```{InputText}```
+Parameter description: ```{ParamDescription}```"
