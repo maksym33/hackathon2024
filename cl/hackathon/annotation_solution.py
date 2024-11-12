@@ -13,7 +13,9 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, List
+
+from cl.hackathon.hackathon_input import HackathonInput
 from cl.runtime import Context
 from cl.runtime.log.exceptions.user_error import UserError
 from cl.runtime.records.dataclasses_extensions import missing
@@ -98,7 +100,7 @@ class AnnotationSolution(HackathonSolution):
             pay_receive = PayReceiveEntry(description=extracted_pay_receive)
             pay_receive.run_generate()
             if pay_rec_key := pay_receive.pay_receive:
-                entry_dict["pay_receive"] = pay_rec_key.pay_rec_id
+                entry_dict["pay_receive"] = pay_rec_key.pay_receive_id
 
         # Payment Frequency
         if extracted_pay_freq := retriever.retrieve(
@@ -155,7 +157,7 @@ class AnnotationSolution(HackathonSolution):
             pay_receive = PayReceiveEntry(description=extracted_pay_receive)
             pay_receive.run_generate()
             if pay_rec_key := pay_receive.pay_receive:
-                entry_dict["pay_receive"] = pay_rec_key.pay_rec_id
+                entry_dict["pay_receive"] = pay_rec_key.pay_receive_id
 
         # Payment Frequency
         if extracted_pay_freq := retriever.retrieve(
@@ -175,7 +177,7 @@ class AnnotationSolution(HackathonSolution):
 
         return entry_dict
 
-    def _retrieve_trade_parameters(self) -> Dict:
+    def _retrieve_trade_parameters(self, input_: HackathonInput) -> Dict:
 
         trade_parameters = {}
 
@@ -193,7 +195,7 @@ class AnnotationSolution(HackathonSolution):
 
         # Maturity
         if extracted_maturity := retriever.retrieve(
-            input_text=self.description, param_description=self.maturity_description, is_required=False
+            input_text=input_.entry_text, param_description=self.maturity_description, is_required=False
         ):
             maturity = DateOrTenorEntry(description=extracted_maturity)
             maturity.run_generate()
@@ -219,7 +221,7 @@ class AnnotationSolution(HackathonSolution):
 
         # Effective date
         if extracted_effective_date := retriever.retrieve(
-            input_text=self.description, param_description=self.effective_date_description, is_required=False
+            input_text=input_.entry_text, param_description=self.effective_date_description, is_required=False
         ):
             effective_date = DateEntry(description=extracted_effective_date)
             effective_date.run_generate()
@@ -228,7 +230,7 @@ class AnnotationSolution(HackathonSolution):
 
         # Notional
         if extracted_notional := retriever.retrieve(
-            input_text=self.description, param_description=self.notional_description, is_required=False
+            input_text=input_.entry_text, param_description=self.notional_description, is_required=False
         ):
             notional = AmountEntry(description=extracted_notional)
             notional.run_generate()
@@ -249,28 +251,59 @@ class AnnotationSolution(HackathonSolution):
 
         return trade_parameters
 
-    def run_generate(self) -> None:
+    def _process_input(self, input_: HackathonInput) -> HackathonOutput:
 
-        trade = HackathonOutput(trade_id="trade identifier")  # TODO: Remove stub id
+        # TODO (Roman): Do we need a trade group as part of the HackathonOutputKey if it is already in the solution?
+        output_ = HackathonOutput(
+            solution=self.get_key(),
+            trade_group=self.trade_group,
+            trade_id=input_.trade_id,
+            entry_text=input_.entry_text,
+        )
 
-        trade_parameters = self._retrieve_trade_parameters()
+        trade_parameters = self._retrieve_trade_parameters(input_)
 
-        trade.maturity_date = trade_parameters.get("maturity_date")
-        trade.effective_date = trade_parameters.get("effective_date")
-        trade.notional_amount = trade_parameters.get("notional_amount")
-        trade.notional_currency = trade_parameters.get("notional_currency")
+        output_.maturity_date = trade_parameters.get("maturity_date")
+        output_.effective_date = trade_parameters.get("effective_date")
 
-        leg_descriptions = RatesSwapEntry(description=self.description).extract_legs(self.legs_annotation_prompt)
+        # TODO (Roman): 'HackathonOutput' class has no attributes 'notional_amount' and 'notional_currency' or similar.
+        # output_.notional_amount = trade_parameters.get("notional_amount")
+        # output_.notional_currency = trade_parameters.get("notional_currency")
 
-        if len(leg_descriptions) != 2:
-            raise UserError(
-                f"Incorrect number of legs. Should be 2.\n" f"Leg descriptions:\n" f"{' '.join(leg_descriptions)}"
-            )
+        leg_descriptions = RatesSwapEntry(description=input_.entry_text).extract_legs(self.legs_annotation_prompt)
+
+        # TODO (Roman): Check if it is critical to have exactly 2 legs in leg_descriptions list.
+        # if len(leg_descriptions) != 2:
+        #     raise UserError(
+        #         f"Incorrect number of legs. Should be 2.\n" f"Leg descriptions:\n" f"{' '.join(leg_descriptions)}"
+        #     )
 
         for leg_description in leg_descriptions:
-            self._populate_leg(trade, leg_description)
+            self._populate_leg(output_, leg_description)
 
-        Context.current().save_one(trade)
+        return output_
+
+    def _get_ids_list(self) -> List[int] | None:
+        # TODO (Roman): Extract list from self.trade_ids attribute.
+        return None
+
+    def run_generate(self) -> None:
+
+        # Load all inputs
+        inputs = Context.current().load_all(HackathonInput)
+
+        # Filter inputs by trade_group and trade_ids
+        inputs = [
+            x for x in inputs
+            if x.trade_group == self.trade_group and
+            ((ids_list := self._get_ids_list()) is None or x.trade_id in ids_list)
+        ]
+
+        # Process inputs
+        for input_ in inputs:
+            output_ = self._process_input(input_)
+            Context.current().save_one(output_)
+
         Context.current().save_one(self)
 
     def _populate_leg(self, trade: HackathonOutput, description: str):
@@ -278,14 +311,23 @@ class AnnotationSolution(HackathonSolution):
         if leg_type == "Floating":
             leg_entry_dict = self._float_leg_entry_to_dict(description)
             pay_receive = leg_entry_dict.get("pay_receive")
+
+            # TODO (Roman): Review pay_freq. It's a string in dict (e.g. "semi-annual"), but int in class declaration.
+            try:
+                pay_freq = int(leg_entry_dict.get("pay_freq"))
+            except Exception:
+                pay_freq = None
+
             if pay_receive == "Pay":
-                trade.pay_leg_pay_freq = leg_entry_dict.get("pay_freq")
-                trade.pay_leg_float_freq = leg_entry_dict.get("float_freq")
+                trade.pay_leg_freq_months = pay_freq
+                # TODO (Roman): 'HackathonOutput' class has no attribute 'pay_leg_float_freq' or similar.
+                # trade.pay_leg_float_freq = leg_entry_dict.get("float_freq")
                 trade.pay_leg_float_index = leg_entry_dict.get("float_index")
                 trade.pay_leg_float_spread_bp = leg_entry_dict.get("float_spread")
             elif pay_receive == "Receive":
-                trade.rec_leg_pay_freq = leg_entry_dict.get("pay_freq")
-                trade.rec_leg_float_freq = leg_entry_dict.get("float_freq")
+                trade.rec_leg_freq_months = pay_freq
+                # TODO (Roman): 'HackathonOutput' class has no attribute 'rec_leg_float_freq' or similar.
+                # trade.rec_leg_float_freq = leg_entry_dict.get("float_freq")
                 trade.rec_leg_float_index = leg_entry_dict.get("float_index")
                 trade.rec_leg_float_spread_bp = leg_entry_dict.get("float_spread")
             else:
@@ -293,13 +335,22 @@ class AnnotationSolution(HackathonSolution):
         elif leg_type == "Fixed":
             leg_entry_dict = self._fixed_leg_entry_to_dict(description)
             pay_receive = leg_entry_dict.get("pay_receive")
+
+            # TODO (Roman): Review pay_freq. It's a string in dict (e.g. "semi-annual"), but int in class declaration.
+            try:
+                pay_freq = int(leg_entry_dict.get("pay_freq"))
+            except Exception:
+                pay_freq = None
+
             if pay_receive == "Pay":
-                trade.pay_leg_pay_freq = leg_entry_dict.get("pay_freq")
+                trade.pay_leg_freq_months = pay_freq
                 trade.pay_leg_fixed_rate_pct = leg_entry_dict.get("fixed_rate")
             elif pay_receive == "Receive":
-                trade.rec_leg_pay_freq = leg_entry_dict.get("pay_freq")
+                trade.rec_leg_freq_months = pay_freq
                 trade.rec_leg_fixed_rate_pct = leg_entry_dict.get("fixed_rate")
             else:
-                raise UserError(f"Unknown value of pay_receive parameter: {pay_receive}")
+                # TODO (Roman): Check whether to raise an error if pay_receive is None or something else
+                # raise UserError(f"Unknown value of pay_receive parameter: {pay_receive}")
+                pass
         else:
             raise UserError(f"Undefined leg type: {leg_type}")
