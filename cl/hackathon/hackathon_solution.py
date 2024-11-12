@@ -49,3 +49,25 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey])
 
     def view_outputs(self) -> List[HackathonInput]:
         """Return the list of outputs (each with its score)."""
+
+    def get_trade_ids_list(self) -> List[int]:
+        """Return the list of trade ids from the trade_ids string."""
+        if not self.trade_ids:
+            return []
+
+        result = set()
+        parts = self.trade_ids.split(',')
+
+        for part in parts:
+            part = part.strip()
+            # Check if the part is a range like "1-3"
+            if '-' in part:
+                start, end = sorted([int(range_part) for range_part in part.split('-')])
+                # Add the range of numbers to the result
+                result.update(range(start, end + 1))
+                continue
+
+            # Add single number to the result
+            result.add(int(part))
+
+        return sorted(list(result))

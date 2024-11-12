@@ -283,10 +283,6 @@ class AnnotationSolution(HackathonSolution):
 
         return output_
 
-    def _get_ids_list(self) -> List[int] | None:
-        # TODO (Roman): Extract list from self.trade_ids attribute.
-        return None
-
     def run_generate(self) -> None:
 
         # Load all inputs
@@ -296,7 +292,7 @@ class AnnotationSolution(HackathonSolution):
         inputs = [
             x for x in inputs
             if x.trade_group == self.trade_group and
-            ((ids_list := self._get_ids_list()) is None or x.trade_id in ids_list)
+            ((ids_list := self.get_trade_ids_list()) is None or x.trade_id in ids_list)
         ]
 
         # Process inputs
