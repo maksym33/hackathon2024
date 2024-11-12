@@ -1,0 +1,177 @@
+# Copyright (C) 2023-present The Project Contributors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+from dataclasses import dataclass
+
+from cl.convince.retrievers.retriever_util import RetrieverUtil
+from cl.hackathon.hackathon_input import HackathonInput
+from cl.runtime.records.dataclasses_extensions import missing
+from cl.convince.llms.gpt.gpt_llm import GptLlm
+from cl.tradeentry.entries.date_entry import DateEntry
+from cl.tradeentry.entries.number_entry import NumberEntry
+from cl.hackathon.hackathon_output import HackathonOutput
+from cl.hackathon.hackathon_solution import HackathonSolution
+
+
+@dataclass(slots=True, kw_only=True)
+class OneStepSolution(HackathonSolution):
+    """Solution based on extracting values in one step."""
+
+    prompt: str = missing()
+    """One step prompt to parse trade."""
+
+    def _process_input(self, input_: HackathonInput) -> HackathonOutput:
+
+        output_ = HackathonOutput(
+            solution=self.get_key(),
+            trade_group=self.trade_group,
+            trade_id=input_.trade_id,
+            entry_text=input_.entry_text,
+        )
+
+        llm = GptLlm(llm_id="gpt-4o")
+
+        query = self.prompt.format(input_text=input_.entry_text)
+
+        output = llm.completion(query)
+        json_output = RetrieverUtil.extract_json(output)
+
+        if json_output:
+
+            # Effective date
+            effective_date = json_output.get("effective_date")
+            if effective_date is not None:
+                effective_date = DateEntry(description=str(effective_date))
+                effective_date.run_generate()
+                output_.effective_date = effective_date.date
+
+            # Maturity date
+            maturity_date = json_output.get("maturity_date")
+            if maturity_date is not None:
+                maturity_date = DateEntry(description=str(maturity_date))
+                maturity_date.run_generate()
+                output_.maturity_date = maturity_date.date
+
+            # Tenor
+            tenor_years = json_output.get("tenor_years")
+            if isinstance(tenor_years, int):
+                output_.tenor_years = tenor_years
+            elif tenor_years is not None:
+                tenor_years = NumberEntry(description=str(tenor_years))
+                tenor_years.run_generate()
+                output_.tenor_years = tenor_years.value
+
+            # Pay leg notional
+            pay_leg_notional = json_output.get("pay_leg_notional")
+            if isinstance(pay_leg_notional, float):
+                output_.pay_leg_notional = pay_leg_notional
+            elif pay_leg_notional is not None:
+                pay_leg_notional = NumberEntry(description=str(pay_leg_notional))
+                pay_leg_notional.run_generate()
+                output_.pay_leg_notional = pay_leg_notional.value
+
+            # Pay leg currency
+            pay_leg_ccy = json_output.get("pay_leg_ccy")
+            if isinstance(pay_leg_ccy, str):
+                output_.pay_leg_basis = pay_leg_ccy
+
+            # Pay leg payment frequency
+            pay_leg_freq_months = json_output.get("pay_leg_freq_months")
+            if isinstance(pay_leg_freq_months, int):
+                output_.pay_leg_freq_months = pay_leg_freq_months
+            elif pay_leg_freq_months is not None:
+                pay_leg_freq_months_entry = NumberEntry(description=str(pay_leg_freq_months))
+                pay_leg_freq_months_entry.run_generate()
+                output_.pay_leg_freq_months = pay_leg_freq_months_entry.value
+
+            # Pay leg basis
+            pay_leg_basis = json_output.get("pay_leg_basis")
+            if isinstance(pay_leg_basis, str):
+                output_.pay_leg_basis = pay_leg_basis
+
+            # Pay leg floating interest rate index
+            pay_leg_float_index = json_output.get("pay_leg_float_index")
+            if isinstance(pay_leg_float_index, str):
+                output_.pay_leg_float_index = pay_leg_float_index
+
+            # Pay leg spread in basis points
+            pay_leg_float_spread_bp = json_output.get("pay_leg_float_spread_bp")
+            if isinstance(pay_leg_float_spread_bp, float):
+                output_.pay_leg_float_spread_bp = pay_leg_float_spread_bp
+            elif pay_leg_float_spread_bp is not None:
+                pay_leg_float_spread_bp = NumberEntry(description=str(pay_leg_float_spread_bp))
+                pay_leg_float_spread_bp.run_generate()
+                output_.pay_leg_float_spread_bp = pay_leg_float_spread_bp.value
+
+            # Pay leg fixed rate in percent
+            pay_leg_fixed_rate_pct = json_output.get("pay_leg_fixed_rate_pct")
+            if isinstance(pay_leg_fixed_rate_pct, float):
+                output_.pay_leg_fixed_rate_pct = pay_leg_fixed_rate_pct
+            elif pay_leg_fixed_rate_pct is not None:
+                pay_leg_fixed_rate_pct = NumberEntry(description=str(pay_leg_fixed_rate_pct))
+                pay_leg_fixed_rate_pct.run_generate()
+                output_.pay_leg_fixed_rate_pct = pay_leg_fixed_rate_pct.value
+
+            # Receive leg notional
+            rec_leg_notional = json_output.get("rec_leg_notional")
+            if isinstance(rec_leg_notional, float):
+                output_.rec_leg_notional = rec_leg_notional
+            elif rec_leg_notional is not None:
+                rec_leg_notional = NumberEntry(description=str(rec_leg_notional))
+                rec_leg_notional.run_generate()
+                output_.rec_leg_notional = rec_leg_notional.value
+
+            # Receive leg currency
+            rec_leg_ccy = json_output.get("rec_leg_ccy")
+            if isinstance(rec_leg_ccy, str):
+                output_.rec_leg_basis = rec_leg_ccy
+
+            # Receive leg payment frequency
+            rec_leg_freq_months = json_output.get("rec_leg_freq_months")
+            if isinstance(rec_leg_freq_months, int):
+                output_.rec_leg_freq_months = rec_leg_freq_months
+            elif rec_leg_freq_months is not None:
+                rec_leg_freq_months_entry = NumberEntry(description=str(rec_leg_freq_months))
+                rec_leg_freq_months_entry.run_generate()
+                output_.rec_leg_freq_months = rec_leg_freq_months_entry.value
+
+            # Receive leg basis
+            rec_leg_basis = json_output.get("rec_leg_basis")
+            if isinstance(rec_leg_basis, str):
+                output_.rec_leg_basis = rec_leg_basis
+
+            # Receive leg floating interest rate index
+            rec_leg_float_index = json_output.get("rec_leg_float_index")
+            if isinstance(rec_leg_float_index, str):
+                output_.rec_leg_float_index = rec_leg_float_index
+
+            # Receive leg spread in basis points
+            rec_leg_float_spread_bp = json_output.get("rec_leg_float_spread_bp")
+            if isinstance(rec_leg_float_spread_bp, float):
+                output_.rec_leg_float_spread_bp = rec_leg_float_spread_bp
+            elif rec_leg_float_spread_bp is not None:
+                rec_leg_float_spread_bp = NumberEntry(description=str(rec_leg_float_spread_bp))
+                rec_leg_float_spread_bp.run_generate()
+                output_.rec_leg_float_spread_bp = rec_leg_float_spread_bp.value
+
+            # Receive leg fixed rate in percent
+            rec_leg_fixed_rate_pct = json_output.get("rec_leg_fixed_rate_pct")
+            if isinstance(rec_leg_fixed_rate_pct, float):
+                output_.rec_leg_fixed_rate_pct = rec_leg_fixed_rate_pct
+            elif rec_leg_fixed_rate_pct is not None:
+                rec_leg_fixed_rate_pct = NumberEntry(description=str(rec_leg_fixed_rate_pct))
+                rec_leg_fixed_rate_pct.run_generate()
+                output_.rec_leg_fixed_rate_pct = rec_leg_fixed_rate_pct.value
+
+        return output_

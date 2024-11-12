@@ -283,25 +283,6 @@ class AnnotationSolution(HackathonSolution):
 
         return output_
 
-    def run_generate(self) -> None:
-
-        # Load all inputs
-        inputs = Context.current().load_all(HackathonInput)
-
-        # Filter inputs by trade_group and trade_ids
-        inputs = [
-            x for x in inputs
-            if x.trade_group == self.trade_group and
-            ((ids_list := self.get_trade_ids_list()) is None or x.trade_id in ids_list)
-        ]
-
-        # Process inputs
-        for input_ in inputs:
-            output_ = self._process_input(input_)
-            Context.current().save_one(output_)
-
-        Context.current().save_one(self)
-
     def _populate_leg(self, trade: HackathonOutput, description: str):
         leg_type = AnyLegEntry(description=description).determine_leg_type(self.leg_type_prompt)
         if leg_type == "Floating":

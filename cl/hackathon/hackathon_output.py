@@ -50,7 +50,7 @@ class HackathonOutput(HackathonOutputKey, RecordMixin[HackathonOutputKey]):
     """Pay leg floating interest rate index as specified, e.g., '3m Term SOFR' (omit for a fixed leg)."""
 
     pay_leg_float_spread_bp: float | None = None
-    """Receive leg spread in basis points, for example 30 (omit for a fixed leg, 0 or omit if not specified)."""
+    """Pay leg spread in basis points, for example 30 (omit for a fixed leg, 0 or omit if not specified)."""
 
     pay_leg_fixed_rate_pct: float | None = None
     """Pay leg fixed rate in percent, for example 3.45 (omit for a floating leg)."""
