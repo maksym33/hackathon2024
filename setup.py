@@ -6,7 +6,7 @@ with open('./README.md', 'r') as readme_file:
 # Internal requirements (exclude when building from monorepo)
 install_requires = [
     "runtime>=2.0.5",
-    "convince>=0.0.3"
+    "convince>=0.0.3",
 ]
 
 # Third-party requirements
