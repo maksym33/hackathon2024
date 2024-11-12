@@ -13,9 +13,9 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-from cl.hackathon.hackathon_output_key import HackathonOutputKey
 from cl.runtime import RecordMixin
 from cl.runtime.records.dataclasses_extensions import missing
+from cl.hackathon.hackathon_output_key import HackathonOutputKey
 
 
 @dataclass(slots=True, kw_only=True)

@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from cl.hackathon.annotation_solution import AnnotationSolution
 from cl.runtime.context.testing_context import TestingContext
 from cl.runtime.settings.preload_settings import PreloadSettings
+from cl.hackathon.annotation_solution import AnnotationSolution
 
 
 def test_annotation_solution():
@@ -29,6 +29,3 @@ def test_annotation_solution():
         solutions = context.load_all(AnnotationSolution)
         for solution in solutions:
             pass  # TODO: Perform scoring and record the output
-
-
-

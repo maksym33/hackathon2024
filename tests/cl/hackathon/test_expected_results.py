@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from cl.runtime.context.testing_context import TestingContext
+from cl.runtime.log.exceptions.user_error import UserError
+from cl.runtime.settings.preload_settings import PreloadSettings
 from cl.hackathon.expected_results import ExpectedResults
 from cl.hackathon.hackathon_input import HackathonInput
 from cl.hackathon.hackathon_output import HackathonOutput
 from cl.hackathon.hackathon_output_key import HackathonOutputKey
-from cl.runtime.context.testing_context import TestingContext
-from cl.runtime.log.exceptions.user_error import UserError
-from cl.runtime.settings.preload_settings import PreloadSettings
 
 
 def test_expected_results():
@@ -61,7 +61,7 @@ def test_expected_results():
 
             # Perform additional checks
             if input.entry_text.strip().lower() != output.entry_text.strip().lower():
-                raise UserError(f"Entry text does not match between HackathonInput and HackathonOutput records "
-                                f"for trade_id='{input.trade_id}'")
-
-
+                raise UserError(
+                    f"Entry text does not match between HackathonInput and HackathonOutput records "
+                    f"for trade_id='{input.trade_id}'"
+                )

@@ -14,15 +14,13 @@
 
 from dataclasses import dataclass
 from typing import Dict
-
+from cl.runtime import Context
+from cl.runtime.log.exceptions.user_error import UserError
+from cl.runtime.records.dataclasses_extensions import missing
 from cl.convince.llms.gpt.gpt_llm import GptLlm
 from cl.convince.prompts.formatted_prompt import FormattedPrompt
 from cl.convince.retrievers.annotating_retriever import AnnotatingRetriever
 from cl.convince.retrievers.retrieval import Retrieval
-from cl.hackathon.hackathon_output import HackathonOutput
-from cl.hackathon.hackathon_solution import HackathonSolution
-from cl.runtime import Context
-from cl.runtime.log.exceptions.user_error import UserError
 from cl.tradeentry.entries.amount_entry import AmountEntry
 from cl.tradeentry.entries.currency_entry import CurrencyEntry
 from cl.tradeentry.entries.date_entry import DateEntry
@@ -33,8 +31,9 @@ from cl.tradeentry.entries.pay_receive_entry import PayReceiveEntry
 from cl.tradeentry.entries.rates.rates_index_entry import RatesIndexEntry
 from cl.tradeentry.entries.rates.swaps.any_leg_entry import AnyLegEntry
 from cl.tradeentry.entries.rates.swaps.rates_swap_entry import RatesSwapEntry
-from cl.runtime.records.dataclasses_extensions import missing
 from cl.tradeentry.trades.currency_key import CurrencyKey
+from cl.hackathon.hackathon_output import HackathonOutput
+from cl.hackathon.hackathon_solution import HackathonSolution
 
 
 @dataclass(slots=True, kw_only=True)
@@ -88,49 +87,49 @@ class AnnotationSolution(HackathonSolution):
                 prompt_id="AnnotatingRetriever",
                 params_type=Retrieval.__name__,
                 template=self.parameter_annotation_prompt,
-            )
+            ),
         )
         retriever.init_all()
 
         # Pay or receive flag
-        if extracted_pay_receive := retriever.retrieve(input_text=leg_description,
-                                                       param_description=self.pay_rec_description,
-                                                       is_required=False):
+        if extracted_pay_receive := retriever.retrieve(
+            input_text=leg_description, param_description=self.pay_rec_description, is_required=False
+        ):
             pay_receive = PayReceiveEntry(description=extracted_pay_receive)
             pay_receive.run_generate()
             if pay_rec_key := pay_receive.pay_receive:
-                entry_dict['pay_receive'] = pay_rec_key.pay_rec_id
+                entry_dict["pay_receive"] = pay_rec_key.pay_rec_id
 
         # Payment Frequency
-        if extracted_pay_freq := retriever.retrieve(input_text=leg_description,
-                                                    param_description=self.pay_freq_description,
-                                                    is_required=False):
+        if extracted_pay_freq := retriever.retrieve(
+            input_text=leg_description, param_description=self.pay_freq_description, is_required=False
+        ):
             # TODO: Reformat description
-            entry_dict['pay_freq'] = extracted_pay_freq
+            entry_dict["pay_freq"] = extracted_pay_freq
 
         # Floating Frequency
-        if extracted_float_freq := retriever.retrieve(input_text=leg_description,
-                                                      param_description=self.float_freq_description,
-                                                      is_required=False):
+        if extracted_float_freq := retriever.retrieve(
+            input_text=leg_description, param_description=self.float_freq_description, is_required=False
+        ):
             # TODO: Reformat description
-            entry_dict['float_freq'] = extracted_float_freq
+            entry_dict["float_freq"] = extracted_float_freq
 
         # Floating rate index
-        if extracted_float_index := retriever.retrieve(input_text=leg_description,
-                                                       param_description=self.float_index_description,
-                                                       is_required=False):
+        if extracted_float_index := retriever.retrieve(
+            input_text=leg_description, param_description=self.float_index_description, is_required=False
+        ):
             float_index = RatesIndexEntry(description=extracted_float_index)
             float_index.run_generate()
             if rates_index_key := float_index.rates_index:
-                entry_dict['float_index'] = rates_index_key.rates_index_id
+                entry_dict["float_index"] = rates_index_key.rates_index_id
 
         # Floating rate spread
-        if extracted_float_spread := retriever.retrieve(input_text=leg_description,
-                                                        param_description=self.float_spread_description,
-                                                        is_required=False):
+        if extracted_float_spread := retriever.retrieve(
+            input_text=leg_description, param_description=self.float_spread_description, is_required=False
+        ):
             float_spread = NumberEntry(description=extracted_float_spread)
             float_spread.run_generate()
-            entry_dict['float_spread'] = float_spread.value
+            entry_dict["float_spread"] = float_spread.value
 
         return entry_dict
 
@@ -145,34 +144,34 @@ class AnnotationSolution(HackathonSolution):
                 prompt_id="AnnotatingRetriever",
                 params_type=Retrieval.__name__,
                 template=self.parameter_annotation_prompt,
-            )
+            ),
         )
         retriever.init_all()
 
         # Pay or receive flag
-        if extracted_pay_receive := retriever.retrieve(input_text=leg_description,
-                                                       param_description=self.pay_rec_description,
-                                                       is_required=False):
+        if extracted_pay_receive := retriever.retrieve(
+            input_text=leg_description, param_description=self.pay_rec_description, is_required=False
+        ):
             pay_receive = PayReceiveEntry(description=extracted_pay_receive)
             pay_receive.run_generate()
             if pay_rec_key := pay_receive.pay_receive:
-                entry_dict['pay_receive'] = pay_rec_key.pay_rec_id
+                entry_dict["pay_receive"] = pay_rec_key.pay_rec_id
 
         # Payment Frequency
-        if extracted_pay_freq := retriever.retrieve(input_text=leg_description,
-                                                    param_description=self.pay_freq_description,
-                                                    is_required=False):
+        if extracted_pay_freq := retriever.retrieve(
+            input_text=leg_description, param_description=self.pay_freq_description, is_required=False
+        ):
             pay_freq = PayFreqEntry(description=extracted_pay_freq)
             # TODO: Reformat description
-            entry_dict['pay_freq'] = extracted_pay_freq
+            entry_dict["pay_freq"] = extracted_pay_freq
 
         # Fixed Rate
-        if extracted_fixed_rate := retriever.retrieve(input_text=leg_description,
-                                                      param_description=self.fixed_rate_description,
-                                                      is_required=False):
+        if extracted_fixed_rate := retriever.retrieve(
+            input_text=leg_description, param_description=self.fixed_rate_description, is_required=False
+        ):
             fixed_rate = NumberEntry(description=extracted_fixed_rate)
             fixed_rate.run_generate()
-            entry_dict['fixed_rate'] = fixed_rate.value
+            entry_dict["fixed_rate"] = fixed_rate.value
 
         return entry_dict
 
@@ -188,18 +187,18 @@ class AnnotationSolution(HackathonSolution):
                 prompt_id="AnnotatingRetriever",
                 params_type=Retrieval.__name__,
                 template=self.parameter_annotation_prompt,
-            )
+            ),
         )
         retriever.init_all()
 
         # Maturity
-        if extracted_maturity := retriever.retrieve(input_text=self.description,
-                                                    param_description=self.maturity_description,
-                                                    is_required=False):
+        if extracted_maturity := retriever.retrieve(
+            input_text=self.description, param_description=self.maturity_description, is_required=False
+        ):
             maturity = DateOrTenorEntry(description=extracted_maturity)
             maturity.run_generate()
             if date := maturity.date:
-                trade_parameters['maturity_date'] = date
+                trade_parameters["maturity_date"] = date
             else:
                 tenor_parts = []
 
@@ -216,56 +215,57 @@ class AnnotationSolution(HackathonSolution):
 
                 # TODO: Convert to date
                 if tenor_parts:
-                    trade_parameters['maturity_date'] = ''.join(tenor_parts)
+                    trade_parameters["maturity_date"] = "".join(tenor_parts)
 
         # Effective date
-        if extracted_effective_date := retriever.retrieve(input_text=self.description,
-                                                          param_description=self.effective_date_description,
-                                                          is_required=False):
+        if extracted_effective_date := retriever.retrieve(
+            input_text=self.description, param_description=self.effective_date_description, is_required=False
+        ):
             effective_date = DateEntry(description=extracted_effective_date)
             effective_date.run_generate()
             if date := effective_date.date:
-                trade_parameters['effective_date'] = date
+                trade_parameters["effective_date"] = date
 
         # Notional
-        if extracted_notional := retriever.retrieve(input_text=self.description,
-                                                    param_description=self.notional_description,
-                                                    is_required=False):
+        if extracted_notional := retriever.retrieve(
+            input_text=self.description, param_description=self.notional_description, is_required=False
+        ):
             notional = AmountEntry(description=extracted_notional)
             notional.run_generate()
 
             if notional_amount_entry_key := notional.amount:
                 notional_amount_entry = context.load_one(NumberEntry, notional_amount_entry_key)
                 notional_amount_entry.run_generate()
-                trade_parameters['notional_amount'] = notional_amount_entry.value
+                trade_parameters["notional_amount"] = notional_amount_entry.value
 
             if notional_currency_entry_key := notional.currency:
                 notional_currency_entry = context.load_one(CurrencyEntry, notional_currency_entry_key)
 
                 if notional_currency_entry_currency_key := notional_currency_entry.currency:
-                    notional_currency_entry_currency = context.load_one(CurrencyKey,
-                                                                        notional_currency_entry_currency_key)
-                    trade_parameters['notional_currency'] = notional_currency_entry_currency.iso_code
+                    notional_currency_entry_currency = context.load_one(
+                        CurrencyKey, notional_currency_entry_currency_key
+                    )
+                    trade_parameters["notional_currency"] = notional_currency_entry_currency.iso_code
 
         return trade_parameters
 
     def run_generate(self) -> None:
 
-        trade = HackathonOutput(trade_id='trade identifier')  # TODO: Remove stub id
+        trade = HackathonOutput(trade_id="trade identifier")  # TODO: Remove stub id
 
         trade_parameters = self._retrieve_trade_parameters()
 
-        trade.maturity_date = trade_parameters.get('maturity_date')
-        trade.effective_date = trade_parameters.get('effective_date')
-        trade.notional_amount = trade_parameters.get('notional_amount')
-        trade.notional_currency = trade_parameters.get('notional_currency')
+        trade.maturity_date = trade_parameters.get("maturity_date")
+        trade.effective_date = trade_parameters.get("effective_date")
+        trade.notional_amount = trade_parameters.get("notional_amount")
+        trade.notional_currency = trade_parameters.get("notional_currency")
 
         leg_descriptions = RatesSwapEntry(description=self.description).extract_legs(self.legs_annotation_prompt)
 
         if len(leg_descriptions) != 2:
-            raise UserError(f"Incorrect number of legs. Should be 2.\n"
-                            f"Leg descriptions:\n"
-                            f"{' '.join(leg_descriptions)}")
+            raise UserError(
+                f"Incorrect number of legs. Should be 2.\n" f"Leg descriptions:\n" f"{' '.join(leg_descriptions)}"
+            )
 
         for leg_description in leg_descriptions:
             self._populate_leg(trade, leg_description)
@@ -275,30 +275,30 @@ class AnnotationSolution(HackathonSolution):
 
     def _populate_leg(self, trade: HackathonOutput, description: str):
         leg_type = AnyLegEntry(description=description).determine_leg_type(self.leg_type_prompt)
-        if leg_type == 'Floating':
+        if leg_type == "Floating":
             leg_entry_dict = self._float_leg_entry_to_dict(description)
-            pay_receive = leg_entry_dict.get('pay_receive')
+            pay_receive = leg_entry_dict.get("pay_receive")
             if pay_receive == "Pay":
-                trade.pay_leg_pay_freq = leg_entry_dict.get('pay_freq')
-                trade.pay_leg_float_freq = leg_entry_dict.get('float_freq')
-                trade.pay_leg_float_index = leg_entry_dict.get('float_index')
-                trade.pay_leg_float_spread_bp = leg_entry_dict.get('float_spread')
+                trade.pay_leg_pay_freq = leg_entry_dict.get("pay_freq")
+                trade.pay_leg_float_freq = leg_entry_dict.get("float_freq")
+                trade.pay_leg_float_index = leg_entry_dict.get("float_index")
+                trade.pay_leg_float_spread_bp = leg_entry_dict.get("float_spread")
             elif pay_receive == "Receive":
-                trade.rec_leg_pay_freq = leg_entry_dict.get('pay_freq')
-                trade.rec_leg_float_freq = leg_entry_dict.get('float_freq')
-                trade.rec_leg_float_index = leg_entry_dict.get('float_index')
-                trade.rec_leg_float_spread_bp = leg_entry_dict.get('float_spread')
+                trade.rec_leg_pay_freq = leg_entry_dict.get("pay_freq")
+                trade.rec_leg_float_freq = leg_entry_dict.get("float_freq")
+                trade.rec_leg_float_index = leg_entry_dict.get("float_index")
+                trade.rec_leg_float_spread_bp = leg_entry_dict.get("float_spread")
             else:
                 raise UserError(f"Unknown value of pay_receive parameter: {pay_receive}")
-        elif leg_type == 'Fixed':
+        elif leg_type == "Fixed":
             leg_entry_dict = self._fixed_leg_entry_to_dict(description)
-            pay_receive = leg_entry_dict.get('pay_receive')
+            pay_receive = leg_entry_dict.get("pay_receive")
             if pay_receive == "Pay":
-                trade.pay_leg_pay_freq = leg_entry_dict.get('pay_freq')
-                trade.pay_leg_fixed_rate_pct = leg_entry_dict.get('fixed_rate')
+                trade.pay_leg_pay_freq = leg_entry_dict.get("pay_freq")
+                trade.pay_leg_fixed_rate_pct = leg_entry_dict.get("fixed_rate")
             elif pay_receive == "Receive":
-                trade.rec_leg_pay_freq = leg_entry_dict.get('pay_freq')
-                trade.rec_leg_fixed_rate_pct = leg_entry_dict.get('fixed_rate')
+                trade.rec_leg_pay_freq = leg_entry_dict.get("pay_freq")
+                trade.rec_leg_fixed_rate_pct = leg_entry_dict.get("fixed_rate")
             else:
                 raise UserError(f"Unknown value of pay_receive parameter: {pay_receive}")
         else:
