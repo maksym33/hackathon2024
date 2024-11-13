@@ -132,21 +132,21 @@ def test_vanilla_swap():
     with TestingContext():
         numbered_vanilla_swap = add_line_numbers(stub_vanilla_swap_entry)
         _testing_formatted_string(numbered_vanilla_swap, run_count=50)
-        RegressionGuard.verify_all()
+        RegressionGuard().verify_all()
 
 
 def test_floored_swap():
     with TestingContext():
         numbered_floored_swap = add_line_numbers(stub_floored_swap_entry)
         _testing_formatted_string(numbered_floored_swap, run_count=50)
-        RegressionGuard.verify_all()
+        RegressionGuard().verify_all()
 
 
 def test_amortizing_swap():
     with TestingContext():
         numbered_amortizing_swap = add_line_numbers(stub_amortizing_swap_entry)
         _testing_formatted_string(numbered_amortizing_swap, run_count=50)
-        RegressionGuard.verify_all()
+        RegressionGuard().verify_all()
 
 
 if __name__ == "__main__":

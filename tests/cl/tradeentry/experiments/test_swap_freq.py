@@ -94,7 +94,7 @@ def test_swap_freq():
             value_ticks=list(range(0, 101, 10)),
         )
         plot.save_png()
-        RegressionGuard.verify_all()
+        RegressionGuard().verify_all()
 
 
 if __name__ == "__main__":

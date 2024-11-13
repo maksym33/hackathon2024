@@ -46,7 +46,7 @@ def _test_extraction() -> None:
         value_ticks=list(range(0, 101, 10)),
     )
     plot.save_png()
-    RegressionGuard.verify_all()
+    RegressionGuard().verify_all()
 
 
 @pytest.mark.skip("Refactoring.")

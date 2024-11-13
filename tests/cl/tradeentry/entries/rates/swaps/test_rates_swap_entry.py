@@ -31,7 +31,7 @@ def test_rates_swap_entry():
         rates_swap_entry.run_generate()
         guard.write(str(rates_swap_entry))
 
-        RegressionGuard.verify_all()
+        RegressionGuard().verify_all()
 
 
 if __name__ == "__main__":

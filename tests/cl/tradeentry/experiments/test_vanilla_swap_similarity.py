@@ -132,7 +132,7 @@ def test_vanilla_swap_similarity():
         summary_guard = RegressionGuard(channel="summary")
         summary_guard.write(results_df.to_string(index=False))
 
-    RegressionGuard.verify_all()
+    RegressionGuard().verify_all()
 
 
 if __name__ == "__main__":

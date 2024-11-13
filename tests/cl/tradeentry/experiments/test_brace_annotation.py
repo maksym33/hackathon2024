@@ -131,7 +131,7 @@ def test_brace_annotation():
         plot.save_png()
 
     # Regression test
-    RegressionGuard.verify_all()
+    RegressionGuard().verify_all()
 
 
 if __name__ == "__main__":

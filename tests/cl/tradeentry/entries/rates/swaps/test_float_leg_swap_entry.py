@@ -28,7 +28,7 @@ def test_float_leg_swap_entry():
         float_swap_leg_entry.run_generate()
         guard.write(str(float_swap_leg_entry))
 
-        RegressionGuard.verify_all()
+        RegressionGuard().verify_all()
 
 
 if __name__ == "__main__":

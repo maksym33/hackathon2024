@@ -127,7 +127,7 @@ Correct: {Buy} 7y LIBOR swap at 3.75%""",
         plot.save_png()
 
     # Regression test
-    RegressionGuard.verify_all()
+    RegressionGuard().verify_all()
 
 
 if __name__ == "__main__":
