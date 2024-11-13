@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Dict
 
 from cl.hackathon.hackathon_input import HackathonInput
 from cl.runtime import Context
@@ -28,6 +28,7 @@ from cl.tradeentry.entries.currency_entry import CurrencyEntry
 from cl.tradeentry.entries.date_entry import DateEntry
 from cl.tradeentry.entries.date_or_tenor_entry import DateOrTenorEntry
 from cl.tradeentry.entries.number_entry import NumberEntry
+from cl.tradeentry.entries.pay_freq_months_entry import PayFreqMonthsEntry
 from cl.tradeentry.entries.pay_receive_entry import PayReceiveEntry
 from cl.tradeentry.entries.rates.rates_index_entry import RatesIndexEntry
 from cl.tradeentry.entries.rates.swaps.any_leg_entry import AnyLegEntry
@@ -102,7 +103,9 @@ class AnnotationSolution(HackathonSolution):
         if extracted_freq_months := retriever.retrieve(
             input_text=leg_description, param_description=self.freq_months_description, is_required=False
         ):
-            entry_dict["freq_months"] = extracted_freq_months
+            freq_months = PayFreqMonthsEntry(description=extracted_freq_months)
+            freq_months.run_generate()
+            entry_dict["freq_months"] = freq_months.pay_freq_months
 
         # Floating rate index
         if extracted_float_index := retriever.retrieve(
@@ -151,7 +154,9 @@ class AnnotationSolution(HackathonSolution):
         if extracted_freq_months := retriever.retrieve(
                 input_text=leg_description, param_description=self.freq_months_description, is_required=False
         ):
-            entry_dict["freq_months"] = extracted_freq_months
+            freq_months = PayFreqMonthsEntry(description=extracted_freq_months)
+            freq_months.run_generate()
+            entry_dict["freq_months"] = freq_months.pay_freq_months
 
         # Fixed Rate
         if extracted_fixed_rate := retriever.retrieve(
@@ -278,13 +283,11 @@ class AnnotationSolution(HackathonSolution):
             pay_receive = leg_entry_dict.get("pay_receive")
 
             if pay_receive == "Pay":
-                # TODO (Kate): Convert frequency to number of months
-                # trade.pay_leg_freq_months = leg_entry_dict.get("freq_months")
+                trade.pay_leg_freq_months = leg_entry_dict.get("freq_months")
                 trade.pay_leg_float_index = leg_entry_dict.get("float_index")
                 trade.pay_leg_float_spread_bp = leg_entry_dict.get("float_spread")
             elif pay_receive == "Receive":
-                # TODO (Kate): Convert frequency to number of months
-                # trade.rec_leg_freq_months = leg_entry_dict.get("freq_months")
+                trade.rec_leg_freq_months = leg_entry_dict.get("freq_months")
                 trade.rec_leg_float_index = leg_entry_dict.get("float_index")
                 trade.rec_leg_float_spread_bp = leg_entry_dict.get("float_spread")
             else:
@@ -294,12 +297,10 @@ class AnnotationSolution(HackathonSolution):
             pay_receive = leg_entry_dict.get("pay_receive")
 
             if pay_receive == "Pay":
-                # TODO (Kate): Convert frequency to number of months
-                # trade.pay_leg_freq_months = leg_entry_dict.get("freq_months")
+                trade.pay_leg_freq_months = leg_entry_dict.get("freq_months")
                 trade.pay_leg_fixed_rate_pct = leg_entry_dict.get("fixed_rate")
             elif pay_receive == "Receive":
-                # TODO (Kate): Convert frequency to number of months
-                # trade.rec_leg_freq_months = leg_entry_dict.get("freq_months")
+                trade.rec_leg_freq_months = leg_entry_dict.get("freq_months")
                 trade.rec_leg_fixed_rate_pct = leg_entry_dict.get("fixed_rate")
             else:
                 # TODO (Roman): Check whether to raise an error if pay_receive is None or something else
