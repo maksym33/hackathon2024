@@ -38,7 +38,7 @@ def test_jinja_prompt():
         guard.write(simple_prompt.render(StubPromptParams()))
         # For loop
         guard.write(for_loop_prompt.render(StubPromptParams()))
-        RegressionGuard.verify_all()
+        RegressionGuard().verify_all()
 
 
 if __name__ == "__main__":

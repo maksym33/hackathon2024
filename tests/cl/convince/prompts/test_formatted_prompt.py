@@ -37,7 +37,7 @@ def test_formatted_prompt():
             prompt.render(StubPromptParams())
         except UserError as e:
             guard.write(f"Expected UserError: {e}")
-        RegressionGuard.verify_all()
+        RegressionGuard().verify_all()
 
 
 if __name__ == "__main__":
