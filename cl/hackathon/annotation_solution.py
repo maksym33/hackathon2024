@@ -249,23 +249,8 @@ class AnnotationSolution(HackathonSolution):
             if date := maturity.date:
                 trade_parameters["maturity_date"] = date
             else:
-
-                tenor_parts = []
-
-                if maturity.years is not None:
-                    tenor_parts.append(f"{maturity.years}y")
-                if maturity.months is not None:
-                    tenor_parts.append(f"{maturity.months}m")
-                if maturity.weeks is not None:
-                    tenor_parts.append(f"{maturity.weeks}w")
-                if maturity.days is not None:
-                    tenor_parts.append(f"{maturity.days}d")
-                if maturity.business_days is not None:
-                    tenor_parts.append(f"{maturity.business_days}b")
-
-                # TODO (Kate): maturity_date or tenor_years
-                if tenor_parts:
-                    trade_parameters["maturity_date"] = "".join(tenor_parts)
+                # TODO (Kate): Convert from months too
+                trade_parameters["tenor_years"] = maturity.years
 
         # Effective date
         if extracted_effective_date := retriever.retrieve(
@@ -305,6 +290,7 @@ class AnnotationSolution(HackathonSolution):
         trade_parameters = self._retrieve_trade_parameters(general_trade_information)
 
         output_.maturity_date = trade_parameters.get("maturity_date")
+        output_.tenor_years = trade_parameters.get("tenor_years")
         output_.effective_date = trade_parameters.get("effective_date")
 
         if notional_amount := trade_parameters.get("notional_amount"):
