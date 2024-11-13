@@ -106,7 +106,7 @@ class AnnotationSolution(HackathonSolution):
 
         return notional_amount, notional_currency
 
-    def _float_leg_entry_to_dict(self, leg_description: str) -> Dict:
+    def _leg_entry_to_dict(self, leg_description: str) -> Dict:
 
         entry_dict = {}
 
@@ -151,6 +151,7 @@ class AnnotationSolution(HackathonSolution):
         if extracted_float_spread := retriever.retrieve(
             input_text=leg_description, param_description=self.float_spread_description, is_required=False
         ):
+            # TODO (Kate): use RatesSpreadEntry
             float_spread = NumberEntry(description=extracted_float_spread)
             float_spread.run_generate()
             entry_dict["float_spread"] = float_spread.value
@@ -168,60 +169,13 @@ class AnnotationSolution(HackathonSolution):
         entry_dict["notional_amount"] = notional_amount
         entry_dict["notional_currency"] = notional_currency
 
-        return entry_dict
-
-    def _fixed_leg_entry_to_dict(self, leg_description) -> Dict:
-
-        entry_dict = {}
-
-        retriever = AnnotatingRetriever(
-            retriever_id="parameter_annotating_retriever",
-            llm=GptLlm(llm_id="gpt-4o"),
-            prompt=FormattedPrompt(
-                prompt_id="AnnotatingRetriever",
-                params_type=Retrieval.__name__,
-                template=self.parameter_annotation_prompt,
-            ),
-        )
-        retriever.init_all()
-
-        # Pay or receive flag
-        if extracted_pay_receive := retriever.retrieve(
-            input_text=leg_description, param_description=self.pay_rec_description, is_required=False
-        ):
-            pay_receive = PayReceiveEntry(description=extracted_pay_receive)
-            pay_receive.run_generate()
-            if pay_rec_key := pay_receive.pay_receive:
-                entry_dict["pay_receive"] = pay_rec_key.pay_receive_id
-
-        # Payment Frequency
-        if extracted_freq_months := retriever.retrieve(
-                input_text=leg_description, param_description=self.freq_months_description, is_required=False
-        ):
-            freq_months = PayFreqMonthsEntry(description=extracted_freq_months)
-            freq_months.run_generate()
-            entry_dict["freq_months"] = freq_months.pay_freq_months
-
         # Fixed Rate
         if extracted_fixed_rate := retriever.retrieve(
-            input_text=leg_description, param_description=self.fixed_rate_description, is_required=False
+                input_text=leg_description, param_description=self.fixed_rate_description, is_required=False
         ):
             fixed_rate = NumberEntry(description=extracted_fixed_rate)
             fixed_rate.run_generate()
             entry_dict["fixed_rate"] = fixed_rate.value
-
-        # Day-count Basis
-        if extracted_basis := retriever.retrieve(
-                input_text=leg_description, param_description=self.basis_description, is_required=False
-        ):
-            basis = DayCountBasisEntry(description=extracted_basis)
-            basis.run_generate()
-            entry_dict["basis"] = basis.basis
-
-        # Notional
-        notional_amount, notional_currency = self._extract_notional(retriever, leg_description)
-        entry_dict["notional_amount"] = notional_amount
-        entry_dict["notional_currency"] = notional_currency
 
         return entry_dict
 
@@ -313,54 +267,31 @@ class AnnotationSolution(HackathonSolution):
         return output_
 
     def _populate_leg(self, trade: HackathonOutput, description: str):
-        leg_type = AnyLegEntry(description=description).determine_leg_type(self.leg_type_prompt)
-        if leg_type == "Floating":
-            leg_entry_dict = self._float_leg_entry_to_dict(description)
-            pay_receive = leg_entry_dict.get("pay_receive")
 
-            if pay_receive == "Pay":
-                if pay_leg_notional := leg_entry_dict.get("notional_amount"):
-                    trade.pay_leg_notional = pay_leg_notional
-                if pay_leg_ccy := leg_entry_dict.get("notional_currency"):
-                    trade.pay_leg_ccy = pay_leg_ccy
-                trade.pay_leg_basis = leg_entry_dict.get("basis")
-                trade.pay_leg_freq_months = leg_entry_dict.get("freq_months")
-                trade.pay_leg_float_index = leg_entry_dict.get("float_index")
-                trade.pay_leg_float_spread_bp = leg_entry_dict.get("float_spread")
-            elif pay_receive == "Receive":
-                if rec_leg_notional := leg_entry_dict.get("notional_amount"):
-                    trade.rec_leg_notional = rec_leg_notional
-                if rec_leg_ccy := leg_entry_dict.get("notional_currency"):
-                    trade.rec_leg_ccy = rec_leg_ccy
-                trade.rec_leg_basis = leg_entry_dict.get("basis")
-                trade.rec_leg_freq_months = leg_entry_dict.get("freq_months")
-                trade.rec_leg_float_index = leg_entry_dict.get("float_index")
-                trade.rec_leg_float_spread_bp = leg_entry_dict.get("float_spread")
-            else:
-                raise UserError(f"Unknown value of pay_receive parameter: {pay_receive}")
-        elif leg_type == "Fixed":
-            leg_entry_dict = self._fixed_leg_entry_to_dict(description)
-            pay_receive = leg_entry_dict.get("pay_receive")
+        leg_entry_dict = self._leg_entry_to_dict(description)
+        pay_receive = leg_entry_dict.get("pay_receive")
 
-            if pay_receive == "Pay":
-                if pay_leg_notional := leg_entry_dict.get("notional_amount"):
-                    trade.pay_leg_notional = pay_leg_notional
-                if pay_leg_ccy := leg_entry_dict.get("notional_currency"):
-                    trade.pay_leg_ccy = pay_leg_ccy
-                trade.pay_leg_basis = leg_entry_dict.get("basis")
-                trade.pay_leg_freq_months = leg_entry_dict.get("freq_months")
-                trade.pay_leg_fixed_rate_pct = leg_entry_dict.get("fixed_rate")
-            elif pay_receive == "Receive":
-                if rec_leg_notional := leg_entry_dict.get("notional_amount"):
-                    trade.rec_leg_notional = rec_leg_notional
-                if rec_leg_ccy := leg_entry_dict.get("notional_currency"):
-                    trade.rec_leg_ccy = rec_leg_ccy
-                trade.rec_leg_basis = leg_entry_dict.get("basis")
-                trade.rec_leg_freq_months = leg_entry_dict.get("freq_months")
-                trade.rec_leg_fixed_rate_pct = leg_entry_dict.get("fixed_rate")
-            else:
-                # TODO (Roman): Check whether to raise an error if pay_receive is None or something else
-                # raise UserError(f"Unknown value of pay_receive parameter: {pay_receive}")
-                pass
+        if pay_receive == "Pay":
+            if pay_leg_notional := leg_entry_dict.get("notional_amount"):
+                trade.pay_leg_notional = pay_leg_notional
+            if pay_leg_ccy := leg_entry_dict.get("notional_currency"):
+                trade.pay_leg_ccy = pay_leg_ccy
+            trade.pay_leg_basis = leg_entry_dict.get("basis")
+            trade.pay_leg_freq_months = leg_entry_dict.get("freq_months")
+            trade.pay_leg_float_index = leg_entry_dict.get("float_index")
+            trade.pay_leg_float_spread_bp = leg_entry_dict.get("float_spread")
+            trade.pay_leg_fixed_rate_pct = leg_entry_dict.get("fixed_rate")
+        elif pay_receive == "Receive":
+            if rec_leg_notional := leg_entry_dict.get("notional_amount"):
+                trade.rec_leg_notional = rec_leg_notional
+            if rec_leg_ccy := leg_entry_dict.get("notional_currency"):
+                trade.rec_leg_ccy = rec_leg_ccy
+            trade.rec_leg_basis = leg_entry_dict.get("basis")
+            trade.rec_leg_freq_months = leg_entry_dict.get("freq_months")
+            trade.rec_leg_float_index = leg_entry_dict.get("float_index")
+            trade.rec_leg_float_spread_bp = leg_entry_dict.get("float_spread")
+            trade.rec_leg_fixed_rate_pct = leg_entry_dict.get("fixed_rate")
         else:
-            raise UserError(f"Undefined leg type: {leg_type}")
+            # TODO (Roman): Check whether to raise an error if pay_receive is None or something else
+            # raise UserError(f"Unknown value of pay_receive parameter: {pay_receive}")
+            pass
