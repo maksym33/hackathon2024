@@ -44,7 +44,7 @@ class HackathonOutput(HackathonOutputKey, RecordMixin[HackathonOutputKey]):
     """Pay leg payment frequency in months, for example 3."""
 
     pay_leg_basis: str | None = None
-    """Pay leg daycount basis as specified, for example act/360."""
+    """Pay leg daycount basis as specified, for example actual/360."""
 
     pay_leg_float_index: str | None = None
     """Pay leg floating interest rate index as specified, e.g., '3m Term SOFR' (omit for a fixed leg)."""
@@ -65,7 +65,7 @@ class HackathonOutput(HackathonOutputKey, RecordMixin[HackathonOutputKey]):
     """Pay leg payment frequency in months, for example 3."""
 
     rec_leg_basis: str | None = None
-    """Pay leg daycount basis as specified, for example act/360."""
+    """Pay leg daycount basis as specified, for example actual/360."""
 
     rec_leg_float_index: str | None = None
     """Receive leg floating interest rate index as specified, e.g., '3m Term SOFR' (omit for a fixed leg)."""
