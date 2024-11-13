@@ -70,7 +70,7 @@ class OneStepSolution(HackathonSolution):
             elif tenor_years is not None:
                 tenor_years = NumberEntry(description=str(tenor_years))
                 tenor_years.run_generate()
-                output_.tenor_years = tenor_years.value
+                output_.tenor_years = int(tenor_years.value)
 
             # Pay leg notional
             pay_leg_notional = json_output.get("pay_leg_notional")
@@ -93,7 +93,7 @@ class OneStepSolution(HackathonSolution):
             elif pay_leg_freq_months is not None:
                 pay_leg_freq_months_entry = NumberEntry(description=str(pay_leg_freq_months))
                 pay_leg_freq_months_entry.run_generate()
-                output_.pay_leg_freq_months = pay_leg_freq_months_entry.value
+                output_.pay_leg_freq_months = int(pay_leg_freq_months_entry.value)
 
             # Pay leg basis
             pay_leg_basis = json_output.get("pay_leg_basis")
@@ -144,7 +144,7 @@ class OneStepSolution(HackathonSolution):
             elif rec_leg_freq_months is not None:
                 rec_leg_freq_months_entry = NumberEntry(description=str(rec_leg_freq_months))
                 rec_leg_freq_months_entry.run_generate()
-                output_.rec_leg_freq_months = rec_leg_freq_months_entry.value
+                output_.rec_leg_freq_months = int(rec_leg_freq_months_entry.value)
 
             # Receive leg basis
             rec_leg_basis = json_output.get("rec_leg_basis")
