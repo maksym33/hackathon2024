@@ -35,11 +35,17 @@ class TradeEntryConfig(Config):
                 opened_tabs=[
                     TabInfo(
                         type=BaseTypeInfo(
-                            name="Entry",
-                            module="Entry",
-                            label="Entry",
+                            name="TradeEntry",
+                            module="TradeEntry",
+                            label="TradeEntry",
                         ),
                     ),
                 ],
+                user_secret_identifiers=[
+                    "ANTHROPIC_API_KEY",
+                    "FIREWORKS_API_KEY",
+                    "GOOGLE_API_KEY",
+                    "OPENAI_API_KEY"
+                ]
             ),
         )
