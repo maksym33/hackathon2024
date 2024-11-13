@@ -24,7 +24,7 @@ Parameter descriptions:
     }},
     {{
         'name': 'pay_leg_notional',
-        'description': 'Pay leg notional amount.'
+        'description': 'Pay leg notional amount, without currency.'
     }},
     {{
         'name': 'pay_leg_ccy',
