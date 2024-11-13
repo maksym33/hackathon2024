@@ -48,9 +48,11 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey])
 
     def view_inputs(self) -> List[HackathonInput]:
         """Return the list of inputs specified by the trade list."""
+        return self.get_inputs()
 
     def view_outputs(self) -> List[HackathonInput]:
         """Return the list of outputs (each with its score)."""
+        return self.get_outputs()
 
     def get_trade_ids_list(self) -> List[int]:
         """Return the list of trade ids from the trade_ids string."""
@@ -74,25 +76,31 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey])
 
         return sorted(list(result))
 
+    def get_inputs(self) -> List[HackathonInput]:
+        """Return the list of inputs specified by the trade list."""
+        inputs = Context.current().load_all(HackathonInput)
+
+        # Filter inputs by trade_group and trade_ids
+        return [
+            x for x in inputs
+            if x.trade_group == self.trade_group and
+            not ((ids_list := self.get_trade_ids_list()) or x.trade_id in ids_list)
+        ]
+
+    def get_outputs(self) -> List[HackathonOutput]:
+        """Return the list of outputs (each with its score)."""
+        outputs = Context.current().load_all(HackathonOutput)
+
+        return [x for x in outputs if x.solution.solution_id == self.solution_id]
+
     def _process_input(self, input_: HackathonInput) -> HackathonOutput:
         """Process input and return output. Must be implemented in subclasses."""
         pass
 
     def run_generate(self) -> None:
         """Load, filter, and process HackathonInput data, then save results."""
-
-        # Load all inputs
-        inputs = Context.current().load_all(HackathonInput)
-
-        # Filter inputs by trade_group and trade_ids
-        inputs = [
-            x for x in inputs
-            if x.trade_group == self.trade_group and
-            not ((ids_list := self.get_trade_ids_list()) or x.trade_id in ids_list)
-        ]
-
         # Process inputs
-        for input_ in inputs:
+        for input_ in self.get_inputs():
             output_ = self._process_input(input_)
             Context.current().save_one(output_)
 
