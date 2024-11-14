@@ -13,6 +13,9 @@
 # limitations under the License.
 
 from dataclasses import dataclass
+
+from typing_extensions import Self
+
 from cl.runtime.settings.settings import Settings
 
 
@@ -26,13 +29,15 @@ class TradeEntrySettings(Settings):
     full_llm: str
     """String identifier of the full mini LLM used for more complex tasks by the tradeentry package."""
 
-    def init(self) -> None:
-        """Same as __init__ but can be used when field values are set both during and after construction."""
-
+    def init(self) -> Self:
+        """Similar to __init__ but can use fields set after construction, return self to enable method chaining."""
         if not isinstance(self.mini_llm, str):
             raise RuntimeError(f"{type(self).__name__} field 'mini_llm' must be a string.")
         if not isinstance(self.full_llm, str):
             raise RuntimeError(f"{type(self).__name__} field 'full_llm' must be a string.")
+
+        # Return self to enable method chaining
+        return self
 
     @classmethod
     def get_prefix(cls) -> str:
