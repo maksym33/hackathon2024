@@ -87,7 +87,7 @@ class AnnotationSolution(HackathonSolution):
         if extracted_notional := retriever.retrieve(
                 input_text=input_description, param_description=self.notional_description, is_required=False
         ):
-            notional = AmountEntry(description=extracted_notional)
+            notional = AmountEntry(text=extracted_notional)
             notional.run_generate()
 
             if notional_amount_entry_key := notional.amount:
@@ -125,7 +125,7 @@ class AnnotationSolution(HackathonSolution):
         if extracted_pay_receive := retriever.retrieve(
             input_text=leg_description, param_description=self.pay_rec_description, is_required=False
         ):
-            pay_receive = PayReceiveEntry(description=extracted_pay_receive)
+            pay_receive = PayReceiveEntry(text=extracted_pay_receive)
             pay_receive.run_generate()
             if pay_rec_key := pay_receive.pay_receive:
                 entry_dict["pay_receive"] = pay_rec_key.pay_receive_id
@@ -134,7 +134,7 @@ class AnnotationSolution(HackathonSolution):
         if extracted_freq_months := retriever.retrieve(
             input_text=leg_description, param_description=self.freq_months_description, is_required=False
         ):
-            freq_months = PayFreqMonthsEntry(description=extracted_freq_months)
+            freq_months = PayFreqMonthsEntry(text=extracted_freq_months)
             freq_months.run_generate()
             entry_dict["freq_months"] = freq_months.pay_freq_months
 
@@ -142,7 +142,7 @@ class AnnotationSolution(HackathonSolution):
         if extracted_float_index := retriever.retrieve(
             input_text=leg_description, param_description=self.float_index_description, is_required=False
         ):
-            float_index = RatesIndexEntry(description=extracted_float_index)
+            float_index = RatesIndexEntry(text=extracted_float_index)
             float_index.run_generate()
             if rates_index_key := float_index.rates_index:
                 entry_dict["float_index"] = rates_index_key.rates_index_id
@@ -152,7 +152,7 @@ class AnnotationSolution(HackathonSolution):
             input_text=leg_description, param_description=self.float_spread_description, is_required=False
         ):
             # TODO (Kate): use RatesSpreadEntry
-            float_spread = NumberEntry(description=extracted_float_spread)
+            float_spread = NumberEntry(text=extracted_float_spread)
             float_spread.run_generate()
             entry_dict["float_spread"] = float_spread.value
 
@@ -160,7 +160,7 @@ class AnnotationSolution(HackathonSolution):
         if extracted_basis := retriever.retrieve(
                 input_text=leg_description, param_description=self.basis_description, is_required=False
         ):
-            basis = DayCountBasisEntry(description=extracted_basis)
+            basis = DayCountBasisEntry(text=extracted_basis)
             basis.run_generate()
             entry_dict["basis"] = basis.basis
 
@@ -173,7 +173,7 @@ class AnnotationSolution(HackathonSolution):
         if extracted_fixed_rate := retriever.retrieve(
                 input_text=leg_description, param_description=self.fixed_rate_description, is_required=False
         ):
-            fixed_rate = NumberEntry(description=extracted_fixed_rate)
+            fixed_rate = NumberEntry(text=extracted_fixed_rate)
             fixed_rate.run_generate()
             entry_dict["fixed_rate"] = fixed_rate.value
 
@@ -198,7 +198,7 @@ class AnnotationSolution(HackathonSolution):
         if extracted_maturity := retriever.retrieve(
             input_text=input_description, param_description=self.maturity_description, is_required=False
         ):
-            maturity = DateOrTenorEntry(description=extracted_maturity)
+            maturity = DateOrTenorEntry(text=extracted_maturity)
             maturity.run_generate()
             if date := maturity.date:
                 trade_parameters["maturity_date"] = date
@@ -210,7 +210,7 @@ class AnnotationSolution(HackathonSolution):
         if extracted_effective_date := retriever.retrieve(
             input_text=input_description, param_description=self.effective_date_description, is_required=False
         ):
-            effective_date = DateEntry(description=extracted_effective_date)
+            effective_date = DateEntry(text=extracted_effective_date)
             effective_date.run_generate()
             if date := effective_date.date:
                 trade_parameters["effective_date"] = date
@@ -233,7 +233,7 @@ class AnnotationSolution(HackathonSolution):
         )
 
         # Extract leg descriptions
-        leg_descriptions = RatesSwapEntry(description=input_.entry_text).extract_legs(self.legs_annotation_prompt)
+        leg_descriptions = RatesSwapEntry(text=input_.entry_text).extract_legs(self.legs_annotation_prompt)
 
         # Remove each leg description from entry_text in order to get a description of only the general parameters
         general_trade_information = input_.entry_text

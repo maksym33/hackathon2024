@@ -52,14 +52,14 @@ class OneStepSolution(HackathonSolution):
             # Effective date
             effective_date = json_output.get("effective_date")
             if effective_date is not None:
-                effective_date = DateEntry(description=str(effective_date))
+                effective_date = DateEntry(text=str(effective_date))
                 effective_date.run_generate()
                 output_.effective_date = effective_date.date
 
             # Maturity date
             maturity_date = json_output.get("maturity_date")
             if maturity_date is not None:
-                maturity_date = DateEntry(description=str(maturity_date))
+                maturity_date = DateEntry(text=str(maturity_date))
                 maturity_date.run_generate()
                 output_.maturity_date = maturity_date.date
 
@@ -68,7 +68,7 @@ class OneStepSolution(HackathonSolution):
             if isinstance(tenor_years, int):
                 output_.tenor_years = tenor_years
             elif tenor_years is not None:
-                tenor_years = NumberEntry(description=str(tenor_years))
+                tenor_years = NumberEntry(text=str(tenor_years))
                 tenor_years.run_generate()
                 output_.tenor_years = int(tenor_years.value)
 
@@ -77,7 +77,7 @@ class OneStepSolution(HackathonSolution):
             if isinstance(pay_leg_notional, float):
                 output_.pay_leg_notional = pay_leg_notional
             elif pay_leg_notional is not None:
-                pay_leg_notional = NumberEntry(description=str(pay_leg_notional))
+                pay_leg_notional = NumberEntry(text=str(pay_leg_notional))
                 pay_leg_notional.run_generate()
                 output_.pay_leg_notional = pay_leg_notional.value
 
@@ -91,7 +91,7 @@ class OneStepSolution(HackathonSolution):
             if isinstance(pay_leg_freq_months, int):
                 output_.pay_leg_freq_months = pay_leg_freq_months
             elif pay_leg_freq_months is not None:
-                pay_leg_freq_months_entry = NumberEntry(description=str(pay_leg_freq_months))
+                pay_leg_freq_months_entry = NumberEntry(text=str(pay_leg_freq_months))
                 pay_leg_freq_months_entry.run_generate()
                 output_.pay_leg_freq_months = int(pay_leg_freq_months_entry.value)
 
@@ -110,7 +110,7 @@ class OneStepSolution(HackathonSolution):
             if isinstance(pay_leg_float_spread_bp, float):
                 output_.pay_leg_float_spread_bp = pay_leg_float_spread_bp
             elif pay_leg_float_spread_bp is not None:
-                pay_leg_float_spread_bp = NumberEntry(description=str(pay_leg_float_spread_bp))
+                pay_leg_float_spread_bp = NumberEntry(text=str(pay_leg_float_spread_bp))
                 pay_leg_float_spread_bp.run_generate()
                 output_.pay_leg_float_spread_bp = pay_leg_float_spread_bp.value
 
@@ -119,7 +119,7 @@ class OneStepSolution(HackathonSolution):
             if isinstance(pay_leg_fixed_rate_pct, float):
                 output_.pay_leg_fixed_rate_pct = pay_leg_fixed_rate_pct
             elif pay_leg_fixed_rate_pct is not None:
-                pay_leg_fixed_rate_pct = NumberEntry(description=str(pay_leg_fixed_rate_pct))
+                pay_leg_fixed_rate_pct = NumberEntry(text=str(pay_leg_fixed_rate_pct))
                 pay_leg_fixed_rate_pct.run_generate()
                 output_.pay_leg_fixed_rate_pct = pay_leg_fixed_rate_pct.value
 
@@ -128,7 +128,7 @@ class OneStepSolution(HackathonSolution):
             if isinstance(rec_leg_notional, float):
                 output_.rec_leg_notional = rec_leg_notional
             elif rec_leg_notional is not None:
-                rec_leg_notional = NumberEntry(description=str(rec_leg_notional))
+                rec_leg_notional = NumberEntry(text=str(rec_leg_notional))
                 rec_leg_notional.run_generate()
                 output_.rec_leg_notional = rec_leg_notional.value
 
@@ -142,7 +142,7 @@ class OneStepSolution(HackathonSolution):
             if isinstance(rec_leg_freq_months, int):
                 output_.rec_leg_freq_months = rec_leg_freq_months
             elif rec_leg_freq_months is not None:
-                rec_leg_freq_months_entry = NumberEntry(description=str(rec_leg_freq_months))
+                rec_leg_freq_months_entry = NumberEntry(text=str(rec_leg_freq_months))
                 rec_leg_freq_months_entry.run_generate()
                 output_.rec_leg_freq_months = int(rec_leg_freq_months_entry.value)
 
@@ -161,7 +161,7 @@ class OneStepSolution(HackathonSolution):
             if isinstance(rec_leg_float_spread_bp, float):
                 output_.rec_leg_float_spread_bp = rec_leg_float_spread_bp
             elif rec_leg_float_spread_bp is not None:
-                rec_leg_float_spread_bp = NumberEntry(description=str(rec_leg_float_spread_bp))
+                rec_leg_float_spread_bp = NumberEntry(text=str(rec_leg_float_spread_bp))
                 rec_leg_float_spread_bp.run_generate()
                 output_.rec_leg_float_spread_bp = rec_leg_float_spread_bp.value
 
@@ -170,7 +170,7 @@ class OneStepSolution(HackathonSolution):
             if isinstance(rec_leg_fixed_rate_pct, float):
                 output_.rec_leg_fixed_rate_pct = rec_leg_fixed_rate_pct
             elif rec_leg_fixed_rate_pct is not None:
-                rec_leg_fixed_rate_pct = NumberEntry(description=str(rec_leg_fixed_rate_pct))
+                rec_leg_fixed_rate_pct = NumberEntry(text=str(rec_leg_fixed_rate_pct))
                 rec_leg_fixed_rate_pct.run_generate()
                 output_.rec_leg_fixed_rate_pct = rec_leg_fixed_rate_pct.value
 
