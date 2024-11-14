@@ -1,0 +1,80 @@
+# Copyright (C) 2023-present The Project Contributors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+from dataclasses import dataclass
+from cl.runtime.exceptions.error_util import ErrorUtil
+from cl.runtime.settings.settings import Settings
+
+
+@dataclass(slots=True, kw_only=True)
+class ConvinceSettings(Settings):
+    """Locale and related conventions."""
+
+    locale: str | None = None
+    """Locale in BCP 47 ll-CC where ll is language and CC is country for AI applications, no effect on front end."""
+    
+    _language: str | None = None
+    """Two-letter lowercase language code for AI applications, no effect on front end."""
+    
+    _country: str | None = None
+    """Two-letter UPPERCASE country code (not region) for AI applications, no effect on front end."""
+
+    def init(self) -> None:
+        """Same as __init__ but can be used when field values are set both during and after construction."""
+        
+        # Set default locale
+        if self.locale is None:
+            self.locale = "en-US"
+
+        # Validate locale and get language and region
+        # Validate format
+        locale_tokens = self.locale.split("-")
+        format_msg = "  - Locale not in BCP 47 ll-CC format where ll is language and CC is country, for example en-US"
+        if len(locale_tokens) != 2:
+            raise ErrorUtil.value_error(
+                self.locale,
+                details=f"{format_msg}\n  - It has {len(locale_tokens)} dash-delimited tokens instead of 2",
+                value_name="locale",
+                data_type=ConvinceSettings,
+            )
+        if not len(language := locale_tokens[0]) == 2 and language.islower():
+            raise ErrorUtil.value_error(
+                self.locale,
+                details=f"{format_msg}\n  - Its first part must be a two-letter lowercase language code",
+                value_name="locale",
+                data_type=ConvinceSettings,
+            )
+        if not len(country := locale_tokens[1]) == 2 and country.isupper():
+            raise ErrorUtil.value_error(
+                self.locale,
+                details=f"{format_msg}\n  - Its second part must be a two-letter UPPERCASE country code (not region)",
+                value_name="locale",
+                data_type=ConvinceSettings,
+            )
+        
+        # Assign language and country fields
+        self._language = language
+        self._country = country
+        
+    def get_language(self) -> str:
+        """Two-letter lowercase language code."""
+        return self._language
+    
+    def get_country(self) -> str:
+        """Two-letter UPPERCASE country code (not region)."""
+        return self._country
+
+    @classmethod
+    def get_prefix(cls) -> str:
+        return "convince"
