@@ -1,0 +1,4 @@
+Sample Text (Currency, en-GB)
+Long Text Long Text Long Text Long Text Long Text Long Text Long Text Long Text (Currency, en-GB, 27f03fdab88bb0a5ae9060f8a942521d)
+Multiline Text (Currency, en-GB, d4ff408f75fa0a44647bc25286bafdfa)
+Sample Text (Currency, en-GB, dfefd46585918f6ff272010f51f2f9d8)

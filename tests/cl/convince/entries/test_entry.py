@@ -54,14 +54,19 @@ def test_create_key():
 def test_check_entry_id():
     """Test EntryKey.check_entry_id method."""
 
-    EntryKey(entry_id="a\\b\\c").init()
-    EntryKey(entry_id="a\\b\\c\\d").init()
+    # Valid without hash
+    EntryKey(entry_id="text (type, en-US)").init()
+
+    # Valid with hash
+    EntryKey(entry_id="text (type, en-US, 00000000000000000000000000000000)").init()
+
+    # Not valid
     with pytest.raises(UserError):
-        EntryKey(entry_id="a").init()
+        EntryKey(entry_id="text").init()
     with pytest.raises(UserError):
-        EntryKey(entry_id="a\\b").init()
+        EntryKey(entry_id="text(").init()
     with pytest.raises(UserError):
-        EntryKey(entry_id="a\\b\\c\\d\\e").init()
+        EntryKey(entry_id="text)").init()
 
 
 if __name__ == "__main__":
