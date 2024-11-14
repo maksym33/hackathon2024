@@ -28,7 +28,6 @@ from cl.tradeentry.entries.currency_entry import CurrencyEntry
 from cl.tradeentry.entries.date_entry import DateEntry
 from cl.tradeentry.entries.date_or_tenor_entry import DateOrTenorEntry
 from cl.tradeentry.entries.number_entry import NumberEntry
-from cl.tradeentry.entries.pay_freq_entry import PayFreqEntry
 from cl.tradeentry.entries.pay_receive_entry import PayReceiveEntry
 from cl.tradeentry.entries.rates.rates_index_entry import RatesIndexEntry
 from cl.tradeentry.entries.rates.swaps.any_leg_entry import AnyLegEntry
@@ -60,11 +59,8 @@ class AnnotationSolution(HackathonSolution):
     effective_date_description: str = "Effective date as date"
     """Description of the effective date to use with the parameter annotation prompt."""
 
-    pay_freq_description: str = "Payment frequency"
+    freq_months_description: str = "Payment frequency"
     """Description of the payment frequency to use with the parameter annotation prompt."""
-
-    float_freq_description: str = "Frequency at which floating interest accrues"
-    """Description of the floating frequency to use with the parameter annotation prompt."""
 
     float_index_description: str = "Name of the floating interest rate index"
     """Description of the floating interest rate index to use with the parameter annotation prompt."""
@@ -103,18 +99,10 @@ class AnnotationSolution(HackathonSolution):
                 entry_dict["pay_receive"] = pay_rec_key.pay_receive_id
 
         # Payment Frequency
-        if extracted_pay_freq := retriever.retrieve(
-            input_text=leg_description, param_description=self.pay_freq_description, is_required=False
+        if extracted_freq_months := retriever.retrieve(
+            input_text=leg_description, param_description=self.freq_months_description, is_required=False
         ):
-            # TODO: Reformat description
-            entry_dict["pay_freq"] = extracted_pay_freq
-
-        # Floating Frequency
-        if extracted_float_freq := retriever.retrieve(
-            input_text=leg_description, param_description=self.float_freq_description, is_required=False
-        ):
-            # TODO: Reformat description
-            entry_dict["float_freq"] = extracted_float_freq
+            entry_dict["freq_months"] = extracted_freq_months
 
         # Floating rate index
         if extracted_float_index := retriever.retrieve(
@@ -160,12 +148,10 @@ class AnnotationSolution(HackathonSolution):
                 entry_dict["pay_receive"] = pay_rec_key.pay_receive_id
 
         # Payment Frequency
-        if extracted_pay_freq := retriever.retrieve(
-            input_text=leg_description, param_description=self.pay_freq_description, is_required=False
+        if extracted_freq_months := retriever.retrieve(
+                input_text=leg_description, param_description=self.freq_months_description, is_required=False
         ):
-            pay_freq = PayFreqEntry(description=extracted_pay_freq)
-            # TODO: Reformat description
-            entry_dict["pay_freq"] = extracted_pay_freq
+            entry_dict["freq_months"] = extracted_freq_months
 
         # Fixed Rate
         if extracted_fixed_rate := retriever.retrieve(
@@ -261,6 +247,8 @@ class AnnotationSolution(HackathonSolution):
             entry_text=input_.entry_text,
         )
 
+        # TODO (Kate): Add basis
+
         trade_parameters = self._retrieve_trade_parameters(input_)
 
         output_.maturity_date = trade_parameters.get("maturity_date")
@@ -289,22 +277,14 @@ class AnnotationSolution(HackathonSolution):
             leg_entry_dict = self._float_leg_entry_to_dict(description)
             pay_receive = leg_entry_dict.get("pay_receive")
 
-            # TODO (Roman): Review pay_freq. It's a string in dict (e.g. "semi-annual"), but int in class declaration.
-            try:
-                pay_freq = int(leg_entry_dict.get("pay_freq"))
-            except Exception:
-                pay_freq = None
-
             if pay_receive == "Pay":
-                trade.pay_leg_freq_months = pay_freq
-                # TODO (Roman): 'HackathonOutput' class has no attribute 'pay_leg_float_freq' or similar.
-                # trade.pay_leg_float_freq = leg_entry_dict.get("float_freq")
+                # TODO (Kate): Convert frequency to number of months
+                # trade.pay_leg_freq_months = leg_entry_dict.get("freq_months")
                 trade.pay_leg_float_index = leg_entry_dict.get("float_index")
                 trade.pay_leg_float_spread_bp = leg_entry_dict.get("float_spread")
             elif pay_receive == "Receive":
-                trade.rec_leg_freq_months = pay_freq
-                # TODO (Roman): 'HackathonOutput' class has no attribute 'rec_leg_float_freq' or similar.
-                # trade.rec_leg_float_freq = leg_entry_dict.get("float_freq")
+                # TODO (Kate): Convert frequency to number of months
+                # trade.rec_leg_freq_months = leg_entry_dict.get("freq_months")
                 trade.rec_leg_float_index = leg_entry_dict.get("float_index")
                 trade.rec_leg_float_spread_bp = leg_entry_dict.get("float_spread")
             else:
@@ -313,17 +293,13 @@ class AnnotationSolution(HackathonSolution):
             leg_entry_dict = self._fixed_leg_entry_to_dict(description)
             pay_receive = leg_entry_dict.get("pay_receive")
 
-            # TODO (Roman): Review pay_freq. It's a string in dict (e.g. "semi-annual"), but int in class declaration.
-            try:
-                pay_freq = int(leg_entry_dict.get("pay_freq"))
-            except Exception:
-                pay_freq = None
-
             if pay_receive == "Pay":
-                trade.pay_leg_freq_months = pay_freq
+                # TODO (Kate): Convert frequency to number of months
+                # trade.pay_leg_freq_months = leg_entry_dict.get("freq_months")
                 trade.pay_leg_fixed_rate_pct = leg_entry_dict.get("fixed_rate")
             elif pay_receive == "Receive":
-                trade.rec_leg_freq_months = pay_freq
+                # TODO (Kate): Convert frequency to number of months
+                # trade.rec_leg_freq_months = leg_entry_dict.get("freq_months")
                 trade.rec_leg_fixed_rate_pct = leg_entry_dict.get("fixed_rate")
             else:
                 # TODO (Roman): Check whether to raise an error if pay_receive is None or something else
