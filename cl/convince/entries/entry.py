@@ -41,7 +41,7 @@ class Entry(EntryKey, RecordMixin[EntryKey], ABC):
     """ISO 639-1 two-letter lowercase language code (defaults to 'en')."""
 
     verified: bool | None = None
-    """If True, use this entry as a few-shot sample."""
+    """Flag indicating the entry is verified."""
 
     def get_key(self) -> EntryKey:
         return EntryKey(entry_id=self.entry_id)

@@ -45,18 +45,15 @@ def test_get_entry_id():
 
 
 def test_check_entry_id():
-    """Test EntryKey.create_key method."""
+    """Test EntryKey.check_entry_id method."""
 
-    EntryKey.check_entry_id("SampleEntryType: Sample Description")
-    EntryKey.check_entry_id("SampleEntryType: Sample Description (MD5: 00000000000000000000000000000000)")
+    EntryKey(entry_id="a:c").init()
     with pytest.raises(UserError):
-        EntryKey.check_entry_id("Sample Description")
+        EntryKey(entry_id="a").init()
     with pytest.raises(UserError):
-        EntryKey.check_entry_id("SampleEntryType: Sample Description (MD5: 00000000000000000000000000000000")
+        EntryKey(entry_id="a\\b").init()
     with pytest.raises(UserError):
-        EntryKey.check_entry_id("SampleEntryType: Sample Description (MD5: 000000000000000000000000000000000")
-    with pytest.raises(UserError):
-        EntryKey.check_entry_id("SampleEntryType: Sample Description (md5: 0000000000000000000000000000000")
+        EntryKey(entry_id="a\\b\\c\\d").init()
 
 
 if __name__ == "__main__":

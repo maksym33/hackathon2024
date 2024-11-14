@@ -47,9 +47,14 @@ class EntryKey(KeyMixin):
     """Based on record type, description and MD5 hash of body and data if present."""
 
     def init(self) -> None:
-        # Check only if inside a key, will be set automatically if inside a record
+        # Check entry_id inside a key but not inside a record where it will be set automatically
         if is_key(self):
-            self.check_entry_id(self.entry_id)
+            # Check that entry_id consists of three backslash-delimited tokens
+            # if len(self.entry_id.split("\\")) != 3:
+            if len(self.entry_id.split(":")) != 2:
+                # raise UserError(f"The following EntryId does not consist of three backslash-delimited tokens:\n"
+                raise UserError(f"The following EntryId does not consist of two colon-delimited tokens:\n"
+                                f"{self.entry_id}\n")
 
     @classmethod
     def get_key_type(cls) -> Type:
@@ -105,38 +110,3 @@ class EntryKey(KeyMixin):
             entry_id = type_and_description
         return entry_id
 
-    @classmethod
-    def check_entry_id(cls, entry_id: str) -> None:
-        """Check that the unique identifier is compliant with the expected format."""
-        is_valid = True
-        type_and_description = None
-        # Validate MD5 suffix if present
-        left_parenthesis_tokens = entry_id.split("(")
-        if len(left_parenthesis_tokens) == 2:
-            # Includes type, description and MD5 cache
-            type_and_description = left_parenthesis_tokens[0]
-            md5_suffix = left_parenthesis_tokens[1]
-            is_valid = md5_suffix.startswith("MD5: ") and md5_suffix.endswith(")")
-            md5_hex = md5_suffix[5:-1]
-            is_valid = is_valid and len(md5_hex) == 32 and bool(_MD5_HEX_RE.match(md5_hex))
-        elif len(left_parenthesis_tokens) == 1:
-            # Includes only type and description
-            type_and_description = entry_id
-        else:
-            is_valid = False
-
-        # Validate type and description
-        if is_valid:
-            colon_tokens = type_and_description.split(": ")
-            if len(colon_tokens) == 2:
-                is_valid = CaseUtil.is_pascal_case(colon_tokens[0])
-            else:
-                is_valid = False
-
-        # Error message if does not match format
-        if not is_valid:
-            raise UserError(
-                f"EntryId format must be either '{{RecordType}}: {{Description}}' "
-                f"or '{{RecordType}}: {{Description}} (MD5: {{lowercase hexadecimal}})'.\n"
-                f"EntryId: '{entry_id}'"
-            )
