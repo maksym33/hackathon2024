@@ -13,6 +13,8 @@
 # limitations under the License.
 
 from dataclasses import dataclass
+from typing import Tuple
+
 from cl.runtime.exceptions.error_util import ErrorUtil
 from cl.runtime.settings.settings import Settings
 
@@ -38,30 +40,7 @@ class ConvinceSettings(Settings):
             self.locale = "en-US"
 
         # Validate locale and get language and region
-        # Validate format
-        locale_tokens = self.locale.split("-")
-        format_msg = "  - Locale not in BCP 47 ll-CC format where ll is language and CC is country, for example en-US"
-        if len(locale_tokens) != 2:
-            raise ErrorUtil.value_error(
-                self.locale,
-                details=f"{format_msg}\n  - It has {len(locale_tokens)} dash-delimited tokens instead of 2",
-                value_name="locale",
-                data_type=ConvinceSettings,
-            )
-        if not len(language := locale_tokens[0]) == 2 and language.islower():
-            raise ErrorUtil.value_error(
-                self.locale,
-                details=f"{format_msg}\n  - Its first part must be a two-letter lowercase language code",
-                value_name="locale",
-                data_type=ConvinceSettings,
-            )
-        if not len(country := locale_tokens[1]) == 2 and country.isupper():
-            raise ErrorUtil.value_error(
-                self.locale,
-                details=f"{format_msg}\n  - Its second part must be a two-letter UPPERCASE country code (not region)",
-                value_name="locale",
-                data_type=ConvinceSettings,
-            )
+        language, country = self.parse_locale(self.locale)
         
         # Assign language and country fields
         self._language = language
@@ -74,6 +53,35 @@ class ConvinceSettings(Settings):
     def get_country(self) -> str:
         """Two-letter UPPERCASE country code (not region)."""
         return self._country
+
+    @classmethod
+    def parse_locale(cls, locale: str) -> Tuple[str, str]:
+        """Parse locale in BCP 47 ll-CC where ll is language and CC is country (not region)."""
+        locale_tokens = locale.split("-")
+        format_msg = "  - Locale not in BCP 47 ll-CC format where ll is language and CC is country, for example en-US"
+        if len(locale_tokens) != 2:
+            raise ErrorUtil.value_error(
+                locale,
+                details=f"{format_msg}\n  - It has {len(locale_tokens)} dash-delimited tokens instead of 2",
+                value_name="locale",
+                data_type=ConvinceSettings,
+            )
+        if not len(language := locale_tokens[0]) == 2 and language.islower():
+            raise ErrorUtil.value_error(
+                locale,
+                details=f"{format_msg}\n  - Its first part must be a two-letter lowercase language code",
+                value_name="locale",
+                data_type=ConvinceSettings,
+            )
+        if not len(country := locale_tokens[1]) == 2 and country.isupper():
+            raise ErrorUtil.value_error(
+                locale,
+                details=f"{format_msg}\n  - Its second part must be a two-letter UPPERCASE country code (not region)",
+                value_name="locale",
+                data_type=ConvinceSettings,
+            )
+
+        return language, country
 
     @classmethod
     def get_prefix(cls) -> str:

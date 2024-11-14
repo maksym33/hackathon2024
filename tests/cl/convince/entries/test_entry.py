@@ -20,25 +20,26 @@ from cl.convince.entries.entry_key import EntryKey
 from cl.convince.entries.entry_type_key import EntryTypeKey
 
 
-def test_get_entry_id():
+def test_create_key():
     """Test EntryKey.create_key method."""
 
     guard = RegressionGuard()
 
     # Record type
-    record_type = "SampleEntryType"
+    entry_type = "Stub"
+    locale = "en-GB"
 
     # Check with type and description only
-    guard.write(EntryKey.get_entry_id(record_type, "Sample Description"))
+    guard.write(EntryKey.create_key(entry_type=entry_type, locale=locale, text="Sample Text"))
 
     # Check with body
-    guard.write(EntryKey.get_entry_id(record_type, "Sample Description", body="Sample Body"))
+    guard.write(EntryKey.create_key(entry_type=entry_type, locale=locale, text=" ".join(20 * ["Long Text"])))
 
     # Check with data
-    guard.write(EntryKey.get_entry_id(record_type, "Sample Description", data="Sample Data"))
+    guard.write(EntryKey.create_key(entry_type=entry_type, locale=locale, text="Multiline\nText"))
 
     # Check with both
-    guard.write(EntryKey.get_entry_id(record_type, "Sample Description", body="Sample Body", data="Sample Data"))
+    guard.write(EntryKey.create_key(entry_type=entry_type, locale=locale, text="Sample Text", data="Sample Data"))
 
     # Verify
     guard.verify_all()
@@ -47,13 +48,14 @@ def test_get_entry_id():
 def test_check_entry_id():
     """Test EntryKey.check_entry_id method."""
 
-    EntryKey(entry_id="a:c").init()
+    EntryKey(entry_id="a\\b\\c").init()
+    EntryKey(entry_id="a\\b\\c\\d").init()
     with pytest.raises(UserError):
         EntryKey(entry_id="a").init()
     with pytest.raises(UserError):
         EntryKey(entry_id="a\\b").init()
     with pytest.raises(UserError):
-        EntryKey(entry_id="a\\b\\c\\d").init()
+        EntryKey(entry_id="a\\b\\c\\d\\e").init()
 
 
 if __name__ == "__main__":

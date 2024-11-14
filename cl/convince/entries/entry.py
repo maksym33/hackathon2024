@@ -15,6 +15,9 @@
 from abc import ABC
 from abc import abstractmethod
 from dataclasses import dataclass
+from typing import Type
+
+from cl.convince.settings.convince_settings import ConvinceSettings
 from cl.runtime import Context
 from cl.runtime.backend.core.user_key import UserKey
 from cl.runtime.log.exceptions.user_error import UserError
@@ -28,17 +31,17 @@ from cl.convince.entries.entry_key import EntryKey
 class Entry(EntryKey, RecordMixin[EntryKey], ABC):
     """Contains description, body and supporting data of user entry along with the entry processing result."""
 
-    description: str = missing()
+    entry_type: str = missing()
+    """Entry type string is set in 'init' method of a descendant of this class."""
+
+    text: str = missing()
     """Description exactly as provided by the user (included in MD5 hash)."""
 
-    body: str | None = None
-    """Optional text following the description exactly as provided by the user (included in MD5 hash)."""
+    locale: str = missing()
+    """Locale in BCP 47 ll-CC where ll is language and CC is country (included in MD5 hash)."""
 
     data: str | None = None
     """Optional supporting data in YAML format (included in MD5 hash)."""
-
-    lang: str | None = "en"
-    """ISO 639-1 two-letter lowercase language code (defaults to 'en')."""
 
     verified: bool | None = None
     """Flag indicating the entry is verified."""
@@ -48,21 +51,37 @@ class Entry(EntryKey, RecordMixin[EntryKey], ABC):
 
     def init(self) -> None:
         """Generate entry_id in 'type: description' format followed by an MD5 hash of body and data if present."""
+
+        # Check locale format or set based on the default in ConvinceSettings if not specified
+        if self.locale is not None:
+            # This performs validation
+            ConvinceSettings.parse_locale(self.locale)
+        else:
+            self.locale = ConvinceSettings.instance().locale
+
         # Convert field types if necessary
         if self.verified is not None and isinstance(self.verified, str):
             self.verified = self.parse_optional_bool(self.verified, field_name="verified")
-        # Record type is part of the key
-        record_type = type(self).__name__
-        self.entry_id = self.get_entry_id(record_type, self.description, self.body, self.data)
+
+        # Base type resolves the ambiguity of different entry types with the same text
+        base_type = self.get_base_type()
+        entry_type = base_type.__name__.removesuffix("Entry")
+        self.entry_id = self.create_key(
+            entry_type=entry_type,
+            text=self.text,
+            locale=self.locale,
+            data=self.data)
+
+    @abstractmethod
+    def get_base_type(self) -> Type:
+        """Lowest level of class hierarchy that resolves the ambiguity of different entry types with the same text."""
 
     def get_text(self) -> str:
         """Get the complete text of the entry."""
-        # TODO: Support body and data
-        if self.body is not None:
-            raise RuntimeError("Entry 'body' field is not yet supported.")
+        # TODO: Support data
         if self.data is not None:
             raise RuntimeError("Entry 'data' field is not yet supported.")
-        result = self.description
+        result = self.text
         return result
 
     # TODO: Restore abstract when implemented for all entries
@@ -79,8 +98,7 @@ class Entry(EntryKey, RecordMixin[EntryKey], ABC):
             )
         record_type = type(self)
         result = record_type(
-            description=self.description,
-            body=self.body,
+            description=self.text,
             data=self.data,
             lang=self.lang,
         )

@@ -17,23 +17,19 @@ from dataclasses import dataclass
 from typing import Type
 from typing_extensions import Self
 from cl.runtime.log.exceptions.user_error import UserError
-from cl.runtime.primitive.case_util import CaseUtil
 from cl.runtime.primitive.string_util import StringUtil
 from cl.runtime.records.dataclasses_extensions import missing
 from cl.runtime.records.key_mixin import KeyMixin
 from cl.runtime.records.protocols import is_key
 
-_MAX_TITLE_LEN = 1000
-"""Maximum length of the description."""
-
-_DISALLOWED_TITLE_SUBSTRINGS = {  # TODO: Use names from a consolidated list
-    ":": "Colon",
-    "(": "Left parenthesis",
-    ")": "Right parenthesis",
-    "\n": "End of line",
-    "\r": "Carriage return",
+_DISALLOWED_DELIMITERS = {
+    "\\": "Backslash",
+    ";": "Semicolon",
 }
-"""These substrings are not allowed in description."""
+"""These delimiters are not allowed in the text."""
+
+_WHITESPACE_RE = re.compile(r'\s+')
+"""Regex for whitespace replacement."""
 
 _MD5_HEX_RE = re.compile(r"^[0-9a-f]+$")
 """Regex for MD5 hex."""
@@ -50,11 +46,10 @@ class EntryKey(KeyMixin):
         # Check entry_id inside a key but not inside a record where it will be set automatically
         if is_key(self):
             # Check that entry_id consists of three backslash-delimited tokens
-            # if len(self.entry_id.split("\\")) != 3:
-            if len(self.entry_id.split(":")) != 2:
-                # raise UserError(f"The following EntryId does not consist of three backslash-delimited tokens:\n"
-                raise UserError(f"The following EntryId does not consist of two colon-delimited tokens:\n"
-                                f"{self.entry_id}\n")
+            token_count = len(self.entry_id.split("\\"))
+            if token_count != 3 and token_count != 4:
+                raise UserError(f"EntryId must have three or four backslash-delimited tokens.\n"
+                                f"EntryId: {self.entry_id}\n")
 
     @classmethod
     def get_key_type(cls) -> Type:
@@ -69,44 +64,51 @@ class EntryKey(KeyMixin):
     ) -> Self:
         """Create the unique identifier from parameters."""
         record_type = cls.__name__
-        result = EntryKey(entry_id=cls.get_entry_id(record_type, description, body=body, data=data))
+        result = EntryKey(entry_id=cls.create_key(record_type, description, body=body, data=data))
         return result
 
     @classmethod
-    def get_entry_id(
+    def create_key(
         cls,
-        record_type: str,
-        description: str,
-        body: str | None = None,
+        *,
+        entry_type: str,
+        text: str,
+        locale: str,
         data: str | None = None,
     ) -> str:
         """Create the unique identifier from parameters."""
 
         # Initial checks for the description
-        if StringUtil.is_empty(description):
-            raise UserError(f"Empty 'description' field in {record_type}.")
-        if len(description) > _MAX_TITLE_LEN:
-            raise UserError(
-                f"The length {len(description)} of the 'description' field in {record_type} exceeds {_MAX_TITLE_LEN}, "
-                f"use 'Entry.body' field for the excess text."
-            )
-        description_substrings = [name for sub, name in _DISALLOWED_TITLE_SUBSTRINGS.items() if sub in description]
-        if description_substrings:
-            description_substrings_str = "\n".join(description_substrings)
-            raise UserError(
-                f"Field 'description' contains the following disallowed substrings:\n{description_substrings_str}\n. "
-                f"Field text:\n{description}"
-            )
+        if StringUtil.is_empty(text):
+            raise UserError(f"Empty 'text' field in {cls.__name__}.")
 
-        # Combine ClassName with description
-        type_and_description = f"{record_type}: {description}"
-
-        if not StringUtil.is_empty(body) or not StringUtil.is_empty(data):
-            # Append MD5 hash in hexadecimal format of the body and data if at least one is present
-            md5_hash = StringUtil.md5_hex(f"{body}.{data}")
-            entry_id = f"{type_and_description} (MD5: {md5_hash})"
+        # Generate digest if multiline or more than 80 characters
+        if "\n" in text or len(text) > 80:
+            # Get the first 160 characters, replace all whitespace by a single space and then truncate to 80
+            is_truncated = True
+            digest = text[:160].strip()
+            digest = _WHITESPACE_RE.sub(" ", digest).strip()
+            digest = digest[:80].strip()
         else:
-            # Otherwise use type and description only
-            entry_id = type_and_description
-        return entry_id
+            is_truncated = False
+            digest = text
 
+        delimiters = [name for sub, name in _DISALLOWED_DELIMITERS.items() if sub in text]
+        if delimiters:
+            delimiters_str = "\n".join(delimiters)
+            raise UserError(
+                f"Entry text digest contains the following disallowed delimiters:\n{delimiters_str}\n. "
+                f"Digest:\n{digest}"
+            )
+
+        # EntryId without MD5 hash using type\digest\locale format
+        base_entry_id = f"{entry_type}\\{digest}\\{locale}"
+
+        if is_truncated or not StringUtil.is_empty(data):
+            # Append MD5 hash in hexadecimal format if the text is truncated or data is present
+            md5_hash = StringUtil.md5_hex(f"{text}{data}")
+            entry_id = f"{base_entry_id}\\{md5_hash}"
+        else:
+            # Otherwise return without the hash
+            entry_id = base_entry_id
+        return entry_id
