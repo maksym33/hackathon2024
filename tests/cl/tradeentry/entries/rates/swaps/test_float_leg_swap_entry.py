@@ -25,6 +25,7 @@ def test_float_leg_swap_entry():
         float_swap_leg_entry = FloatSwapLegEntry(
             text="Effective date - 10 November 2009, Tenor - 12 months, Client pays 3M Term SOFR + 70bps act/360, quarterly"
         )
+        float_swap_leg_entry.init()
         float_swap_leg_entry.run_generate()
         guard.write(str(float_swap_leg_entry))
 

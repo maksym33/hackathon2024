@@ -14,6 +14,8 @@
 
 from abc import ABC
 from dataclasses import dataclass
+from typing import Type
+
 from cl.convince.entries.entry import Entry
 from cl.tradeentry.trades.rates.rates_leg_key import RatesLegKey
 
@@ -25,5 +27,6 @@ class RatesLegEntry(Entry, ABC):
     leg: RatesLegKey | None = None
     """Interest rate leg."""
 
-    def init(self) -> None:
-        self.entry_type = RatesLegEntry.__name__
+    def get_base_type(self) -> Type:
+        return RatesLegEntry
+

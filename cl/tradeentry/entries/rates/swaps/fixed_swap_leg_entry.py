@@ -18,13 +18,10 @@ from cl.runtime.records.dataclasses_extensions import missing
 from cl.convince.entries.entry_key import EntryKey
 from cl.convince.llms.gpt.gpt_llm import GptLlm
 from cl.convince.retrievers.annotating_retriever import AnnotatingRetriever
-from cl.tradeentry.entries.date_entry import DateEntry
-from cl.tradeentry.entries.date_or_tenor_entry import DateOrTenorEntry
 from cl.tradeentry.entries.fixed_rate_entry import FixedRateEntry
 from cl.tradeentry.entries.pay_freq_entry import PayFreqEntry
 from cl.tradeentry.entries.pay_receive_fixed_entry import PayReceiveFixedEntry
 from cl.tradeentry.entries.rates.swaps.rates_swap_leg_entry import RatesSwapLegEntry
-from cl.tradeentry.trades.rates.rates_leg_key import RatesLegKey
 
 _SIDE = "The words Buy or Sell, or the words Pay or Receive"
 _FIXED_RATE = "Fixed rate"

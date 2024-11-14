@@ -43,7 +43,7 @@ class NumberEntry(Entry):
     value: float | None = missing()
     """Numerical value (output)."""
 
-    def get_entry_type(self) -> Type:
+    def get_base_type(self) -> Type:
         return NumberEntry
 
     def run_generate(self) -> None:

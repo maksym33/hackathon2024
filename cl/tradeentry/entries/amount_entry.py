@@ -103,11 +103,12 @@ class AmountEntry(Entry):
         )
         if currency_description is not None:
             # Try to load an existing entry using reverse lookup
-            self.currency = CurrencyEntry.get_entry_key(currency_description)
-            if (loaded := context.load_one(CurrencyEntry, self.currency, is_record_optional=True)) is None:
+            currency = CurrencyEntry(text=currency_description, locale=self.locale)
+            currency.init()
+            if (loaded := context.load_one(CurrencyEntry, currency.get_key(), is_record_optional=True)) is None:
                 # Save only if does not exist
-                currency = CurrencyEntry(text=currency_description, lang=self.lang)
                 context.save_one(currency)
+                self.currency = currency.get_key()
             else:
                 # Otherwise update the verified status
                 verified = verified and loaded.verified
@@ -120,11 +121,12 @@ class AmountEntry(Entry):
         )
         if amount_description is not None:
             # Try to load an existing entry using reverse lookup
-            self.amount = NumberEntry.get_entry_key(amount_description)
-            if (loaded := context.load_one(NumberEntry, self.amount, is_record_optional=True)) is None:
+            amount = NumberEntry(text=amount_description, locale=self.locale)
+            amount.init()
+            if (loaded := context.load_one(NumberEntry, amount.get_key(), is_record_optional=True)) is None:
                 # Save only if does not exist
-                amount = NumberEntry(text=amount_description, lang=self.lang)
                 context.save_one(amount)
+                self.amount = amount
             else:
                 # Otherwise update the verified status
                 verified = verified and loaded.verified

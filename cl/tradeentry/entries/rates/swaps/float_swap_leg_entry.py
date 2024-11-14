@@ -17,14 +17,11 @@ from cl.runtime import Context
 from cl.convince.entries.entry_key import EntryKey
 from cl.convince.llms.gpt.gpt_llm import GptLlm
 from cl.convince.retrievers.annotating_retriever import AnnotatingRetriever
-from cl.tradeentry.entries.date_entry import DateEntry
-from cl.tradeentry.entries.date_or_tenor_entry import DateOrTenorEntry
 from cl.tradeentry.entries.pay_freq_entry import PayFreqEntry
 from cl.tradeentry.entries.pay_receive_fixed_entry import PayReceiveFixedEntry
 from cl.tradeentry.entries.rates.rates_index_entry import RatesIndexEntry
 from cl.tradeentry.entries.rates.rates_spread_entry import RatesSpreadEntry
 from cl.tradeentry.entries.rates.swaps.rates_swap_leg_entry import RatesSwapLegEntry
-from cl.tradeentry.trades.rates.rates_leg_key import RatesLegKey
 
 _SIDE = "The words Buy or Sell, or the words Pay or Receive"
 _MATURITY = "Either maturity date as a date, or tenor (length) as the number of years and/or months"
