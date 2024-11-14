@@ -22,7 +22,7 @@ from cl.hackathon.hackathon_scoring_key import HackathonScoringKey
 from cl.hackathon.hackathon_solution import HackathonSolution
 from cl.hackathon.hackathon_solution_key import HackathonSolutionKey
 from cl.runtime import RecordMixin, Context
-from cl.runtime.records.dataclasses_extensions import missing
+from cl.runtime.records.dataclasses_extensions import missing, field
 
 
 @dataclass(slots=True, kw_only=True)
@@ -36,9 +36,9 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
     """Maximum possible score for solution."""
 
     details: List[HackathonScoreItem] = missing()
-    """Detailed info for each input."""
+    """Detailed scoring info for each input."""
 
-    trial_count: int = missing()
+    trial_count: int = field(default=10)
     """Number of trials for each input."""
 
     def get_key(self):
@@ -48,26 +48,27 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
     def get_score_item(cls, actual_output: HackathonOutput, expected_output: HackathonOutput) -> HackathonScoreItem:
         """Compare actual output with expected output and return HackathonScoreItem."""
 
-        # TODO (Roman): Extract all fields that are likely needed for comparison
-        expected_output_key_fields = ...
-        expected_output_fields = ...
+        # Use expected output __slots__ as field names for comparison, excluding key slots
+        expected_output_key_fields = expected_output.get_key().__slots__
+        expected_output_fields = expected_output.__slots__
 
         matched_fields = []
         mismatched_fields = []
 
-        for field in expected_output_fields:
-            if field in expected_output_key_fields:
-                continue
+        # Iterate over expected output fields and compare values
+        for field_name in [f for f in expected_output_fields if f not in expected_output_key_fields]:
 
-            expected_field_value = getattr(expected_output, field)
-            actual_field_value = getattr(actual_output, field)
+            expected_field_value = getattr(expected_output, field_name, None)
+            actual_field_value = getattr(actual_output, field_name, None)
 
             # TODO (Roman): Use custom comparison rules
+            # Check equality for all fields
             if expected_field_value == actual_field_value:
-                matched_fields.append(field)
+                matched_fields.append(field_name)
             else:
-                mismatched_fields.append(field)
+                mismatched_fields.append(field_name)
 
+        # Create and return score item
         return HackathonScoreItem(
             actual_output=actual_output.get_key(),
             expected_output=expected_output.get_key(),
