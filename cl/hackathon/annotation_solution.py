@@ -151,7 +151,6 @@ class AnnotationSolution(HackathonSolution):
         if extracted_float_spread := retriever.retrieve(
             input_text=leg_description, param_description=self.float_spread_description, is_required=False
         ):
-            # TODO (Kate): use RatesSpreadEntry
             float_spread = NumberEntry(text=extracted_float_spread)
             float_spread.run_generate()
             entry_dict["float_spread"] = float_spread.value
@@ -203,7 +202,6 @@ class AnnotationSolution(HackathonSolution):
             if date := maturity.date:
                 trade_parameters["maturity_date"] = date
             else:
-                # TODO (Kate): Convert from months too
                 trade_parameters["tenor_years"] = maturity.years
 
         # Effective date
