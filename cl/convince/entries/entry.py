@@ -129,18 +129,19 @@ class Entry(EntryKey, RecordMixin[EntryKey], ABC):
         raise UserError(f"Propose handler is not yet implemented for {type(self).__name__}.")
 
     def run_reset(self) -> None:
-        """Clear all output  fields and verification flag."""
+        """Clear all output fields and the verification flag."""
         if self.verified:
             raise UserError(
                 f"Entry {self.entry_id} is marked as verified, run Unmark Verified before running Reset."
                 f"This is a safety feature to prevent overwriting verified entries. "
             )
+
+        # Create a record of the same type but copy the base class fields except entry_type and verified
         record_type = type(self)
-        result = record_type(
-            description=self.text,
-            data=self.data,
-            lang=self.lang,
-        )
+        result = record_type(text=self.text, locale=self.locale, data=self.data)  # noqa
+        result.init()
+
+        # Save to replace the current record
         Context.current().save_one(result)
 
     def run_mark_verified(self) -> None:
