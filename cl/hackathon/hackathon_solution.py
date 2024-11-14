@@ -15,12 +15,11 @@
 from dataclasses import dataclass
 from typing import List
 from typing_extensions import Self
-
-from cl.hackathon.hackathon_output import HackathonOutput
 from cl.runtime import Context
 from cl.runtime import RecordMixin
 from cl.runtime.records.dataclasses_extensions import missing
 from cl.hackathon.hackathon_input import HackathonInput
+from cl.hackathon.hackathon_output import HackathonOutput
 from cl.hackathon.hackathon_solution_key import HackathonSolutionKey
 from cl.hackathon.hackathon_trade_group_key import HackathonTradeGroupKey
 
@@ -65,13 +64,13 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey])
             return []
 
         result = set()
-        parts = self.trade_ids.split(',')
+        parts = self.trade_ids.split(",")
 
         for part in parts:
             part = part.strip()
             # Check if the part is a range like "1-3"
-            if '-' in part:
-                start, end = sorted([int(range_part) for range_part in part.split('-')])
+            if "-" in part:
+                start, end = sorted([int(range_part) for range_part in part.split("-")])
                 # Add the range of numbers to the result
                 result.update(range(start, end + 1))
                 continue
@@ -87,9 +86,10 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey])
 
         # Filter inputs by trade_group and trade_ids
         return [
-            x for x in inputs
-            if x.trade_group == self.trade_group and
-            not ((ids_list := self.get_trade_ids_list()) or x.trade_id in ids_list)
+            x
+            for x in inputs
+            if x.trade_group == self.trade_group
+            and not ((ids_list := self.get_trade_ids_list()) or x.trade_id in ids_list)
         ]
 
     def get_outputs(self) -> List[HackathonOutput]:

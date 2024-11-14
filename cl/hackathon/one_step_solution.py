@@ -13,13 +13,12 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-
-from cl.convince.retrievers.retriever_util import RetrieverUtil
-from cl.hackathon.hackathon_input import HackathonInput
 from cl.runtime.records.dataclasses_extensions import missing
 from cl.convince.llms.gpt.gpt_llm import GptLlm
+from cl.convince.retrievers.retriever_util import RetrieverUtil
 from cl.tradeentry.entries.date_entry import DateEntry
 from cl.tradeentry.entries.number_entry import NumberEntry
+from cl.hackathon.hackathon_input import HackathonInput
 from cl.hackathon.hackathon_output import HackathonOutput
 from cl.hackathon.hackathon_solution import HackathonSolution
 

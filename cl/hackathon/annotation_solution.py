@@ -14,8 +14,6 @@
 
 from dataclasses import dataclass
 from typing import Dict
-
-from cl.hackathon.hackathon_input import HackathonInput
 from cl.runtime import Context
 from cl.runtime.log.exceptions.user_error import UserError
 from cl.runtime.records.dataclasses_extensions import missing
@@ -35,6 +33,7 @@ from cl.tradeentry.entries.rates.rates_index_entry import RatesIndexEntry
 from cl.tradeentry.entries.rates.swaps.any_leg_entry import AnyLegEntry
 from cl.tradeentry.entries.rates.swaps.rates_swap_entry import RatesSwapEntry
 from cl.tradeentry.trades.currency_key import CurrencyKey
+from cl.hackathon.hackathon_input import HackathonInput
 from cl.hackathon.hackathon_output import HackathonOutput
 from cl.hackathon.hackathon_solution import HackathonSolution
 
@@ -85,7 +84,7 @@ class AnnotationSolution(HackathonSolution):
 
         context = Context.current()
         if extracted_notional := retriever.retrieve(
-                input_text=input_description, param_description=self.notional_description, is_required=False
+            input_text=input_description, param_description=self.notional_description, is_required=False
         ):
             notional = AmountEntry(text=extracted_notional)
             notional.run_generate()
@@ -157,7 +156,7 @@ class AnnotationSolution(HackathonSolution):
 
         # Day-count Basis
         if extracted_basis := retriever.retrieve(
-                input_text=leg_description, param_description=self.basis_description, is_required=False
+            input_text=leg_description, param_description=self.basis_description, is_required=False
         ):
             basis = DayCountBasisEntry(text=extracted_basis)
             basis.run_generate()
@@ -170,7 +169,7 @@ class AnnotationSolution(HackathonSolution):
 
         # Fixed Rate
         if extracted_fixed_rate := retriever.retrieve(
-                input_text=leg_description, param_description=self.fixed_rate_description, is_required=False
+            input_text=leg_description, param_description=self.fixed_rate_description, is_required=False
         ):
             fixed_rate = NumberEntry(text=extracted_fixed_rate)
             fixed_rate.run_generate()
