@@ -17,6 +17,8 @@ from dataclasses import dataclass
 from typing import Type
 
 from text_to_num import text2num
+
+from cl.convince.settings.convince_settings import ConvinceSettings
 from cl.runtime import Context
 from cl.runtime.exceptions.error_util import ErrorUtil
 from cl.runtime.log.exceptions.user_error import UserError
@@ -70,7 +72,8 @@ class NumberEntry(Entry):
         else:
             # Try to parse a word description
             try:
-                value = text2num(self.text, self.lang)
+                language, region = ConvinceSettings.parse_locale(self.locale)
+                value = text2num(self.text, language)
                 self.value = float(value)
             except Exception as e:  # noqa
                 raise ErrorUtil.value_error(
