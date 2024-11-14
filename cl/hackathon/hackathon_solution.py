@@ -14,6 +14,7 @@
 
 from dataclasses import dataclass
 from typing import List
+from typing_extensions import Self
 
 from cl.hackathon.hackathon_output import HackathonOutput
 from cl.runtime import Context
@@ -43,8 +44,12 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey])
     def get_key(self) -> HackathonSolutionKey:
         return HackathonSolutionKey(solution_id=self.solution_id)
 
-    def init(self) -> None:
-        """Same as __init__ but can be used when field values are set both during and after construction."""
+    def init(self) -> Self:
+        """Similar to __init__ but can use fields set after construction, return self to enable method chaining."""
+        pass  # TODO: Provide initialization
+
+        # Return self to enable method chaining
+        return self
 
     def view_inputs(self) -> List[HackathonInput]:
         """Return the list of inputs specified by the trade list."""
