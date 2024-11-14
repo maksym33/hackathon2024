@@ -23,7 +23,7 @@ def test_fixed_leg_swap_entry():
         guard = RegressionGuard()
 
         fixed_swap_leg_entry = FixedSwapLegEntry(
-            description="Bank pays - USD fixed 3.45%, semi-annual, act/360, Effective date - 10 November 2009, Tenor - 12 months"
+            text="Bank pays - USD fixed 3.45%, semi-annual, act/360, Effective date - 10 November 2009, Tenor - 12 months"
         )
         fixed_swap_leg_entry.run_generate()
         guard.write(str(fixed_swap_leg_entry))

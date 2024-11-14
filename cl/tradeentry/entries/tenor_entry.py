@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from dataclasses import dataclass
+from typing import Type
 from cl.convince.entries.entry import Entry
 
 
@@ -39,3 +40,6 @@ class TenorEntry(Entry):
 
     business_days: int | None = None
     """Business days component of the time interval."""
+
+    def get_base_type(self) -> Type:
+        return TenorEntry

@@ -15,6 +15,7 @@
 from dataclasses import dataclass
 
 from cl.runtime import Context
+from typing import Type
 from cl.convince.entries.entry import Entry
 from cl.convince.llms.gpt.gpt_llm import GptLlm
 from cl.convince.retrievers.multiple_choice_retriever import MultipleChoiceRetriever
@@ -30,6 +31,9 @@ class PayFreqMonthsEntry(Entry):
 
     pay_freq_months: int | None = None
     """Payment frequency."""
+
+    def get_base_type(self) -> Type:
+        return PayFreqMonthsEntry
 
     def run_generate(self) -> None:
         """Retrieve parameters from this entry and save the resulting entries."""
@@ -59,7 +63,7 @@ class PayFreqMonthsEntry(Entry):
             valid_choices=options,
         )
 
-        pay_freq_months = NumberEntry(description=retrieval.param_value)
+        pay_freq_months = NumberEntry(text=retrieval.param_value)
         pay_freq_months.run_generate()
         self.pay_freq_months = int(pay_freq_months.value)
 

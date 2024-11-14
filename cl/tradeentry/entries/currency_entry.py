@@ -14,6 +14,7 @@
 
 import re
 from dataclasses import dataclass
+from typing import Type
 from cl.runtime import Context
 from cl.runtime.exceptions.error_util import ErrorUtil
 from cl.runtime.log.exceptions.user_error import UserError
@@ -37,6 +38,9 @@ class CurrencyEntry(Entry):
 
     currency: CurrencyKey | None = missing()
     """Currency (output)."""
+
+    def get_base_type(self) -> Type:
+        return CurrencyEntry
 
     def run_generate(self) -> None:
         """Retrieve parameters from this entry and save the resulting entries."""

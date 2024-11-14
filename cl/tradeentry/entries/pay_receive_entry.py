@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from dataclasses import dataclass
+from typing import Type
 from cl.runtime import Context
 from cl.runtime.log.exceptions.user_error import UserError
 from cl.runtime.records.dataclasses_extensions import missing
@@ -33,6 +34,9 @@ class PayReceiveEntry(Entry):
 
     pay_receive: PayReceiveKey = missing()
     """Determines if we pay or receive payments or periodic coupons for a trade or leg."""
+
+    def get_base_type(self) -> Type:
+        return PayReceiveEntry
 
     def run_generate(self) -> None:
         if self.verified:

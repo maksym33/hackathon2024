@@ -76,7 +76,7 @@ class VanillaSwapEntry(TradeEntry):
 
         # Pay or receive fixed flag is described side
         pay_receive_fixed = PayReceiveFixedEntry(
-            description=retriever.retrieve(
+            text=retriever.retrieve(
                 input_text=input_text,
                 param_description=_SIDE,
                 is_required=False,
@@ -87,7 +87,7 @@ class VanillaSwapEntry(TradeEntry):
 
         # Tenor
         maturity = DateOrTenorEntry(
-            description=retriever.retrieve(
+            text=retriever.retrieve(
                 input_text=input_text,
                 param_description=_MATURITY,
                 is_required=False,
@@ -98,7 +98,7 @@ class VanillaSwapEntry(TradeEntry):
 
         # Floating rate index
         float_index = RatesIndexEntry(
-            description=retriever.retrieve(
+            text=retriever.retrieve(
                 input_text=input_text,
                 param_description=_FLOAT_INDEX,
                 is_required=False,
@@ -109,7 +109,7 @@ class VanillaSwapEntry(TradeEntry):
 
         # Fixed Rate
         fixed_rate = FixedRateEntry(
-            description=retriever.retrieve(
+            text=retriever.retrieve(
                 input_text=input_text,
                 param_description=_FIXED_RATE,
                 is_required=False,

@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from dataclasses import dataclass
+from typing import Type
 from cl.runtime import Context
 from cl.runtime.log.exceptions.user_error import UserError
 from cl.convince.entries.entry import Entry
@@ -29,6 +30,9 @@ class RatesIndexEntry(Entry):
 
     rates_index: RatesIndexKey | None = None
     """Floating rate index."""
+
+    def get_base_type(self) -> Type:
+        return RatesIndexEntry
 
     def run_generate(self) -> None:
         if self.verified:

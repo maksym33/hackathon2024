@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from dataclasses import dataclass
+from typing import Type
 from cl.convince.entries.entry import Entry
 
 
@@ -22,3 +23,6 @@ class RatesSpreadEntry(Entry):
 
     rates_spread_bp: float | None = None
     """Numerical value of the spread in basis points."""
+
+    def get_base_type(self) -> Type:
+        return RatesSpreadEntry

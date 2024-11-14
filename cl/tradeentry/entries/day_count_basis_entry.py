@@ -14,6 +14,7 @@
 
 from dataclasses import dataclass
 
+from typing import Type
 from cl.convince.llms.gpt.gpt_llm import GptLlm
 from cl.convince.retrievers.multiple_choice_retriever import MultipleChoiceRetriever
 from cl.runtime import Context
@@ -28,6 +29,9 @@ class DayCountBasisEntry(Entry):
     """Maps a date string specified by the user to a calendar date."""
 
     basis: str | None = None
+
+    def get_base_type(self) -> Type:
+        return DayCountBasisEntry
 
     def run_generate(self) -> None:
         """Retrieve parameters from this entry and save the resulting entries."""

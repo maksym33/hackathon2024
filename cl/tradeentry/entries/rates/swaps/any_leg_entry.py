@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from dataclasses import dataclass
+from typing import Type
 from cl.runtime import Context
 from cl.runtime.log.exceptions.user_error import UserError
 from cl.runtime.records.dataclasses_extensions import missing
@@ -41,9 +42,12 @@ class AnyLegEntry(Entry):
     leg: EntryKey = missing()
     """Entry for the leg."""
 
+    def get_base_type(self) -> Type:
+        return AnyLegEntry
+
     def determine_leg_type(self, leg_type_prompt: str) -> str | None:
         llm = GptLlm(llm_id="gpt-4o")
-        input_text = self.description
+        input_text = self.text
 
         trial_count = 2
         for trial_index in range(trial_count):
@@ -92,9 +96,9 @@ class AnyLegEntry(Entry):
         leg_type = self.determine_leg_type(_PROMPT_TEMPLATE)
 
         if leg_type == "Floating":
-            leg_obj = FloatSwapLegEntry(description=self.description)
+            leg_obj = FloatSwapLegEntry(text=self.text)
         elif leg_type == "Fixed":
-            leg_obj = FixedSwapLegEntry(description=self.description)
+            leg_obj = FixedSwapLegEntry(text=self.text)
         else:
             raise UserError(f"Undefined leg type: {leg_type}")
 

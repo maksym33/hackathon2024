@@ -53,7 +53,7 @@ class RatesSwapEntry(TradeEntry):
 
     def extract_legs(self, legs_annotation_prompt: str) -> List[str] | None:
         llm = GptLlm(llm_id="gpt-4o")
-        input_text = self.description
+        input_text = self.text
 
         trial_count = 2
         for trial_index in range(trial_count):
@@ -123,7 +123,7 @@ class RatesSwapEntry(TradeEntry):
 
         self.legs = []
         for leg_title in leg_descriptions:
-            leg_entry = AnyLegEntry(description=leg_title)
+            leg_entry = AnyLegEntry(text=leg_title)
             leg_entry.run_generate()
             Context.current().save_one(leg_entry)
             self.legs.append(leg_entry.get_key())

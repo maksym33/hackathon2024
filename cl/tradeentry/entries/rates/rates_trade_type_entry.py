@@ -13,12 +13,9 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-from typing_extensions import Self
-from cl.runtime import Context
+from typing import Type
 from cl.convince.entries.entry import Entry
-from cl.convince.entries.entry_status_enum import EntryStatusEnum
 from cl.tradeentry.trades.rates.rates_trade_type_key import RatesTradeTypeKey
-from cl.tradeentry.trades.rates.rates_trade_type_keys import RatesTradeTypeKeys
 
 
 @dataclass(slots=True, kw_only=True)
@@ -27,3 +24,6 @@ class RatesTradeTypeEntry(Entry):
 
     rates_trade_type: RatesTradeTypeKey | None = None
     """Interest rate trade type captured from the entry (populated during processing)."""
+
+    def get_base_type(self) -> Type:
+        return RatesTradeTypeEntry

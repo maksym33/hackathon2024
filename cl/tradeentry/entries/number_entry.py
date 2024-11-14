@@ -14,6 +14,8 @@
 
 import re
 from dataclasses import dataclass
+from typing import Type
+
 from text_to_num import text2num
 from cl.runtime import Context
 from cl.runtime.exceptions.error_util import ErrorUtil
@@ -41,6 +43,9 @@ class NumberEntry(Entry):
     value: float | None = missing()
     """Numerical value (output)."""
 
+    def get_entry_type(self) -> Type:
+        return NumberEntry
+
     def run_generate(self) -> None:
         """Retrieve parameters from this entry and save the resulting entries."""
         if self.verified:
@@ -49,13 +54,13 @@ class NumberEntry(Entry):
                 f"This is a safety feature to prevent overwriting verified entries. "
             )
         # First non-AI text2num library to parse a number with suffix
-        if (value := self._parse_number_with_suffix(self.description)) is not None:
+        if (value := self._parse_number_with_suffix(self.text)) is not None:
             # Use parsed value
             try:
                 self.value = float(value)
             except Exception as e:  # noqa
                 raise ErrorUtil.value_error(
-                    self.description,
+                    self.text,
                     details=f"Numerical description of a number with suffix could not be parsed "
                     f"using language code {self.lang}.",
                     value_name="number",
@@ -65,11 +70,11 @@ class NumberEntry(Entry):
         else:
             # Try to parse a word description
             try:
-                value = text2num(self.description, self.lang)
+                value = text2num(self.text, self.lang)
                 self.value = float(value)
             except Exception as e:  # noqa
                 raise ErrorUtil.value_error(
-                    self.description,
+                    self.text,
                     details=f"Text description of a number could not be parsed using language code {self.lang}.",
                     value_name="number",
                     method_name="run_generate",
@@ -97,7 +102,7 @@ class NumberEntry(Entry):
                 number = float(number)
             except Exception as e:  # noqa
                 raise ErrorUtil.value_error(
-                    self.description,
+                    self.text,
                     details=f"Text description of a number could not be parsed using language code {self.lang}.",
                     value_name="number",
                     method_name="run_generate",
@@ -116,7 +121,7 @@ class NumberEntry(Entry):
                 return number * 1_000_000_000  # Billions (single 'b' or 'bn')
             else:
                 raise ErrorUtil.value_error(
-                    self.description,
+                    self.text,
                     details=f"Unknown number scale units '{scale_unit}'.",
                     value_name="scale_unit",
                     method_name="run_generate",

@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from dataclasses import dataclass
+from typing import Type
 import dateparser
 from cl.runtime import Context
 from cl.runtime.exceptions.error_util import ErrorUtil
@@ -28,6 +29,9 @@ class DateEntry(Entry):
     date: str | None = None
     """Date specified by the entry in ISO-8601 yyyy-mm-dd string format."""
 
+    def get_base_type(self) -> Type:
+        return DateEntry
+
     def run_generate(self) -> None:
         """Retrieve parameters from this entry and save the resulting entries."""
         if self.verified:
@@ -39,13 +43,13 @@ class DateEntry(Entry):
         # TODO: Check if the entry already exists in DB
 
         # Parse date
-        if date := dateparser.parse(self.description):
+        if date := dateparser.parse(self.text):
             self.date = date.strftime("%Y-%m-%d")
             Context.current().save_one(self)
         else:
             raise ErrorUtil.value_error(
-                self.description,
-                details=f"Date '{self.description}' can't be parsed.",
+                self.text,
+                details=f"Date '{self.text}' can't be parsed.",
                 value_name="date",
                 method_name="run_generate",
                 data_type=DateEntry.__name__,

@@ -14,7 +14,6 @@
 
 from abc import ABC
 from dataclasses import dataclass
-from cl.runtime.records.dataclasses_extensions import missing
 from cl.convince.entries.entry import Entry
 from cl.tradeentry.trades.rates.rates_leg_key import RatesLegKey
 
@@ -25,3 +24,6 @@ class RatesLegEntry(Entry, ABC):
 
     leg: RatesLegKey | None = None
     """Interest rate leg."""
+
+    def init(self) -> None:
+        self.entry_type = RatesLegEntry.__name__

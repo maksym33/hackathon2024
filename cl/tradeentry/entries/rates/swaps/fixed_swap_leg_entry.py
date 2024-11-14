@@ -57,7 +57,7 @@ class FixedSwapLegEntry(RatesSwapLegEntry):
         if pay_receive_description := retriever.retrieve(
             input_text=input_text, param_description=_SIDE, is_required=False
         ):
-            pay_receive = PayReceiveFixedEntry(description=pay_receive_description)
+            pay_receive = PayReceiveFixedEntry(text=pay_receive_description)
             context.save_one(pay_receive)
             self.pay_receive = pay_receive.get_key()
 
@@ -65,7 +65,7 @@ class FixedSwapLegEntry(RatesSwapLegEntry):
         if fixed_rate_description := retriever.retrieve(
             input_text=input_text, param_description=_FIXED_RATE, is_required=False
         ):
-            fixed_rate = FixedRateEntry(description=fixed_rate_description)
+            fixed_rate = FixedRateEntry(text=fixed_rate_description)
             context.save_one(fixed_rate)
             self.fixed_rate = fixed_rate.get_key()
 
@@ -73,7 +73,7 @@ class FixedSwapLegEntry(RatesSwapLegEntry):
         if pay_freq_description := retriever.retrieve(
             input_text=input_text, param_description=_PAY_FREQ, is_required=False
         ):
-            pay_freq = PayFreqEntry(description=pay_freq_description)
+            pay_freq = PayFreqEntry(text=pay_freq_description)
             context.save_one(pay_freq)
             self.pay_freq = pay_freq.get_key()
 

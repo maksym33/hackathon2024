@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from dataclasses import dataclass
+from typing import Type
 from cl.runtime.records.dataclasses_extensions import missing
 from cl.convince.entries.entry import Entry
 
@@ -23,3 +24,6 @@ class RatesSpreadUnitsEntry(Entry):
 
     rates_spread_multiplier: float = missing()
     """Numerical multiplier."""
+
+    def get_base_type(self) -> Type:
+        return RatesSpreadUnitsEntry

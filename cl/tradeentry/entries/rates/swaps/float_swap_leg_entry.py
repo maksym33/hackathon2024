@@ -67,7 +67,7 @@ class FloatSwapLegEntry(RatesSwapLegEntry):
         if pay_receive_description := retriever.retrieve(
             input_text=input_text, param_description=_SIDE, is_required=False
         ):
-            pay_receive = PayReceiveFixedEntry(description=pay_receive_description)
+            pay_receive = PayReceiveFixedEntry(text=pay_receive_description)
             context.save_one(pay_receive)
             self.pay_receive = pay_receive.get_key()
 
@@ -75,7 +75,7 @@ class FloatSwapLegEntry(RatesSwapLegEntry):
         if pay_freq_description := retriever.retrieve(
             input_text=input_text, param_description=_PAY_FREQ, is_required=False
         ):
-            pay_freq = PayFreqEntry(description=pay_freq_description)
+            pay_freq = PayFreqEntry(text=pay_freq_description)
             context.save_one(pay_freq)
             self.pay_freq = pay_freq.get_key()
 
@@ -83,7 +83,7 @@ class FloatSwapLegEntry(RatesSwapLegEntry):
         if float_freq_description := retriever.retrieve(
             input_text=input_text, param_description=_FLOAT_FREQ, is_required=False
         ):
-            float_freq = PayFreqEntry(description=float_freq_description)
+            float_freq = PayFreqEntry(text=float_freq_description)
             context.save_one(float_freq)
             self.float_freq = float_freq.get_key()
 
@@ -91,7 +91,7 @@ class FloatSwapLegEntry(RatesSwapLegEntry):
         if float_index_description := retriever.retrieve(
             input_text=input_text, param_description=_FLOAT_INDEX, is_required=False
         ):
-            float_index = RatesIndexEntry(description=float_index_description)
+            float_index = RatesIndexEntry(text=float_index_description)
             context.save_one(float_index)
             self.float_index = float_index.get_key()
 
@@ -99,7 +99,7 @@ class FloatSwapLegEntry(RatesSwapLegEntry):
         if float_spread_description := retriever.retrieve(
             input_text=input_text, param_description=_FLOAT_SPREAD, is_required=False
         ):
-            float_spread = RatesSpreadEntry(description=float_spread_description)
+            float_spread = RatesSpreadEntry(text=float_spread_description)
             context.save_one(float_spread)
             self.float_spread = float_spread.get_key()
 
