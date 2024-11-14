@@ -32,7 +32,7 @@ class EntryKey(KeyMixin):
     entry_id: str = missing()
     """Based on record type, description and MD5 hash of body and data if present."""
 
-    def init(self) -> None:
+    def init(self) -> Self:
         # Validate entry_id inside a key but not inside a record where it will be set automatically
         if is_key(self):
             if "(" not in self.entry_id or ")" not in self.entry_id:
@@ -45,6 +45,9 @@ and data in hexadecimal format with no delimiters. The MD5 hash is only included
 if the text exceeds 80 characters in length and/or the data field is not empty.
 EntryId: {self.entry_id}
 """)
+
+        # Return self to enable method chaining
+        return self
 
     @classmethod
     def get_key_type(cls) -> Type:

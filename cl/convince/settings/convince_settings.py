@@ -15,6 +15,8 @@
 from dataclasses import dataclass
 from typing import Tuple
 
+from typing_extensions import Self
+
 from cl.runtime.exceptions.error_util import ErrorUtil
 from cl.runtime.settings.settings import Settings
 
@@ -32,9 +34,8 @@ class ConvinceSettings(Settings):
     _country: str | None = None
     """Two-letter UPPERCASE country code (not region) for AI applications, no effect on front end."""
 
-    def init(self) -> None:
-        """Same as __init__ but can be used when field values are set both during and after construction."""
-        
+    def init(self) -> Self:
+        """Similar to __init__ but can use fields set after construction, return self to enable method chaining."""
         # Set default locale
         if self.locale is None:
             self.locale = "en-US"
@@ -45,6 +46,9 @@ class ConvinceSettings(Settings):
         # Assign language and country fields
         self._language = language
         self._country = country
+
+        # Return self to enable method chaining
+        return self
         
     def get_language(self) -> str:
         """Two-letter lowercase language code."""

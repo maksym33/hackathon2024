@@ -13,6 +13,8 @@
 # limitations under the License.
 
 from dataclasses import dataclass
+from typing_extensions import Self
+
 from cl.runtime import RecordMixin
 from cl.runtime.primitive.timestamp import Timestamp
 from cl.runtime.records.dataclasses_extensions import missing
@@ -33,7 +35,10 @@ class Retrieval(RetrievalKey, RecordMixin[RetrievalKey]):  # TODO: Derive from T
     def get_key(self) -> RetrievalKey:
         return RetrievalKey(retrieval_id=self.retrieval_id)
 
-    def init(self) -> None:
-        """Same as __init__ but can be used when field values are set both during and after construction."""
+    def init(self) -> Self:
+        """Similar to __init__ but can use fields set after construction, return self to enable method chaining."""
         if self.retrieval_id is None:
             self.retrieval_id = Timestamp.create()
+
+        # Return self to enable method chaining
+        return self

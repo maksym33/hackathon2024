@@ -17,6 +17,8 @@ import re
 from abc import abstractmethod
 from dataclasses import dataclass
 from typing import Type
+from typing_extensions import Self
+from typing_extensions import Self
 
 from cl.convince.settings.convince_settings import ConvinceSettings
 from cl.runtime import Context
@@ -59,7 +61,7 @@ class Entry(EntryKey, RecordMixin[EntryKey], ABC):
     def get_key(self) -> EntryKey:
         return EntryKey(entry_id=self.entry_id)
 
-    def init(self) -> None:
+    def init(self) -> Self:
         """Generate entry_id in 'type: description' format followed by an MD5 hash of body and data if present."""
 
         # Check text
@@ -107,6 +109,9 @@ class Entry(EntryKey, RecordMixin[EntryKey], ABC):
         else:
             # Otherwise return without the hash
             self.entry_id = f"{digest} ({self.entry_type}, {self.locale})"
+
+        # Return self to enable method chaining
+        return self
 
     @abstractmethod
     def get_base_type(self) -> Type:

@@ -13,9 +13,8 @@
 # limitations under the License.
 
 from abc import ABC
-from abc import abstractmethod
 from dataclasses import dataclass
-from typing import List
+from typing_extensions import Self
 from cl.runtime import RecordMixin
 from cl.runtime.primitive.timestamp import Timestamp
 from cl.convince.retrievers.retriever_key import RetrieverKey
@@ -28,7 +27,10 @@ class Retriever(RetrieverKey, RecordMixin[RetrieverKey], ABC):
     def get_key(self) -> RetrieverKey:
         return RetrieverKey(retriever_id=self.retriever_id)
 
-    def init(self) -> None:
-        """Same as __init__ but can be used when field values are set both during and after construction."""
+    def init(self) -> Self:
+        """Similar to __init__ but can use fields set after construction, return self to enable method chaining."""
         if self.retriever_id is None:
             self.retriever_id = Timestamp.create()
+
+        # Return self to enable method chaining
+        return self

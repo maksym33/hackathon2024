@@ -15,6 +15,7 @@
 import re
 from dataclasses import dataclass
 from typing import List
+from typing_extensions import Self
 from cl.runtime import Context
 from cl.runtime.log.exceptions.user_error import UserError
 from cl.runtime.primitive.string_util import StringUtil
@@ -72,8 +73,8 @@ class MultipleChoiceRetriever(Retriever):
     prompt: PromptKey = missing()
     """Prompt used to perform the retrieval."""
 
-    def init(self) -> None:
-        """Same as __init__ but can be used when field values are set both during and after construction."""
+    def init(self) -> Self:
+        """Similar to __init__ but can use fields set after construction, return self to enable method chaining."""
         if self.llm is None:
             self.llm = GptLlm(llm_id="gpt-4o")  # TODO: Review the handling of defaults
         if self.prompt is None:
@@ -82,6 +83,9 @@ class MultipleChoiceRetriever(Retriever):
                 params_type=MultipleChoiceRetrieval.__name__,  # TODO: More detailed error message for mismatch
                 template=_TEMPLATE,
             )  # TODO: Review the handling of defaults
+
+        # Return self to enable method chaining
+        return self
 
     def retrieve(
         self,
