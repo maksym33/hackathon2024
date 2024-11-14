@@ -13,13 +13,12 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-
 from typing import Type
-from cl.convince.llms.gpt.gpt_llm import GptLlm
-from cl.convince.retrievers.multiple_choice_retriever import MultipleChoiceRetriever
 from cl.runtime import Context
 from cl.runtime.log.exceptions.user_error import UserError
 from cl.convince.entries.entry import Entry
+from cl.convince.llms.gpt.gpt_llm import GptLlm
+from cl.convince.retrievers.multiple_choice_retriever import MultipleChoiceRetriever
 
 _BASIS = "Day count basis"
 
@@ -50,7 +49,7 @@ class DayCountBasisEntry(Entry):
 
         # List of valid options
         # TODO: Not fixed list
-        options = ['30/360', '30/365', 'actual/360', 'actual/365', 'actual/actual']
+        options = ["30/360", "30/365", "actual/360", "actual/365", "actual/actual"]
 
         input_text = self.get_text()
         retrieval = retriever.retrieve(

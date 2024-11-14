@@ -13,13 +13,12 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-
-from cl.runtime import Context
 from typing import Type
+from cl.runtime import Context
+from cl.runtime.log.exceptions.user_error import UserError
 from cl.convince.entries.entry import Entry
 from cl.convince.llms.gpt.gpt_llm import GptLlm
 from cl.convince.retrievers.multiple_choice_retriever import MultipleChoiceRetriever
-from cl.runtime.log.exceptions.user_error import UserError
 from cl.tradeentry.entries.number_entry import NumberEntry
 
 _PAY_FREQ = "Payment frequency in months, for example 3 for quarterly."
@@ -54,7 +53,7 @@ class PayFreqMonthsEntry(Entry):
         retriever.init_all()
 
         # List of valid options
-        options = ['1', '3', '6', '12']
+        options = ["1", "3", "6", "12"]
 
         input_text = self.get_text()
         retrieval = retriever.retrieve(

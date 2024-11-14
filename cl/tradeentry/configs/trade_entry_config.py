@@ -41,11 +41,6 @@ class TradeEntryConfig(Config):
                         ),
                     ),
                 ],
-                user_secret_identifiers=[
-                    "ANTHROPIC_API_KEY",
-                    "FIREWORKS_API_KEY",
-                    "GOOGLE_API_KEY",
-                    "OPENAI_API_KEY"
-                ]
+                user_secret_identifiers=["ANTHROPIC_API_KEY", "FIREWORKS_API_KEY", "GOOGLE_API_KEY", "OPENAI_API_KEY"],
             ),
         )

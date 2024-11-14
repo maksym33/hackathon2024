@@ -15,10 +15,7 @@
 import re
 from dataclasses import dataclass
 from typing import Type
-
 from text_to_num import text2num
-
-from cl.convince.settings.convince_settings import ConvinceSettings
 from cl.runtime import Context
 from cl.runtime.exceptions.error_util import ErrorUtil
 from cl.runtime.log.exceptions.user_error import UserError
@@ -26,6 +23,7 @@ from cl.runtime.records.dataclasses_extensions import missing
 from cl.convince.entries.entry import Entry
 from cl.convince.llms.gpt.gpt_llm import GptLlm
 from cl.convince.retrievers.multiple_choice_retriever import MultipleChoiceRetriever
+from cl.convince.settings.convince_settings import ConvinceSettings
 from cl.tradeentry.trades.currency import Currency
 from cl.tradeentry.trades.currency_key import CurrencyKey
 

@@ -14,7 +14,6 @@
 
 from dataclasses import dataclass
 from typing import Type
-
 from cl.convince.entries.entry import Entry
 from cl.tradeentry.trades.freq_key import FreqKey
 

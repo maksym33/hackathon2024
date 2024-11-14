@@ -14,7 +14,6 @@
 
 from dataclasses import dataclass
 from typing import Type
-
 from cl.runtime import Context
 from cl.runtime.exceptions.error_util import ErrorUtil
 from cl.runtime.log.exceptions.user_error import UserError
