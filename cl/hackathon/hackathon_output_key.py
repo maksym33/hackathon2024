@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Type
 from cl.runtime.records.dataclasses_extensions import missing
 from cl.runtime.records.key_mixin import KeyMixin
@@ -32,6 +32,9 @@ class HackathonOutputKey(KeyMixin):
 
     trade_id: int = missing()
     """Unique trade identifier within the trade group."""
+
+    trial_id: int = field(default=0)
+    """Trial id."""
 
     @classmethod
     def get_key_type(cls) -> Type:
