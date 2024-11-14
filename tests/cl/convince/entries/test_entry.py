@@ -15,9 +15,8 @@
 import pytest
 from cl.runtime.log.exceptions.user_error import UserError
 from cl.runtime.testing.regression_guard import RegressionGuard
-from cl.convince.entries.entry import Entry
 from cl.convince.entries.entry_key import EntryKey
-from cl.convince.entries.entry_type_key import EntryTypeKey
+from cl.tradeentry.entries.currency_entry import CurrencyEntry
 
 
 def test_create_key():
@@ -26,20 +25,27 @@ def test_create_key():
     guard = RegressionGuard()
 
     # Record type
-    entry_type = "Stub"
     locale = "en-GB"
 
     # Check with type and description only
-    guard.write(EntryKey.create_key(entry_type=entry_type, locale=locale, text="Sample Text"))
+    entry = CurrencyEntry(text="Sample Text", locale=locale)
+    entry.init()
+    guard.write(entry.entry_id)
 
     # Check with body
-    guard.write(EntryKey.create_key(entry_type=entry_type, locale=locale, text=" ".join(20 * ["Long Text"])))
+    entry = CurrencyEntry(text=" ".join(20 * ["Long Text"]), locale=locale)
+    entry.init()
+    guard.write(entry.entry_id)
 
     # Check with data
-    guard.write(EntryKey.create_key(entry_type=entry_type, locale=locale, text="Multiline\nText"))
+    entry = CurrencyEntry(text="Multiline\nText", locale=locale)
+    entry.init()
+    guard.write(entry.entry_id)
 
     # Check with both
-    guard.write(EntryKey.create_key(entry_type=entry_type, locale=locale, text="Sample Text", data="Sample Data"))
+    entry = CurrencyEntry(text="Sample Text", locale=locale, data="Sample Data")
+    entry.init()
+    guard.write(entry.entry_id)
 
     # Verify
     guard.verify_all()

@@ -13,18 +13,28 @@
 # limitations under the License.
 
 from abc import ABC
+import re
 from abc import abstractmethod
 from dataclasses import dataclass
 from typing import Type
 
 from cl.convince.settings.convince_settings import ConvinceSettings
 from cl.runtime import Context
-from cl.runtime.backend.core.user_key import UserKey
 from cl.runtime.log.exceptions.user_error import UserError
 from cl.runtime.primitive.case_util import CaseUtil
+from cl.runtime.primitive.string_util import StringUtil
 from cl.runtime.records.dataclasses_extensions import missing
 from cl.runtime.records.record_mixin import RecordMixin
 from cl.convince.entries.entry_key import EntryKey
+
+_DISALLOWED_DELIMITERS = {
+    "\\": "Backslash",
+    ";": "Semicolon",
+}
+"""These delimiters are not allowed in the text."""
+
+_WHITESPACE_RE = re.compile(r'\s+')
+"""Regex for whitespace replacement."""
 
 
 @dataclass(slots=True, kw_only=True)
@@ -52,6 +62,10 @@ class Entry(EntryKey, RecordMixin[EntryKey], ABC):
     def init(self) -> None:
         """Generate entry_id in 'type: description' format followed by an MD5 hash of body and data if present."""
 
+        # Check text
+        if StringUtil.is_empty(self.text):
+            raise UserError(f"Empty 'text' field in {type(self).__name__}.")
+
         # Check locale format or set based on the default in ConvinceSettings if not specified
         if self.locale is not None:
             # This performs validation
@@ -65,12 +79,34 @@ class Entry(EntryKey, RecordMixin[EntryKey], ABC):
 
         # Base type resolves the ambiguity of different entry types with the same text
         base_type = self.get_base_type()
-        entry_type = base_type.__name__.removesuffix("Entry")
-        self.entry_id = self.create_key(
-            entry_type=entry_type,
-            text=self.text,
-            locale=self.locale,
-            data=self.data)
+        self.entry_type = base_type.__name__.removesuffix("Entry")
+
+        # Generate digest if multiline or more than 80 characters
+        if "\n" in self.text or len(self.text) > 80:
+            # Get the first 160 characters, replace all whitespace by a single space and then truncate to 80
+            is_truncated = True
+            digest = self.text[:160].strip()
+            digest = _WHITESPACE_RE.sub(" ", digest).strip()
+            digest = digest[:80].strip()
+        else:
+            is_truncated = False
+            digest = self.text
+
+        delimiters = [name for sub, name in _DISALLOWED_DELIMITERS.items() if sub in digest]
+        if delimiters:
+            delimiters_str = "\n".join(delimiters)
+            raise UserError(
+                f"Entry text digest contains the following disallowed delimiters:\n{delimiters_str}\n. "
+                f"Digest:\n{digest}"
+            )
+
+        if is_truncated or not StringUtil.is_empty(self.data):
+            # Append MD5 hash in hexadecimal format if the text is truncated or data is present
+            md5_hash = StringUtil.md5_hex(f"{self.text}{self.data}")
+            self.entry_id = f"{digest} ({self.entry_type}, {self.locale}, {md5_hash})"
+        else:
+            # Otherwise return without the hash
+            self.entry_id = f"{digest} ({self.entry_type}, {self.locale})"
 
     @abstractmethod
     def get_base_type(self) -> Type:
