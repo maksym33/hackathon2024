@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from typing import Dict
 from cl.runtime import Context
 from cl.runtime.log.exceptions.user_error import UserError
+from cl.runtime.primitive.float_util import FloatUtil
 from cl.runtime.records.dataclasses_extensions import missing
 from cl.convince.llms.gpt.gpt_llm import GptLlm
 from cl.convince.prompts.formatted_prompt import FormattedPrompt
@@ -241,12 +242,13 @@ class AnnotationSolution(HackathonSolution):
         trade_parameters = self._retrieve_trade_parameters(general_trade_information)
 
         output_.maturity_date = trade_parameters.get("maturity_date")
-        output_.tenor_years = trade_parameters.get("tenor_years")
+        output_.tenor_years = str(FloatUtil.to_int_or_float(trade_parameters.get("tenor_years")))
         output_.effective_date = trade_parameters.get("effective_date")
 
         if notional_amount := trade_parameters.get("notional_amount"):
-            output_.pay_leg_notional = notional_amount
-            output_.rec_leg_notional = notional_amount
+            notional_str = str(FloatUtil.to_int_or_float(notional_amount))
+            output_.pay_leg_notional = notional_str
+            output_.rec_leg_notional = notional_str
 
         if notional_currency := trade_parameters.get("notional_currency"):
             output_.pay_leg_ccy = notional_currency
@@ -270,24 +272,24 @@ class AnnotationSolution(HackathonSolution):
 
         if pay_receive == "Pay":
             if pay_leg_notional := leg_entry_dict.get("notional_amount"):
-                trade.pay_leg_notional = pay_leg_notional
+                trade.pay_leg_notional = str(FloatUtil.to_int_or_float(pay_leg_notional))
             if pay_leg_ccy := leg_entry_dict.get("notional_currency"):
                 trade.pay_leg_ccy = pay_leg_ccy
             trade.pay_leg_basis = leg_entry_dict.get("basis")
-            trade.pay_leg_freq_months = leg_entry_dict.get("freq_months")
+            trade.pay_leg_freq_months = str(FloatUtil.to_int_or_float(leg_entry_dict.get("freq_months")))
             trade.pay_leg_float_index = leg_entry_dict.get("float_index")
-            trade.pay_leg_float_spread_bp = leg_entry_dict.get("float_spread")
-            trade.pay_leg_fixed_rate_pct = leg_entry_dict.get("fixed_rate")
+            trade.pay_leg_float_spread_bp = str(FloatUtil.to_int_or_float(leg_entry_dict.get("float_spread")))
+            trade.pay_leg_fixed_rate_pct = str(FloatUtil.to_int_or_float(leg_entry_dict.get("fixed_rate")))
         elif pay_receive == "Receive":
             if rec_leg_notional := leg_entry_dict.get("notional_amount"):
-                trade.rec_leg_notional = rec_leg_notional
+                trade.rec_leg_notional = str(FloatUtil.to_int_or_float(rec_leg_notional))
             if rec_leg_ccy := leg_entry_dict.get("notional_currency"):
                 trade.rec_leg_ccy = rec_leg_ccy
             trade.rec_leg_basis = leg_entry_dict.get("basis")
-            trade.rec_leg_freq_months = leg_entry_dict.get("freq_months")
+            trade.rec_leg_freq_months = str(FloatUtil.to_int_or_float(leg_entry_dict.get("freq_months")))
             trade.rec_leg_float_index = leg_entry_dict.get("float_index")
-            trade.rec_leg_float_spread_bp = leg_entry_dict.get("float_spread")
-            trade.rec_leg_fixed_rate_pct = leg_entry_dict.get("fixed_rate")
+            trade.rec_leg_float_spread_bp = str(FloatUtil.to_int_or_float(leg_entry_dict.get("float_spread")))
+            trade.rec_leg_fixed_rate_pct = str(FloatUtil.to_int_or_float(leg_entry_dict.get("fixed_rate")))
         else:
             # TODO (Roman): Check whether to raise an error if pay_receive is None or something else
             # raise UserError(f"Unknown value of pay_receive parameter: {pay_receive}")

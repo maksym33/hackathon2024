@@ -31,16 +31,16 @@ class HackathonOutput(HackathonOutputKey, RecordMixin[HackathonOutputKey]):
     maturity_date: str | None = None
     """Maturity date in ISO-8601 yyyy-mm-dd string format (omit if not specified)."""
 
-    tenor_years: int | None = None
+    tenor_years: str | None = None
     """Tenor in whole years, for example 10 for a 10 year swap (omit if not specified)."""
 
-    pay_leg_notional: float | None = None
+    pay_leg_notional: str | None = None
     """Pay leg notional amount."""
 
     pay_leg_ccy: str | None = None
     """Pay leg payment currency in 3-letter ISO-4217 format, for example USD."""
 
-    pay_leg_freq_months: int | None = None
+    pay_leg_freq_months: str | None = None
     """Pay leg payment frequency in months, for example 3."""
 
     pay_leg_basis: str | None = None
@@ -49,19 +49,19 @@ class HackathonOutput(HackathonOutputKey, RecordMixin[HackathonOutputKey]):
     pay_leg_float_index: str | None = None
     """Pay leg floating interest rate index as specified, e.g., '3m Term SOFR' (omit for a fixed leg)."""
 
-    pay_leg_float_spread_bp: float | None = None
+    pay_leg_float_spread_bp: str | None = None
     """Pay leg spread in basis points, for example 30 (omit for a fixed leg, 0 or omit if not specified)."""
 
-    pay_leg_fixed_rate_pct: float | None = None
+    pay_leg_fixed_rate_pct: str | None = None
     """Pay leg fixed rate in percent, for example 3.45 (omit for a floating leg)."""
 
-    rec_leg_notional: float | None = None
+    rec_leg_notional: str | None = None
     """Receive leg notional amount, for example 10000000."""
 
     rec_leg_ccy: str | None = None
     """Receive leg payment currency in 3-letter ISO-4217 format, for example USD."""
 
-    rec_leg_freq_months: int | None = None
+    rec_leg_freq_months: str | None = None
     """Pay leg payment frequency in months, for example 3."""
 
     rec_leg_basis: str | None = None
@@ -70,10 +70,10 @@ class HackathonOutput(HackathonOutputKey, RecordMixin[HackathonOutputKey]):
     rec_leg_float_index: str | None = None
     """Receive leg floating interest rate index as specified, e.g., '3m Term SOFR' (omit for a fixed leg)."""
 
-    rec_leg_float_spread_bp: float | None = None
+    rec_leg_float_spread_bp: str | None = None
     """Receive leg spread in basis points, for example 30 (omit for a fixed leg, 0 or omit if not specified)."""
 
-    rec_leg_fixed_rate_pct: float | None = None
+    rec_leg_fixed_rate_pct: str | None = None
     """Receive leg fixed rate in percent (omit for a floating leg)."""
 
     def get_key(self) -> HackathonOutputKey:

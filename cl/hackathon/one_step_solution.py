@@ -13,6 +13,8 @@
 # limitations under the License.
 
 from dataclasses import dataclass
+
+from cl.runtime.primitive.float_util import FloatUtil
 from cl.runtime.records.dataclasses_extensions import missing
 from cl.convince.llms.gpt.gpt_llm import GptLlm
 from cl.convince.retrievers.retriever_util import RetrieverUtil
@@ -65,20 +67,20 @@ class OneStepSolution(HackathonSolution):
             # Tenor
             tenor_years = json_output.get("tenor_years")
             if isinstance(tenor_years, int):
-                output_.tenor_years = tenor_years
+                output_.tenor_years = str(FloatUtil.to_int_or_float(tenor_years))
             elif tenor_years is not None:
                 tenor_years = NumberEntry(text=str(tenor_years))
                 tenor_years.run_generate()
-                output_.tenor_years = int(tenor_years.value)
+                output_.tenor_years = str(FloatUtil.to_int_or_float(tenor_years.value))
 
             # Pay leg notional
             pay_leg_notional = json_output.get("pay_leg_notional")
             if isinstance(pay_leg_notional, float):
-                output_.pay_leg_notional = pay_leg_notional
+                output_.pay_leg_notional = str(FloatUtil.to_int_or_float(pay_leg_notional))
             elif pay_leg_notional is not None:
                 pay_leg_notional = NumberEntry(text=str(pay_leg_notional))
                 pay_leg_notional.run_generate()
-                output_.pay_leg_notional = pay_leg_notional.value
+                output_.pay_leg_notional = str(FloatUtil.to_int_or_float(pay_leg_notional.value))
 
             # Pay leg currency
             pay_leg_ccy = json_output.get("pay_leg_ccy")
@@ -88,11 +90,11 @@ class OneStepSolution(HackathonSolution):
             # Pay leg payment frequency
             pay_leg_freq_months = json_output.get("pay_leg_freq_months")
             if isinstance(pay_leg_freq_months, int):
-                output_.pay_leg_freq_months = pay_leg_freq_months
+                output_.pay_leg_freq_months = str(FloatUtil.to_int_or_float(pay_leg_freq_months))
             elif pay_leg_freq_months is not None:
                 pay_leg_freq_months_entry = NumberEntry(text=str(pay_leg_freq_months))
                 pay_leg_freq_months_entry.run_generate()
-                output_.pay_leg_freq_months = int(pay_leg_freq_months_entry.value)
+                output_.pay_leg_freq_months = str(FloatUtil.to_int_or_float(pay_leg_freq_months_entry.value))
 
             # Pay leg basis
             pay_leg_basis = json_output.get("pay_leg_basis")
@@ -107,29 +109,29 @@ class OneStepSolution(HackathonSolution):
             # Pay leg spread in basis points
             pay_leg_float_spread_bp = json_output.get("pay_leg_float_spread_bp")
             if isinstance(pay_leg_float_spread_bp, float):
-                output_.pay_leg_float_spread_bp = pay_leg_float_spread_bp
+                output_.pay_leg_float_spread_bp = str(FloatUtil.to_int_or_float(pay_leg_float_spread_bp))
             elif pay_leg_float_spread_bp is not None:
                 pay_leg_float_spread_bp = NumberEntry(text=str(pay_leg_float_spread_bp))
                 pay_leg_float_spread_bp.run_generate()
-                output_.pay_leg_float_spread_bp = pay_leg_float_spread_bp.value
+                output_.pay_leg_float_spread_bp = str(FloatUtil.to_int_or_float(pay_leg_float_spread_bp.value))
 
             # Pay leg fixed rate in percent
             pay_leg_fixed_rate_pct = json_output.get("pay_leg_fixed_rate_pct")
             if isinstance(pay_leg_fixed_rate_pct, float):
-                output_.pay_leg_fixed_rate_pct = pay_leg_fixed_rate_pct
+                output_.pay_leg_fixed_rate_pct = str(FloatUtil.to_int_or_float(pay_leg_fixed_rate_pct))
             elif pay_leg_fixed_rate_pct is not None:
                 pay_leg_fixed_rate_pct = NumberEntry(text=str(pay_leg_fixed_rate_pct))
                 pay_leg_fixed_rate_pct.run_generate()
-                output_.pay_leg_fixed_rate_pct = pay_leg_fixed_rate_pct.value
+                output_.pay_leg_fixed_rate_pct = str(FloatUtil.to_int_or_float(pay_leg_fixed_rate_pct.value))
 
             # Receive leg notional
             rec_leg_notional = json_output.get("rec_leg_notional")
             if isinstance(rec_leg_notional, float):
-                output_.rec_leg_notional = rec_leg_notional
+                output_.rec_leg_notional = str(FloatUtil.to_int_or_float(rec_leg_notional))
             elif rec_leg_notional is not None:
                 rec_leg_notional = NumberEntry(text=str(rec_leg_notional))
                 rec_leg_notional.run_generate()
-                output_.rec_leg_notional = rec_leg_notional.value
+                output_.rec_leg_notional = str(FloatUtil.to_int_or_float(rec_leg_notional.value))
 
             # Receive leg currency
             rec_leg_ccy = json_output.get("rec_leg_ccy")
@@ -139,11 +141,11 @@ class OneStepSolution(HackathonSolution):
             # Receive leg payment frequency
             rec_leg_freq_months = json_output.get("rec_leg_freq_months")
             if isinstance(rec_leg_freq_months, int):
-                output_.rec_leg_freq_months = rec_leg_freq_months
+                output_.rec_leg_freq_months = str(FloatUtil.to_int_or_float(rec_leg_freq_months))
             elif rec_leg_freq_months is not None:
                 rec_leg_freq_months_entry = NumberEntry(text=str(rec_leg_freq_months))
                 rec_leg_freq_months_entry.run_generate()
-                output_.rec_leg_freq_months = int(rec_leg_freq_months_entry.value)
+                output_.rec_leg_freq_months = str(FloatUtil.to_int_or_float(rec_leg_freq_months_entry.value))
 
             # Receive leg basis
             rec_leg_basis = json_output.get("rec_leg_basis")
@@ -158,19 +160,19 @@ class OneStepSolution(HackathonSolution):
             # Receive leg spread in basis points
             rec_leg_float_spread_bp = json_output.get("rec_leg_float_spread_bp")
             if isinstance(rec_leg_float_spread_bp, float):
-                output_.rec_leg_float_spread_bp = rec_leg_float_spread_bp
+                output_.rec_leg_float_spread_bp = str(FloatUtil.to_int_or_float(rec_leg_float_spread_bp))
             elif rec_leg_float_spread_bp is not None:
                 rec_leg_float_spread_bp = NumberEntry(text=str(rec_leg_float_spread_bp))
                 rec_leg_float_spread_bp.run_generate()
-                output_.rec_leg_float_spread_bp = rec_leg_float_spread_bp.value
+                output_.rec_leg_float_spread_bp = str(FloatUtil.to_int_or_float(rec_leg_float_spread_bp.value))
 
             # Receive leg fixed rate in percent
             rec_leg_fixed_rate_pct = json_output.get("rec_leg_fixed_rate_pct")
             if isinstance(rec_leg_fixed_rate_pct, float):
-                output_.rec_leg_fixed_rate_pct = rec_leg_fixed_rate_pct
+                output_.rec_leg_fixed_rate_pct = str(FloatUtil.to_int_or_float(rec_leg_fixed_rate_pct))
             elif rec_leg_fixed_rate_pct is not None:
                 rec_leg_fixed_rate_pct = NumberEntry(text=str(rec_leg_fixed_rate_pct))
                 rec_leg_fixed_rate_pct.run_generate()
-                output_.rec_leg_fixed_rate_pct = rec_leg_fixed_rate_pct.value
+                output_.rec_leg_fixed_rate_pct = str(FloatUtil.to_int_or_float(rec_leg_fixed_rate_pct.value))
 
         return output_
