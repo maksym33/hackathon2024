@@ -12,15 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from abc import ABC
 import re
+from abc import ABC
 from abc import abstractmethod
 from dataclasses import dataclass
 from typing import Type
 from typing_extensions import Self
-from typing_extensions import Self
-
-from cl.convince.settings.convince_settings import ConvinceSettings
 from cl.runtime import Context
 from cl.runtime.log.exceptions.user_error import UserError
 from cl.runtime.primitive.case_util import CaseUtil
@@ -28,6 +25,7 @@ from cl.runtime.primitive.string_util import StringUtil
 from cl.runtime.records.dataclasses_extensions import missing
 from cl.runtime.records.record_mixin import RecordMixin
 from cl.convince.entries.entry_key import EntryKey
+from cl.convince.settings.convince_settings import ConvinceSettings
 
 _DISALLOWED_DELIMITERS = {
     "\\": "Backslash",
@@ -35,7 +33,7 @@ _DISALLOWED_DELIMITERS = {
 }
 """These delimiters are not allowed in the text."""
 
-_WHITESPACE_RE = re.compile(r'\s+')
+_WHITESPACE_RE = re.compile(r"\s+")
 """Regex for whitespace replacement."""
 
 

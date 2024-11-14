@@ -14,7 +14,6 @@
 
 from dataclasses import dataclass
 from typing_extensions import Self
-
 from cl.runtime import RecordMixin
 from cl.runtime.primitive.timestamp import Timestamp
 from cl.runtime.records.dataclasses_extensions import missing

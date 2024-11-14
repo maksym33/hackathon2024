@@ -14,9 +14,7 @@
 
 from dataclasses import dataclass
 from typing import Tuple
-
 from typing_extensions import Self
-
 from cl.runtime.exceptions.error_util import ErrorUtil
 from cl.runtime.settings.settings import Settings
 
@@ -27,10 +25,10 @@ class ConvinceSettings(Settings):
 
     locale: str | None = None
     """Locale in BCP 47 ll-CC where ll is language and CC is country for AI applications, no effect on front end."""
-    
+
     _language: str | None = None
     """Two-letter lowercase language code for AI applications, no effect on front end."""
-    
+
     _country: str | None = None
     """Two-letter UPPERCASE country code (not region) for AI applications, no effect on front end."""
 
@@ -42,18 +40,18 @@ class ConvinceSettings(Settings):
 
         # Validate locale and get language and region
         language, country = self.parse_locale(self.locale)
-        
+
         # Assign language and country fields
         self._language = language
         self._country = country
 
         # Return self to enable method chaining
         return self
-        
+
     def get_language(self) -> str:
         """Two-letter lowercase language code."""
         return self._language
-    
+
     def get_country(self) -> str:
         """Two-letter UPPERCASE country code (not region)."""
         return self._country

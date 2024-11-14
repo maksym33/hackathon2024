@@ -36,7 +36,8 @@ class EntryKey(KeyMixin):
         # Validate entry_id inside a key but not inside a record where it will be set automatically
         if is_key(self):
             if "(" not in self.entry_id or ")" not in self.entry_id:
-                raise UserError(f"""
+                raise UserError(
+                    f"""
 The field 'EntryId' must have one of the following two formats:
 Format 1: digest (type, locale)
 Format 2: digest (type, locale, md5)
@@ -44,7 +45,8 @@ where 'digest' is shortened text and 'md5' is the MD5 hash of the full text
 and data in hexadecimal format with no delimiters. The MD5 hash is only included
 if the text exceeds 80 characters in length and/or the data field is not empty.
 EntryId: {self.entry_id}
-""")
+"""
+                )
 
         # Return self to enable method chaining
         return self
@@ -52,6 +54,3 @@ EntryId: {self.entry_id}
     @classmethod
     def get_key_type(cls) -> Type:
         return EntryKey
-
-
-

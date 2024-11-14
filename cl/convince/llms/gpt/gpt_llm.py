@@ -14,8 +14,8 @@
 
 from dataclasses import dataclass
 from typing import ClassVar
-from typing_extensions import Self
 from openai import OpenAI
+from typing_extensions import Self
 from cl.runtime.context.context_util import ContextUtil
 from cl.runtime.log.exceptions.user_error import UserError
 from cl.runtime.primitive.float_util import FloatUtil

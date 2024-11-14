@@ -13,10 +13,10 @@
 # limitations under the License.
 
 import pytest
+from cl.tradeentry.entries.currency_entry import CurrencyEntry
 from cl.runtime.log.exceptions.user_error import UserError
 from cl.runtime.testing.regression_guard import RegressionGuard
 from cl.convince.entries.entry_key import EntryKey
-from cl.tradeentry.entries.currency_entry import CurrencyEntry
 
 
 def test_create_key():
