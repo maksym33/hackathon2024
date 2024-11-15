@@ -122,59 +122,81 @@ class AnnotationSolution(HackathonSolution):
         retriever.init_all()
 
         # Pay or receive flag
-        if extracted_pay_receive := retriever.retrieve(
-            input_text=leg_description, param_description=self.pay_rec_description, is_required=False
-        ):
-            pay_receive = PayReceiveEntry(text=extracted_pay_receive)
-            pay_receive.run_generate()
-            if pay_rec_key := pay_receive.pay_receive:
-                entry_dict["pay_receive"] = pay_rec_key.pay_receive_id
+        try:
+            if extracted_pay_receive := retriever.retrieve(
+                input_text=leg_description, param_description=self.pay_rec_description, is_required=False
+            ):
+                pay_receive = PayReceiveEntry(text=extracted_pay_receive)
+                pay_receive.run_generate()
+                if pay_rec_key := pay_receive.pay_receive:
+                    entry_dict["pay_receive"] = pay_rec_key.pay_receive_id
+        except Exception as e:
+            entry_dict["pay_receive"] = str(e)
 
         # Payment Frequency
-        if extracted_freq_months := retriever.retrieve(
-            input_text=leg_description, param_description=self.freq_months_description, is_required=False
-        ):
-            freq_months = PayFreqMonthsEntry(text=extracted_freq_months)
-            freq_months.run_generate()
-            entry_dict["freq_months"] = freq_months.pay_freq_months
+        try:
+            if extracted_freq_months := retriever.retrieve(
+                input_text=leg_description, param_description=self.freq_months_description, is_required=False
+            ):
+                freq_months = PayFreqMonthsEntry(text=extracted_freq_months)
+                freq_months.run_generate()
+                entry_dict["freq_months"] = freq_months.pay_freq_months
+        except Exception as e:
+            entry_dict["freq_months"] = str(e)
 
         # Floating rate index
-        if extracted_float_index := retriever.retrieve(
-            input_text=leg_description, param_description=self.float_index_description, is_required=False
-        ):
-            float_index = RatesIndexEntry(text=extracted_float_index)
-            float_index.run_generate()
-            if rates_index_key := float_index.rates_index:
-                entry_dict["float_index"] = rates_index_key.rates_index_id
+        try:
+            if extracted_float_index := retriever.retrieve(
+                input_text=leg_description, param_description=self.float_index_description, is_required=False
+            ):
+                float_index = RatesIndexEntry(text=extracted_float_index)
+                float_index.run_generate()
+                if rates_index_key := float_index.rates_index:
+                    entry_dict["float_index"] = rates_index_key.rates_index_id
+        except Exception as e:
+            entry_dict["float_index"] = str(e)
 
         # Floating rate spread
-        if extracted_float_spread := retriever.retrieve(
-            input_text=leg_description, param_description=self.float_spread_description, is_required=False
-        ):
-            float_spread = NumberEntry(text=extracted_float_spread)
-            float_spread.run_generate()
-            entry_dict["float_spread"] = float_spread.value
+        try:
+            if extracted_float_spread := retriever.retrieve(
+                input_text=leg_description, param_description=self.float_spread_description, is_required=False
+            ):
+                float_spread = NumberEntry(text=extracted_float_spread)
+                float_spread.run_generate()
+                entry_dict["float_spread"] = float_spread.value
+        except Exception as e:
+            entry_dict["float_spread"] = str(e)
 
         # Day-count Basis
-        if extracted_basis := retriever.retrieve(
-            input_text=leg_description, param_description=self.basis_description, is_required=False
-        ):
-            basis = DayCountBasisEntry(text=extracted_basis)
-            basis.run_generate()
-            entry_dict["basis"] = basis.basis
+        try:
+            if extracted_basis := retriever.retrieve(
+                input_text=leg_description, param_description=self.basis_description, is_required=False
+            ):
+                basis = DayCountBasisEntry(text=extracted_basis)
+                basis.run_generate()
+                entry_dict["basis"] = basis.basis
+        except Exception as e:
+            entry_dict["float_spread"] = str(e)
 
         # Notional
-        notional_amount, notional_currency = self._extract_notional(retriever, leg_description)
-        entry_dict["notional_amount"] = notional_amount
-        entry_dict["notional_currency"] = notional_currency
+        try:
+            notional_amount, notional_currency = self._extract_notional(retriever, leg_description)
+            entry_dict["notional_amount"] = notional_amount
+            entry_dict["notional_currency"] = notional_currency
+        except Exception as e:
+            entry_dict["notional_amount"] = str(e)
+            entry_dict["notional_currency"] = str(e)
 
         # Fixed Rate
-        if extracted_fixed_rate := retriever.retrieve(
-            input_text=leg_description, param_description=self.fixed_rate_description, is_required=False
-        ):
-            fixed_rate = NumberEntry(text=extracted_fixed_rate)
-            fixed_rate.run_generate()
-            entry_dict["fixed_rate"] = fixed_rate.value
+        try:
+            if extracted_fixed_rate := retriever.retrieve(
+                input_text=leg_description, param_description=self.fixed_rate_description, is_required=False
+            ):
+                fixed_rate = NumberEntry(text=extracted_fixed_rate)
+                fixed_rate.run_generate()
+                entry_dict["fixed_rate"] = fixed_rate.value
+        except Exception as e:
+            entry_dict["fixed_rate"] = str(e)
 
         return entry_dict
 
@@ -194,29 +216,40 @@ class AnnotationSolution(HackathonSolution):
         retriever.init_all()
 
         # Maturity
-        if extracted_maturity := retriever.retrieve(
-            input_text=input_description, param_description=self.maturity_description, is_required=False
-        ):
-            maturity = DateOrTenorEntry(text=extracted_maturity)
-            maturity.run_generate()
-            if date := maturity.date:
-                trade_parameters["maturity_date"] = date
-            else:
-                trade_parameters["tenor_years"] = maturity.years
+        try:
+            if extracted_maturity := retriever.retrieve(
+                input_text=input_description, param_description=self.maturity_description, is_required=False
+            ):
+                maturity = DateOrTenorEntry(text=extracted_maturity)
+                maturity.run_generate()
+                if date := maturity.date:
+                    trade_parameters["maturity_date"] = date
+                else:
+                    trade_parameters["tenor_years"] = maturity.years
+        except Exception as e:
+            trade_parameters["maturity_date"] = str(e)
+            trade_parameters["tenor_years"] = str(e)
 
         # Effective date
-        if extracted_effective_date := retriever.retrieve(
-            input_text=input_description, param_description=self.effective_date_description, is_required=False
-        ):
-            effective_date = DateEntry(text=extracted_effective_date)
-            effective_date.run_generate()
-            if date := effective_date.date:
-                trade_parameters["effective_date"] = date
+        try:
+            if extracted_effective_date := retriever.retrieve(
+                input_text=input_description, param_description=self.effective_date_description, is_required=False
+            ):
+                effective_date = DateEntry(text=extracted_effective_date)
+                effective_date.run_generate()
+                if date := effective_date.date:
+                    trade_parameters["effective_date"] = date
+        except Exception as e:
+            trade_parameters["effective_date"] = str(e)
 
         # Notional
-        notional_amount, notional_currency = self._extract_notional(retriever, input_description)
-        trade_parameters["notional_amount"] = notional_amount
-        trade_parameters["notional_currency"] = notional_currency
+        try:
+            notional_amount, notional_currency = self._extract_notional(retriever, input_description)
+            trade_parameters["notional_amount"] = notional_amount
+            trade_parameters["notional_currency"] = notional_currency
+        except Exception as e:
+            trade_parameters["notional_amount"] = str(e)
+            trade_parameters["notional_currency"] = str(e)
 
         return trade_parameters
 
@@ -242,23 +275,16 @@ class AnnotationSolution(HackathonSolution):
         trade_parameters = self._retrieve_trade_parameters(general_trade_information)
 
         output_.maturity_date = trade_parameters.get("maturity_date")
-        output_.tenor_years = str(FloatUtil.to_int_or_float(trade_parameters.get("tenor_years")))
+        output_.tenor_years = str(FloatUtil.to_int_or_float(v)) if (v := trade_parameters.get("tenor_years")) else None
         output_.effective_date = trade_parameters.get("effective_date")
 
-        if notional_amount := trade_parameters.get("notional_amount"):
-            notional_str = str(FloatUtil.to_int_or_float(notional_amount))
-            output_.pay_leg_notional = notional_str
-            output_.rec_leg_notional = notional_str
+        notional_amount_str = str(FloatUtil.to_int_or_float(v)) if (v := trade_parameters.get("notional_amount")) else None
+        output_.pay_leg_notional = notional_amount_str
+        output_.rec_leg_notional = notional_amount_str
 
-        if notional_currency := trade_parameters.get("notional_currency"):
-            output_.pay_leg_ccy = notional_currency
-            output_.rec_leg_ccy = notional_currency
-
-        # TODO (Roman): Check if it is critical to have exactly 2 legs in leg_descriptions list.
-        # if len(leg_descriptions) != 2:
-        #     raise UserError(
-        #         f"Incorrect number of legs. Should be 2.\n" f"Leg descriptions:\n" f"{' '.join(leg_descriptions)}"
-        #     )
+        notional_currency = str(FloatUtil.to_int_or_float(v)) if (v := trade_parameters.get("notional_currency")) else None
+        output_.pay_leg_ccy = notional_currency
+        output_.rec_leg_ccy = notional_currency
 
         for leg_description in leg_descriptions:
             self._populate_leg(output_, leg_description)
@@ -271,26 +297,35 @@ class AnnotationSolution(HackathonSolution):
         pay_receive = leg_entry_dict.get("pay_receive")
 
         if pay_receive == "Pay":
-            if pay_leg_notional := leg_entry_dict.get("notional_amount"):
-                trade.pay_leg_notional = str(FloatUtil.to_int_or_float(pay_leg_notional))
-            if pay_leg_ccy := leg_entry_dict.get("notional_currency"):
-                trade.pay_leg_ccy = pay_leg_ccy
+            trade.pay_leg_notional = str(FloatUtil.to_int_or_float(v)) if (v := leg_entry_dict.get("notional_amount")) else None
+            trade.pay_leg_ccy = leg_entry_dict.get("notional_currency")
             trade.pay_leg_basis = leg_entry_dict.get("basis")
-            trade.pay_leg_freq_months = str(FloatUtil.to_int_or_float(leg_entry_dict.get("freq_months")))
+            trade.pay_leg_freq_months = str(FloatUtil.to_int_or_float(v)) if (v := leg_entry_dict.get("freq_months")) else None
             trade.pay_leg_float_index = leg_entry_dict.get("float_index")
-            trade.pay_leg_float_spread_bp = str(FloatUtil.to_int_or_float(leg_entry_dict.get("float_spread")))
-            trade.pay_leg_fixed_rate_pct = str(FloatUtil.to_int_or_float(leg_entry_dict.get("fixed_rate")))
+            trade.pay_leg_float_spread_bp = str(FloatUtil.to_int_or_float(v)) if (v := leg_entry_dict.get("float_spread")) else None
+            trade.pay_leg_fixed_rate_pct = str(FloatUtil.to_int_or_float(v)) if (v := leg_entry_dict.get("fixed_rate")) else None
         elif pay_receive == "Receive":
-            if rec_leg_notional := leg_entry_dict.get("notional_amount"):
-                trade.rec_leg_notional = str(FloatUtil.to_int_or_float(rec_leg_notional))
-            if rec_leg_ccy := leg_entry_dict.get("notional_currency"):
-                trade.rec_leg_ccy = rec_leg_ccy
+            trade.rec_leg_notional = str(FloatUtil.to_int_or_float(v)) if (v := leg_entry_dict.get("notional_amount")) else None
+            trade.rec_leg_ccy = leg_entry_dict.get("notional_currency")
             trade.rec_leg_basis = leg_entry_dict.get("basis")
-            trade.rec_leg_freq_months = str(FloatUtil.to_int_or_float(leg_entry_dict.get("freq_months")))
+            trade.rec_leg_freq_months = str(FloatUtil.to_int_or_float(v)) if (v := leg_entry_dict.get("freq_months")) else None
             trade.rec_leg_float_index = leg_entry_dict.get("float_index")
-            trade.rec_leg_float_spread_bp = str(FloatUtil.to_int_or_float(leg_entry_dict.get("float_spread")))
-            trade.rec_leg_fixed_rate_pct = str(FloatUtil.to_int_or_float(leg_entry_dict.get("fixed_rate")))
+            trade.rec_leg_float_spread_bp = str(FloatUtil.to_int_or_float(v)) if (v := leg_entry_dict.get("float_spread")) else None
+            trade.rec_leg_fixed_rate_pct = str(FloatUtil.to_int_or_float(v)) if (v := leg_entry_dict.get("fixed_rate")) else None
         else:
-            # TODO (Roman): Check whether to raise an error if pay_receive is None or something else
-            # raise UserError(f"Unknown value of pay_receive parameter: {pay_receive}")
-            pass
+            # TODO (Kate): Message for the case when pay_receive is None.
+
+            trade.pay_leg_notional = pay_receive
+            trade.pay_leg_ccy = pay_receive
+            trade.pay_leg_basis = pay_receive
+            trade.pay_leg_freq_months = pay_receive
+            trade.pay_leg_float_index = pay_receive
+            trade.pay_leg_float_spread_bp = pay_receive
+            trade.pay_leg_fixed_rate_pct = pay_receive
+            trade.rec_leg_notional = pay_receive
+            trade.rec_leg_ccy = pay_receive
+            trade.rec_leg_basis = pay_receive
+            trade.rec_leg_freq_months = pay_receive
+            trade.rec_leg_float_index = pay_receive
+            trade.rec_leg_float_spread_bp = pay_receive
+            trade.rec_leg_fixed_rate_pct = pay_receive
