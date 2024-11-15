@@ -119,10 +119,14 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey])
         self.process_all_inputs()
 
     def run_score(self) -> None:
-
+        """Create scoring object for solution."""
         scoring_obj = HackathonScoring(solution=self.get_key())
 
+        # TODO (Roman): consider update outputs for scoring elsewhere
         scoring_obj.update_outputs()
+
+        # Compare solution outputs with expected outputs and save HackathonScoreItems for each pair
         scoring_obj.calculate()
 
+        # Save scoring object with total score
         Context.current().save_one(scoring_obj)
