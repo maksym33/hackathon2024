@@ -18,6 +18,7 @@ from typing import List, Final
 from cl.hackathon.hackathon_output import HackathonOutput
 from cl.hackathon.hackathon_output_key import HackathonOutputKey
 from cl.hackathon.hackathon_score_item import HackathonScoreItem
+from cl.hackathon.hackathon_score_item_key import HackathonScoreItemKey
 from cl.hackathon.hackathon_scoring_key import HackathonScoringKey
 from cl.hackathon.hackathon_solution_key import HackathonSolutionKey
 from cl.runtime import RecordMixin, Context
@@ -37,7 +38,7 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
     maximum_score: int = missing()
     """Maximum possible score for solution."""
 
-    details: List[HackathonScoreItem] = missing()
+    details: List[HackathonScoreItemKey] = missing()
     """Detailed scoring info for each input."""
 
     trial_count: int = field(default=10)
@@ -78,6 +79,14 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
             mismatched_fields=mismatched_fields
         )
 
+    def update_outputs(self):
+
+        # Load solution record
+        solution = Context.current().load_one(HackathonSolutionKey, self.solution)
+
+        # Run processing trial_count times
+        for trial_index in range(1, self.trial_count + 1):
+            solution.process_all_inputs(trial_id=trial_index)
 
     def calculate(self):
         """Calculate scoring info and record to self."""
@@ -121,19 +130,19 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
                     trial_id=trial_index,
                 )
                 actual_output = context.load_one(HackathonOutput, actual_output_key)
-                actual_output.scoring_trial_id = trial_index
 
                 # Create a scoring item by comparing actual and expected outputs
                 score_item = self.get_score_item(actual_output, expected_output)
                 score_item.input = input_key
+                Context.current().save_one(score_item)
 
                 # Sum up scores
                 score += len(score_item.matched_fields)
                 maximum_score += len(score_item.matched_fields) + len(score_item.mismatched_fields)
 
-                details.append(score_item)
+                details.append(score_item.get_key())
 
         # Update self with calculated values
         self.score = score
-        self.maximum_score = score
+        self.maximum_score = maximum_score
         self.details = details

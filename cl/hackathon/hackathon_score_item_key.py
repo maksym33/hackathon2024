@@ -12,28 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from dataclasses import dataclass, field
-from typing import List
+from dataclasses import dataclass
+from typing import Type
 
 from cl.hackathon.hackathon_input_key import HackathonInputKey
 from cl.hackathon.hackathon_output_key import HackathonOutputKey
-from cl.hackathon.hackathon_score_item_key import HackathonScoreItemKey
-from cl.hackathon.hackathon_scoring_key import HackathonScoringKey
-from cl.runtime import RecordMixin
 from cl.runtime.records.dataclasses_extensions import missing
+from cl.runtime.records.key_mixin import KeyMixin
 
 
 @dataclass(slots=True, kw_only=True)
-class HackathonScoreItem(HackathonScoreItemKey, RecordMixin[HackathonScoreItemKey]):
-    """Base scoring info for specified actual and expected outputs."""
+class HackathonScoreItemKey(KeyMixin):
+    """Key for class with base scoring info."""
 
-    matched_fields: List[str] = field(default_factory=list)
-    """List of matched fields."""
+    input: HackathonInputKey = missing()
+    """Related input."""
 
-    mismatched_fields: List[str] = field(default_factory=list)
-    """List of mismatched fields."""
+    actual_output: HackathonOutputKey = missing()
+    """Actual output for input from solution."""
 
-    def get_key(self):
-        return HackathonScoreItemKey(
-            input=self.input, actual_output=self.actual_output, expected_output=self.expected_output
-        )
+    expected_output: HackathonOutputKey = missing()
+    """Expected output for input."""
+
+    @classmethod
+    def get_key_type(cls) -> Type:
+        return HackathonScoreItemKey

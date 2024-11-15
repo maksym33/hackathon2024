@@ -15,6 +15,8 @@
 from dataclasses import dataclass
 from typing import List
 from typing_extensions import Self
+
+from cl.hackathon.hackathon_scoring import HackathonScoring
 from cl.runtime import Context
 from cl.runtime import RecordMixin
 from cl.runtime.records.dataclasses_extensions import missing
@@ -102,11 +104,25 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey])
         """Process input and return output. Must be implemented in subclasses."""
         pass
 
-    def run_generate(self) -> None:
-        """Load, filter, and process HackathonInput data, then save results."""
+    def process_all_inputs(self, trial_id: int = 0) -> None:
         # Process inputs
         for input_ in self.get_inputs():
             output_ = self._process_input(input_)
+            output_.trial_id = trial_id
             Context.current().save_one(output_)
 
         Context.current().save_one(self)
+
+    def run_generate(self) -> None:
+        """Load, filter, and process HackathonInput data, then save results."""
+        # Process inputs
+        self.process_all_inputs()
+
+    def run_score(self) -> None:
+
+        scoring_obj = HackathonScoring(solution=self.get_key())
+
+        scoring_obj.update_outputs()
+        scoring_obj.calculate()
+
+        Context.current().save_one(scoring_obj)
