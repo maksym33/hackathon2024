@@ -32,7 +32,7 @@ class OneStepSolution(HackathonSolution):
     prompt: str = missing()
     """One step prompt to parse trade."""
 
-    def _process_input(self, input_: HackathonInput) -> HackathonOutput:
+    def _process_input(self, input_: HackathonInput, trial_id: int) -> HackathonOutput:
 
         output_ = HackathonOutput(
             solution=self.get_key(),
