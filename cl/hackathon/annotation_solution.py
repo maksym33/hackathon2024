@@ -108,6 +108,8 @@ class AnnotationSolution(HackathonSolution):
         return notional_amount, notional_currency
 
     def _leg_entry_to_dict(self, leg_description: str) -> Dict:
+        error_message_prefix = ("Error trying to extract the field from the leg description\n"
+                                f"Leg description: {leg_description}\n")
 
         entry_dict = {}
 
@@ -132,7 +134,7 @@ class AnnotationSolution(HackathonSolution):
                 if pay_rec_key := pay_receive.pay_receive:
                     entry_dict["pay_receive"] = pay_rec_key.pay_receive_id
         except Exception as e:
-            entry_dict["pay_receive"] = str(e)
+            entry_dict["pay_receive"] = error_message_prefix + str(e)
 
         # Payment Frequency
         try:
@@ -144,7 +146,7 @@ class AnnotationSolution(HackathonSolution):
                 entry_dict["freq_months"] = str(FloatUtil.to_int_or_float(v)) if (
                     v := freq_months.pay_freq_months) else None
         except Exception as e:
-            entry_dict["freq_months"] = str(e)
+            entry_dict["freq_months"] = error_message_prefix + str(e)
 
         # Floating rate index
         try:
@@ -156,7 +158,7 @@ class AnnotationSolution(HackathonSolution):
                 if rates_index_key := float_index.rates_index:
                     entry_dict["float_index"] = rates_index_key.rates_index_id
         except Exception as e:
-            entry_dict["float_index"] = str(e)
+            entry_dict["float_index"] = error_message_prefix + str(e)
 
         # Floating rate spread
         try:
@@ -167,7 +169,7 @@ class AnnotationSolution(HackathonSolution):
                 float_spread.run_generate()
                 entry_dict["float_spread"] = str(FloatUtil.to_int_or_float(v)) if (v := float_spread.value) else None
         except Exception as e:
-            entry_dict["float_spread"] = str(e)
+            entry_dict["float_spread"] = error_message_prefix + str(e)
 
         # Day-count Basis
         try:
@@ -178,7 +180,7 @@ class AnnotationSolution(HackathonSolution):
                 basis.run_generate()
                 entry_dict["basis"] = basis.basis
         except Exception as e:
-            entry_dict["basis"] = str(e)
+            entry_dict["basis"] = error_message_prefix + str(e)
 
         # Notional
         try:
@@ -186,8 +188,8 @@ class AnnotationSolution(HackathonSolution):
             entry_dict["notional_amount"] = notional_amount
             entry_dict["notional_currency"] = notional_currency
         except Exception as e:
-            entry_dict["notional_amount"] = str(e)
-            entry_dict["notional_currency"] = str(e)
+            entry_dict["notional_amount"] = error_message_prefix + str(e)
+            entry_dict["notional_currency"] = error_message_prefix + str(e)
 
         # Currency
         try:
@@ -202,7 +204,7 @@ class AnnotationSolution(HackathonSolution):
                     )
                     entry_dict["currency"] = notional_currency_entry_currency.iso_code
         except Exception as e:
-            entry_dict["currency"] = str(e)
+            entry_dict["currency"] = error_message_prefix + str(e)
 
         # Fixed Rate
         try:
@@ -213,11 +215,14 @@ class AnnotationSolution(HackathonSolution):
                 fixed_rate.run_generate()
                 entry_dict["fixed_rate"] = str(FloatUtil.to_int_or_float(v)) if (v := fixed_rate.value) else None
         except Exception as e:
-            entry_dict["fixed_rate"] = str(e)
+            entry_dict["fixed_rate"] = error_message_prefix + str(e)
 
         return entry_dict
 
     def _retrieve_trade_parameters(self, input_description: str) -> Dict:
+
+        error_message_prefix = ("Error trying to extract the field from the general trade information\n"
+                                f"General trade information: {input_description}\n")
 
         trade_parameters = {}
 
@@ -245,8 +250,8 @@ class AnnotationSolution(HackathonSolution):
                     trade_parameters["tenor_years"] = str(FloatUtil.to_int_or_float(v)) if (
                         v := maturity.years) else None
         except Exception as e:
-            trade_parameters["maturity_date"] = str(e)
-            trade_parameters["tenor_years"] = str(e)
+            trade_parameters["maturity_date"] = error_message_prefix + str(e)
+            trade_parameters["tenor_years"] = error_message_prefix + str(e)
 
         # Effective date
         try:
@@ -258,7 +263,7 @@ class AnnotationSolution(HackathonSolution):
                 if date := effective_date.date:
                     trade_parameters["effective_date"] = date
         except Exception as e:
-            trade_parameters["effective_date"] = str(e)
+            trade_parameters["effective_date"] = error_message_prefix + str(e)
 
         # Notional
         try:
@@ -266,8 +271,8 @@ class AnnotationSolution(HackathonSolution):
             trade_parameters["notional_amount"] = str(FloatUtil.to_int_or_float(v)) if (v := notional_amount) else None
             trade_parameters["notional_currency"] = notional_currency
         except Exception as e:
-            trade_parameters["notional_amount"] = str(e)
-            trade_parameters["notional_currency"] = str(e)
+            trade_parameters["notional_amount"] = error_message_prefix + str(e)
+            trade_parameters["notional_currency"] = error_message_prefix + str(e)
 
         return trade_parameters
 
