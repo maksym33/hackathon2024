@@ -1,18 +1,5 @@
-﻿solution_id,trade_group,trade_ids,legs_annotation_prompt,parameter_annotation_prompt
-DefaultAnnotationSolution,Preview,,"In this text, surround information about each leg in curly brackets. Make no other changes
-to the text. Take into account the following:
-
-- Only one set of curly brackets per leg should be present, surrounding the information specific to the leg
-- Include information about who pays the leg
-- Do not surround with curly brackets any text that is not specific to a single leg
-- Do not miss any information from the original text
-
-Text:
-```
-{input_text}
-```
-
-Enclose you output text in triple backticks.","You will be provided with an input text and a description of a parameter.
+﻿solution_id,trade_group,trade_ids,parameter_annotation_prompt
+DefaultAnnotationSolution,Preview,,"You will be provided with an input text and a description of a parameter.
 Your goal is to surround each piece of information about this parameter you find in the input text by curly braces.
 Use multiple non-nested pairs of opening and closing curly braces if you find more than one piece of information.
 
