@@ -19,7 +19,6 @@ from cl.hackathon.hackathon_output import HackathonOutput
 from cl.hackathon.hackathon_output_key import HackathonOutputKey
 from cl.hackathon.hackathon_score_item import HackathonScoreItem
 from cl.hackathon.hackathon_scoring_key import HackathonScoringKey
-from cl.hackathon.hackathon_solution import HackathonSolution
 from cl.hackathon.hackathon_solution_key import HackathonSolutionKey
 from cl.runtime import RecordMixin, Context
 from cl.runtime.records.dataclasses_extensions import missing, field
@@ -83,7 +82,7 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
         context = Context.current()
 
         # Load solution record
-        solution: HackathonSolution = context.load_one(HackathonSolution, self.solution)
+        solution = context.load_one(HackathonSolutionKey, self.solution)
 
         # Get solution inputs
         inputs = solution.get_inputs()
@@ -102,7 +101,6 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
                 solution=HackathonSolutionKey(solution_id="ExpectedResults"),
                 trade_group=solution.trade_group,
                 trade_id=input_.trade_id,
-                trial_id=0,
             )
             expected_output = context.load_one(HackathonOutput, expected_output_key)
 
