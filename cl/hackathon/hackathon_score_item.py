@@ -14,13 +14,8 @@
 
 from dataclasses import dataclass, field
 from typing import List
-
-from cl.hackathon.hackathon_input_key import HackathonInputKey
-from cl.hackathon.hackathon_output_key import HackathonOutputKey
 from cl.hackathon.hackathon_score_item_key import HackathonScoreItemKey
-from cl.hackathon.hackathon_scoring_key import HackathonScoringKey
 from cl.runtime import RecordMixin
-from cl.runtime.records.dataclasses_extensions import missing
 
 
 @dataclass(slots=True, kw_only=True)
@@ -35,5 +30,8 @@ class HackathonScoreItem(HackathonScoreItemKey, RecordMixin[HackathonScoreItemKe
 
     def get_key(self):
         return HackathonScoreItemKey(
-            input=self.input, actual_output=self.actual_output, expected_output=self.expected_output
+            scoring=self.scoring,
+            input=self.input,
+            actual_output=self.actual_output,
+            expected_output=self.expected_output
         )

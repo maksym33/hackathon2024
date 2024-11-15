@@ -13,12 +13,12 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-from typing import List, Final
+from typing import Final
 
+from cl.hackathon.hackathon_input_key import HackathonInputKey
 from cl.hackathon.hackathon_output import HackathonOutput
 from cl.hackathon.hackathon_output_key import HackathonOutputKey
 from cl.hackathon.hackathon_score_item import HackathonScoreItem
-from cl.hackathon.hackathon_score_item_key import HackathonScoreItemKey
 from cl.hackathon.hackathon_scoring_key import HackathonScoringKey
 from cl.hackathon.hackathon_solution_key import HackathonSolutionKey
 from cl.runtime import RecordMixin, Context
@@ -38,17 +38,18 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
     maximum_score: int = missing()
     """Maximum possible score for solution."""
 
-    details: List[HackathonScoreItemKey] = missing()
-    """Detailed scoring info for each input."""
-
     trial_count: int = field(default=10)
     """Number of trials for each input."""
 
     def get_key(self):
         return HackathonScoringKey(solution=self.solution)
 
-    @classmethod
-    def get_score_item(cls, actual_output: HackathonOutput, expected_output: HackathonOutput) -> HackathonScoreItem:
+    def get_score_item(
+        self,
+        input_key: HackathonInputKey,
+        actual_output: HackathonOutput,
+        expected_output: HackathonOutput
+    ) -> HackathonScoreItem:
         """Compare actual output with expected output and return HackathonScoreItem."""
 
         # Use expected output __slots__ as field names for comparison, excluding key slots
@@ -60,11 +61,15 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
 
         # Iterate over expected output fields and compare values
         for field_name in [f for f in expected_output_fields if f not in expected_output_key_fields]:
+            # TODO (Roman): Use custom comparison rules
+
+            # Skip entry_text field
+            if field_name == "entry_text":
+                continue
 
             expected_field_value = getattr(expected_output, field_name, None)
             actual_field_value = getattr(actual_output, field_name, None)
 
-            # TODO (Roman): Use custom comparison rules
             # Check equality for all fields
             if expected_field_value == actual_field_value:
                 matched_fields.append(field_name)
@@ -73,6 +78,8 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
 
         # Create and return score item
         return HackathonScoreItem(
+            scoring=self.get_key(),
+            input=input_key,
             actual_output=actual_output.get_key(),
             expected_output=expected_output.get_key(),
             matched_fields=matched_fields,
@@ -132,8 +139,7 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
                 actual_output = context.load_one(HackathonOutput, actual_output_key)
 
                 # Create a scoring item by comparing actual and expected outputs
-                score_item = self.get_score_item(actual_output, expected_output)
-                score_item.input = input_key
+                score_item = self.get_score_item(input_key, actual_output, expected_output)
                 Context.current().save_one(score_item)
 
                 # Sum up scores
@@ -145,4 +151,3 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
         # Update self with calculated values
         self.score = score
         self.maximum_score = maximum_score
-        self.details = details
