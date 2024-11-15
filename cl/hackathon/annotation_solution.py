@@ -77,6 +77,9 @@ class AnnotationSolution(HackathonSolution):
     basis_description: str = "Day-count basis"
     """Description of the day-count basis to use with the parameter annotation prompt."""
 
+    currency_description: str = "Currency"
+    """Description of the currency to use with the parameter annotation prompt."""
+
     def _extract_notional(self, retriever: AnnotatingRetriever, input_description: str) -> (float, str):
         notional_amount = None
         notional_currency = None
@@ -186,6 +189,21 @@ class AnnotationSolution(HackathonSolution):
             entry_dict["notional_amount"] = str(e)
             entry_dict["notional_currency"] = str(e)
 
+        # Currency
+        try:
+            if extracted_currency := retriever.retrieve(
+                input_text=leg_description, param_description=self.currency_description, is_required=False
+            ):
+                currency = CurrencyEntry(text=extracted_currency)
+                currency.run_generate()
+                if notional_currency_entry_currency_key := currency.currency:
+                    notional_currency_entry_currency = Context.current().load_one(
+                        CurrencyKey, notional_currency_entry_currency_key
+                    )
+                    entry_dict["currency"] = notional_currency_entry_currency.iso_code
+        except Exception as e:
+            entry_dict["currency"] = str(e)
+
         # Fixed Rate
         try:
             if extracted_fixed_rate := retriever.retrieve(
@@ -255,7 +273,6 @@ class AnnotationSolution(HackathonSolution):
 
     def _process_input(self, input_: HackathonInput) -> HackathonOutput:
 
-        # TODO (Roman): Do we need a trade group as part of the HackathonOutputKey if it is already in the solution?
         output_ = HackathonOutput(
             solution=self.get_key(),
             trade_group=self.trade_group,
@@ -304,6 +321,7 @@ class AnnotationSolution(HackathonSolution):
             trade.pay_leg_float_index = leg_entry_dict.get("float_index")
             trade.pay_leg_float_spread_bp = leg_entry_dict.get("float_spread")
             trade.pay_leg_fixed_rate_pct = leg_entry_dict.get("fixed_rate")
+            trade.pay_leg_ccy = leg_entry_dict.get("currency")
         elif pay_receive == "Receive":
             trade.rec_leg_notional = leg_entry_dict.get("notional_amount")
             trade.rec_leg_ccy = leg_entry_dict.get("notional_currency")
@@ -312,6 +330,7 @@ class AnnotationSolution(HackathonSolution):
             trade.rec_leg_float_index = leg_entry_dict.get("float_index")
             trade.rec_leg_float_spread_bp = leg_entry_dict.get("float_spread")
             trade.rec_leg_fixed_rate_pct = leg_entry_dict.get("fixed_rate")
+            trade.rec_leg_ccy = leg_entry_dict.get("currency")
         else:
             # TODO (Kate): Message for the case when pay_receive is None.
 
