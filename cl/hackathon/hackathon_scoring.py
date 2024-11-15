@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-from typing import List
+from typing import List, Final
 
 from cl.hackathon.hackathon_output import HackathonOutput
 from cl.hackathon.hackathon_output_key import HackathonOutputKey
@@ -22,6 +22,9 @@ from cl.hackathon.hackathon_scoring_key import HackathonScoringKey
 from cl.hackathon.hackathon_solution_key import HackathonSolutionKey
 from cl.runtime import RecordMixin, Context
 from cl.runtime.records.dataclasses_extensions import missing, field
+
+
+EXPECTED_RESULTS_SOLUTION_ID: Final[str] = "ExpectedResults"
 
 
 @dataclass(slots=True, kw_only=True)
@@ -98,7 +101,7 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
 
             # Create expected output key for current input
             expected_output_key = HackathonOutputKey(
-                solution=HackathonSolutionKey(solution_id="ExpectedResults"),
+                solution=HackathonSolutionKey(solution_id=EXPECTED_RESULTS_SOLUTION_ID),
                 trade_group=solution.trade_group,
                 trade_id=input_.trade_id,
             )
