@@ -15,7 +15,6 @@
 from dataclasses import dataclass
 from typing import Dict
 from cl.runtime import Context
-from cl.runtime.log.exceptions.user_error import UserError
 from cl.runtime.primitive.float_util import FloatUtil
 from cl.runtime.records.dataclasses_extensions import missing
 from cl.convince.llms.gpt.gpt_llm import GptLlm
@@ -31,7 +30,6 @@ from cl.tradeentry.entries.number_entry import NumberEntry
 from cl.tradeentry.entries.pay_freq_months_entry import PayFreqMonthsEntry
 from cl.tradeentry.entries.pay_receive_entry import PayReceiveEntry
 from cl.tradeentry.entries.rates.rates_index_entry import RatesIndexEntry
-from cl.tradeentry.entries.rates.swaps.any_leg_entry import AnyLegEntry
 from cl.tradeentry.entries.rates.swaps.rates_swap_entry import RatesSwapEntry
 from cl.tradeentry.trades.currency_key import CurrencyKey
 from cl.hackathon.hackathon_input import HackathonInput
@@ -76,8 +74,8 @@ class AnnotationSolution(HackathonSolution):
     notional_description: str = "Trade notional"
     """Description of the trade notional to use with the parameter annotation prompt."""
 
-    basis_description: str = "Daycount basis"
-    """Description of the daycount basis to use with the parameter annotation prompt."""
+    basis_description: str = "Day-count basis"
+    """Description of the day-count basis to use with the parameter annotation prompt."""
 
     def _extract_notional(self, retriever: AnnotatingRetriever, input_description: str) -> (float, str):
         notional_amount = None
@@ -85,7 +83,7 @@ class AnnotationSolution(HackathonSolution):
 
         context = Context.current()
         if extracted_notional := retriever.retrieve(
-            input_text=input_description, param_description=self.notional_description, is_required=False
+                input_text=input_description, param_description=self.notional_description, is_required=False
         ):
             notional = AmountEntry(text=extracted_notional)
             notional.run_generate()
@@ -124,7 +122,7 @@ class AnnotationSolution(HackathonSolution):
         # Pay or receive flag
         try:
             if extracted_pay_receive := retriever.retrieve(
-                input_text=leg_description, param_description=self.pay_rec_description, is_required=False
+                    input_text=leg_description, param_description=self.pay_rec_description, is_required=False
             ):
                 pay_receive = PayReceiveEntry(text=extracted_pay_receive)
                 pay_receive.run_generate()
@@ -136,11 +134,12 @@ class AnnotationSolution(HackathonSolution):
         # Payment Frequency
         try:
             if extracted_freq_months := retriever.retrieve(
-                input_text=leg_description, param_description=self.freq_months_description, is_required=False
+                    input_text=leg_description, param_description=self.freq_months_description, is_required=False
             ):
                 freq_months = PayFreqMonthsEntry(text=extracted_freq_months)
                 freq_months.run_generate()
-                entry_dict["freq_months"] = freq_months.pay_freq_months
+                entry_dict["freq_months"] = str(FloatUtil.to_int_or_float(v)) if (
+                    v := freq_months.pay_freq_months) else None
         except Exception as e:
             entry_dict["freq_months"] = str(e)
 
@@ -163,7 +162,7 @@ class AnnotationSolution(HackathonSolution):
             ):
                 float_spread = NumberEntry(text=extracted_float_spread)
                 float_spread.run_generate()
-                entry_dict["float_spread"] = float_spread.value
+                entry_dict["float_spread"] = str(FloatUtil.to_int_or_float(v)) if (v := float_spread.value) else None
         except Exception as e:
             entry_dict["float_spread"] = str(e)
 
@@ -176,7 +175,7 @@ class AnnotationSolution(HackathonSolution):
                 basis.run_generate()
                 entry_dict["basis"] = basis.basis
         except Exception as e:
-            entry_dict["float_spread"] = str(e)
+            entry_dict["basis"] = str(e)
 
         # Notional
         try:
@@ -194,7 +193,7 @@ class AnnotationSolution(HackathonSolution):
             ):
                 fixed_rate = NumberEntry(text=extracted_fixed_rate)
                 fixed_rate.run_generate()
-                entry_dict["fixed_rate"] = fixed_rate.value
+                entry_dict["fixed_rate"] = str(FloatUtil.to_int_or_float(v)) if (v := fixed_rate.value) else None
         except Exception as e:
             entry_dict["fixed_rate"] = str(e)
 
@@ -225,7 +224,8 @@ class AnnotationSolution(HackathonSolution):
                 if date := maturity.date:
                     trade_parameters["maturity_date"] = date
                 else:
-                    trade_parameters["tenor_years"] = maturity.years
+                    trade_parameters["tenor_years"] = str(FloatUtil.to_int_or_float(v)) if (
+                        v := maturity.years) else None
         except Exception as e:
             trade_parameters["maturity_date"] = str(e)
             trade_parameters["tenor_years"] = str(e)
@@ -233,7 +233,7 @@ class AnnotationSolution(HackathonSolution):
         # Effective date
         try:
             if extracted_effective_date := retriever.retrieve(
-                input_text=input_description, param_description=self.effective_date_description, is_required=False
+                    input_text=input_description, param_description=self.effective_date_description, is_required=False
             ):
                 effective_date = DateEntry(text=extracted_effective_date)
                 effective_date.run_generate()
@@ -245,7 +245,7 @@ class AnnotationSolution(HackathonSolution):
         # Notional
         try:
             notional_amount, notional_currency = self._extract_notional(retriever, input_description)
-            trade_parameters["notional_amount"] = notional_amount
+            trade_parameters["notional_amount"] = str(FloatUtil.to_int_or_float(v)) if (v := notional_amount) else None
             trade_parameters["notional_currency"] = notional_currency
         except Exception as e:
             trade_parameters["notional_amount"] = str(e)
@@ -275,14 +275,14 @@ class AnnotationSolution(HackathonSolution):
         trade_parameters = self._retrieve_trade_parameters(general_trade_information)
 
         output_.maturity_date = trade_parameters.get("maturity_date")
-        output_.tenor_years = str(FloatUtil.to_int_or_float(v)) if (v := trade_parameters.get("tenor_years")) else None
+        output_.tenor_years = trade_parameters.get("tenor_years")
         output_.effective_date = trade_parameters.get("effective_date")
 
-        notional_amount_str = str(FloatUtil.to_int_or_float(v)) if (v := trade_parameters.get("notional_amount")) else None
+        notional_amount_str = trade_parameters.get("notional_amount")
         output_.pay_leg_notional = notional_amount_str
         output_.rec_leg_notional = notional_amount_str
 
-        notional_currency = str(FloatUtil.to_int_or_float(v)) if (v := trade_parameters.get("notional_currency")) else None
+        notional_currency = trade_parameters.get("notional_currency")
         output_.pay_leg_ccy = notional_currency
         output_.rec_leg_ccy = notional_currency
 
@@ -297,21 +297,21 @@ class AnnotationSolution(HackathonSolution):
         pay_receive = leg_entry_dict.get("pay_receive")
 
         if pay_receive == "Pay":
-            trade.pay_leg_notional = str(FloatUtil.to_int_or_float(v)) if (v := leg_entry_dict.get("notional_amount")) else None
+            trade.pay_leg_notional = leg_entry_dict.get("notional_amount")
             trade.pay_leg_ccy = leg_entry_dict.get("notional_currency")
             trade.pay_leg_basis = leg_entry_dict.get("basis")
-            trade.pay_leg_freq_months = str(FloatUtil.to_int_or_float(v)) if (v := leg_entry_dict.get("freq_months")) else None
+            trade.pay_leg_freq_months = leg_entry_dict.get("freq_months")
             trade.pay_leg_float_index = leg_entry_dict.get("float_index")
-            trade.pay_leg_float_spread_bp = str(FloatUtil.to_int_or_float(v)) if (v := leg_entry_dict.get("float_spread")) else None
-            trade.pay_leg_fixed_rate_pct = str(FloatUtil.to_int_or_float(v)) if (v := leg_entry_dict.get("fixed_rate")) else None
+            trade.pay_leg_float_spread_bp = leg_entry_dict.get("float_spread")
+            trade.pay_leg_fixed_rate_pct = leg_entry_dict.get("fixed_rate")
         elif pay_receive == "Receive":
-            trade.rec_leg_notional = str(FloatUtil.to_int_or_float(v)) if (v := leg_entry_dict.get("notional_amount")) else None
+            trade.rec_leg_notional = leg_entry_dict.get("notional_amount")
             trade.rec_leg_ccy = leg_entry_dict.get("notional_currency")
             trade.rec_leg_basis = leg_entry_dict.get("basis")
-            trade.rec_leg_freq_months = str(FloatUtil.to_int_or_float(v)) if (v := leg_entry_dict.get("freq_months")) else None
+            trade.rec_leg_freq_months = leg_entry_dict.get("freq_months")
             trade.rec_leg_float_index = leg_entry_dict.get("float_index")
-            trade.rec_leg_float_spread_bp = str(FloatUtil.to_int_or_float(v)) if (v := leg_entry_dict.get("float_spread")) else None
-            trade.rec_leg_fixed_rate_pct = str(FloatUtil.to_int_or_float(v)) if (v := leg_entry_dict.get("fixed_rate")) else None
+            trade.rec_leg_float_spread_bp = leg_entry_dict.get("float_spread")
+            trade.rec_leg_fixed_rate_pct = leg_entry_dict.get("fixed_rate")
         else:
             # TODO (Kate): Message for the case when pay_receive is None.
 
