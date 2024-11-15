@@ -108,8 +108,13 @@ class AnnotationSolution(HackathonSolution):
         return notional_amount, notional_currency
 
     def _leg_entry_to_dict(self, leg_description: str) -> Dict:
-        error_message_prefix = ("Error trying to extract the field from the leg description\n"
-                                f"Leg description: {leg_description}\n")
+        retriever_error_message_prefix = ("Error trying to extract the field from the leg description\n"
+                                          f"Leg description: {leg_description}\n")
+
+        entry_error_message_template = ("Error trying to process an extracted field from a leg description\n"
+                                        "Extracted field: {extracted_field}\n"
+                                        f"Leg description: {leg_description}\n"
+                                        "{exception_message}")
 
         entry_dict = {}
 
@@ -125,62 +130,97 @@ class AnnotationSolution(HackathonSolution):
         retriever.init_all()
 
         # Pay or receive flag
+        extracted_pay_receive = None
         try:
-            if extracted_pay_receive := retriever.retrieve(
-                    input_text=leg_description, param_description=self.pay_rec_description, is_required=False
-            ):
+            extracted_pay_receive = retriever.retrieve(
+                input_text=leg_description, param_description=self.pay_rec_description, is_required=False
+            )
+        except Exception as e:
+            entry_dict["pay_receive"] = retriever_error_message_prefix + str(e)
+
+        if extracted_pay_receive is not None:
+            try:
                 pay_receive = PayReceiveEntry(text=extracted_pay_receive)
                 pay_receive.run_generate()
                 if pay_rec_key := pay_receive.pay_receive:
                     entry_dict["pay_receive"] = pay_rec_key.pay_receive_id
-        except Exception as e:
-            entry_dict["pay_receive"] = error_message_prefix + str(e)
+            except Exception as e:
+                entry_dict["pay_receive"] = entry_error_message_template.format(extracted_field=extracted_pay_receive,
+                                                                                exception_message=str(e))
 
         # Payment Frequency
+        extracted_freq_months = None
         try:
-            if extracted_freq_months := retriever.retrieve(
-                    input_text=leg_description, param_description=self.freq_months_description, is_required=False
-            ):
+            extracted_freq_months = retriever.retrieve(
+                input_text=leg_description, param_description=self.freq_months_description, is_required=False
+            )
+        except Exception as e:
+            entry_dict["freq_months"] = retriever_error_message_prefix + str(e)
+
+        if extracted_freq_months is not None:
+            try:
                 freq_months = PayFreqMonthsEntry(text=extracted_freq_months)
                 freq_months.run_generate()
                 entry_dict["freq_months"] = str(FloatUtil.to_int_or_float(v)) if (
                     v := freq_months.pay_freq_months) else None
-        except Exception as e:
-            entry_dict["freq_months"] = error_message_prefix + str(e)
+            except Exception as e:
+                entry_dict["freq_months"] = entry_error_message_template.format(extracted_field=extracted_freq_months,
+                                                                                exception_message=str(e))
 
         # Floating rate index
+        extracted_float_index = None
         try:
-            if extracted_float_index := retriever.retrieve(
+            extracted_float_index = retriever.retrieve(
                 input_text=leg_description, param_description=self.float_index_description, is_required=False
-            ):
+            )
+        except Exception as e:
+            entry_dict["float_index"] = retriever_error_message_prefix + str(e)
+
+        if extracted_float_index is not None:
+            try:
                 float_index = RatesIndexEntry(text=extracted_float_index)
                 float_index.run_generate()
                 if rates_index_key := float_index.rates_index:
                     entry_dict["float_index"] = rates_index_key.rates_index_id
-        except Exception as e:
-            entry_dict["float_index"] = error_message_prefix + str(e)
+            except Exception as e:
+                entry_dict["float_index"] = entry_error_message_template.format(extracted_field=extracted_float_index,
+                                                                                exception_message=str(e))
 
         # Floating rate spread
+        extracted_float_spread = None
         try:
-            if extracted_float_spread := retriever.retrieve(
+            extracted_float_spread = retriever.retrieve(
                 input_text=leg_description, param_description=self.float_spread_description, is_required=False
-            ):
+            )
+        except Exception as e:
+            entry_dict["float_spread"] = retriever_error_message_prefix + str(e)
+
+        if extracted_float_spread is not None:
+            try:
                 float_spread = NumberEntry(text=extracted_float_spread)
                 float_spread.run_generate()
                 entry_dict["float_spread"] = str(FloatUtil.to_int_or_float(v)) if (v := float_spread.value) else None
-        except Exception as e:
-            entry_dict["float_spread"] = error_message_prefix + str(e)
+            except Exception as e:
+                entry_dict["float_spread"] = entry_error_message_template.format(extracted_field=extracted_float_spread,
+                                                                                 exception_message=str(e))
 
         # Day-count Basis
+        extracted_basis = None
         try:
-            if extracted_basis := retriever.retrieve(
+            extracted_basis = retriever.retrieve(
                 input_text=leg_description, param_description=self.basis_description, is_required=False
-            ):
+            )
+        except Exception as e:
+            entry_dict["basis"] = retriever_error_message_prefix + str(e)
+
+        if extracted_basis is not None:
+            try:
                 basis = DayCountBasisEntry(text=extracted_basis)
                 basis.run_generate()
                 entry_dict["basis"] = basis.basis
-        except Exception as e:
-            entry_dict["basis"] = error_message_prefix + str(e)
+            except Exception as e:
+                entry_dict["basis"] = entry_error_message_template.format(extracted_field=extracted_basis,
+                                                                          exception_message=str(e))
 
         # Notional
         try:
@@ -188,14 +228,20 @@ class AnnotationSolution(HackathonSolution):
             entry_dict["notional_amount"] = notional_amount
             entry_dict["notional_currency"] = notional_currency
         except Exception as e:
-            entry_dict["notional_amount"] = error_message_prefix + str(e)
-            entry_dict["notional_currency"] = error_message_prefix + str(e)
+            entry_dict["notional_amount"] = retriever_error_message_prefix + str(e)
+            entry_dict["notional_currency"] = retriever_error_message_prefix + str(e)
 
         # Currency
+        extracted_currency = None
         try:
-            if extracted_currency := retriever.retrieve(
+            extracted_currency = retriever.retrieve(
                 input_text=leg_description, param_description=self.currency_description, is_required=False
-            ):
+            )
+        except Exception as e:
+            entry_dict["currency"] = retriever_error_message_prefix + str(e)
+
+        if extracted_currency is not None:
+            try:
                 currency = CurrencyEntry(text=extracted_currency)
                 currency.run_generate()
                 if notional_currency_entry_currency_key := currency.currency:
@@ -203,19 +249,27 @@ class AnnotationSolution(HackathonSolution):
                         CurrencyKey, notional_currency_entry_currency_key
                     )
                     entry_dict["currency"] = notional_currency_entry_currency.iso_code
-        except Exception as e:
-            entry_dict["currency"] = error_message_prefix + str(e)
+            except Exception as e:
+                entry_dict["currency"] = entry_error_message_template.format(extracted_field=extracted_currency,
+                                                                             exception_message=str(e))
 
         # Fixed Rate
+        extracted_fixed_rate = None
         try:
-            if extracted_fixed_rate := retriever.retrieve(
+            extracted_fixed_rate = retriever.retrieve(
                 input_text=leg_description, param_description=self.fixed_rate_description, is_required=False
-            ):
+            )
+        except Exception as e:
+            entry_dict["fixed_rate"] = retriever_error_message_prefix + str(e)
+
+        if extracted_fixed_rate is not None:
+            try:
                 fixed_rate = NumberEntry(text=extracted_fixed_rate)
                 fixed_rate.run_generate()
                 entry_dict["fixed_rate"] = str(FloatUtil.to_int_or_float(v)) if (v := fixed_rate.value) else None
-        except Exception as e:
-            entry_dict["fixed_rate"] = error_message_prefix + str(e)
+            except Exception as e:
+                entry_dict["fixed_rate"] = entry_error_message_template.format(extracted_field=extracted_fixed_rate,
+                                                                               exception_message=str(e))
 
         return entry_dict
 
@@ -223,6 +277,11 @@ class AnnotationSolution(HackathonSolution):
 
         error_message_prefix = ("Error trying to extract the field from the general trade information\n"
                                 f"General trade information: {input_description}\n")
+
+        entry_error_message_template = ("Error trying to process an extracted field from the general trade information\n"
+                                        "Extracted field: {extracted_field}\n"
+                                        f"General trade information: {input_description}\n"
+                                        "{exception_message}")
 
         trade_parameters = {}
 
@@ -238,10 +297,17 @@ class AnnotationSolution(HackathonSolution):
         retriever.init_all()
 
         # Maturity
+        extracted_maturity = None
         try:
-            if extracted_maturity := retriever.retrieve(
+            extracted_maturity = retriever.retrieve(
                 input_text=input_description, param_description=self.maturity_description, is_required=False
-            ):
+            )
+        except Exception as e:
+            trade_parameters["maturity_date"] = error_message_prefix + str(e)
+            trade_parameters["tenor_years"] = error_message_prefix + str(e)
+
+        if extracted_maturity is not None:
+            try:
                 maturity = DateOrTenorEntry(text=extracted_maturity)
                 maturity.run_generate()
                 if date := maturity.date:
@@ -249,21 +315,31 @@ class AnnotationSolution(HackathonSolution):
                 else:
                     trade_parameters["tenor_years"] = str(FloatUtil.to_int_or_float(v)) if (
                         v := maturity.years) else None
-        except Exception as e:
-            trade_parameters["maturity_date"] = error_message_prefix + str(e)
-            trade_parameters["tenor_years"] = error_message_prefix + str(e)
+            except Exception as e:
+                formatted_error_message = entry_error_message_template.format(extracted_field=extracted_maturity,
+                                                                              exception_message=str(e))
+
+                trade_parameters["maturity_date"] = formatted_error_message
+                trade_parameters["tenor_years"] = formatted_error_message
 
         # Effective date
+        extracted_effective_date = None
         try:
-            if extracted_effective_date := retriever.retrieve(
+            extracted_effective_date = retriever.retrieve(
                     input_text=input_description, param_description=self.effective_date_description, is_required=False
-            ):
+            )
+        except Exception as e:
+            trade_parameters["effective_date"] = error_message_prefix + str(e)
+
+        if extracted_effective_date is not None:
+            try:
                 effective_date = DateEntry(text=extracted_effective_date)
                 effective_date.run_generate()
                 if date := effective_date.date:
                     trade_parameters["effective_date"] = date
-        except Exception as e:
-            trade_parameters["effective_date"] = error_message_prefix + str(e)
+            except Exception as e:
+                trade_parameters["effective_date"] = entry_error_message_template.format(extracted_field=extracted_effective_date,
+                                                                                         exception_message=str(e))
 
         # Notional
         try:
