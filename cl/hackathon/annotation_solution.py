@@ -44,9 +44,6 @@ class AnnotationSolution(HackathonSolution):
     legs_annotation_prompt: str = missing()
     """Prompt to surround information about each leg in curly braces."""
 
-    leg_type_prompt: str = missing()
-    """Prompt to determine the leg type."""
-
     parameter_annotation_prompt: str = missing()
     """Prompt to surround the specified parameter in curly braces."""
 
