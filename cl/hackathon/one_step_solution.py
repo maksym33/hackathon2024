@@ -51,103 +51,143 @@ class OneStepSolution(HackathonSolution):
         if json_output:
 
             # Effective date
-            effective_date = json_output.get("effective_date")
-            if effective_date is not None:
-                effective_date = DateEntry(text=str(effective_date))
-                effective_date.run_generate()
-                output_.effective_date = effective_date.date
+            try:
+                effective_date = json_output.get("effective_date")
+                if effective_date is not None:
+                    effective_date = DateEntry(text=str(effective_date))
+                    effective_date.run_generate()
+                    output_.effective_date = effective_date.date
+            except Exception as e:
+                output_.effective_date = str(e)
 
             # Maturity date
-            maturity_date = json_output.get("maturity_date")
-            if maturity_date is not None:
-                maturity_date = DateEntry(text=str(maturity_date))
-                maturity_date.run_generate()
-                output_.maturity_date = maturity_date.date
+            try:
+                maturity_date = json_output.get("maturity_date")
+                if maturity_date is not None:
+                    maturity_date = DateEntry(text=str(maturity_date))
+                    maturity_date.run_generate()
+                    output_.maturity_date = maturity_date.date
+            except Exception as e:
+                output_.maturity_date = str(e)
 
             # Tenor
-            tenor_years = json_output.get("tenor_years")
-            if isinstance(tenor_years, int):
-                output_.tenor_years = str(FloatUtil.to_int_or_float(tenor_years))
-            elif tenor_years is not None:
-                tenor_years = NumberEntry(text=str(tenor_years))
-                tenor_years.run_generate()
-                output_.tenor_years = str(FloatUtil.to_int_or_float(tenor_years.value))
+            try:
+                tenor_years = json_output.get("tenor_years")
+                if isinstance(tenor_years, int):
+                    output_.tenor_years = str(FloatUtil.to_int_or_float(tenor_years))
+                elif tenor_years is not None:
+                    tenor_years = NumberEntry(text=str(tenor_years))
+                    tenor_years.run_generate()
+                    output_.tenor_years = str(FloatUtil.to_int_or_float(tenor_years.value))
+            except Exception as e:
+                output_.tenor_years = str(e)
 
             # Pay leg notional
-            pay_leg_notional = json_output.get("pay_leg_notional")
-            if isinstance(pay_leg_notional, float):
-                output_.pay_leg_notional = str(FloatUtil.to_int_or_float(pay_leg_notional))
-            elif pay_leg_notional is not None:
-                pay_leg_notional = NumberEntry(text=str(pay_leg_notional))
-                pay_leg_notional.run_generate()
-                output_.pay_leg_notional = str(FloatUtil.to_int_or_float(pay_leg_notional.value))
+            try:
+                pay_leg_notional = json_output.get("pay_leg_notional")
+                if isinstance(pay_leg_notional, float):
+                    output_.pay_leg_notional = str(FloatUtil.to_int_or_float(pay_leg_notional))
+                elif pay_leg_notional is not None:
+                    pay_leg_notional = NumberEntry(text=str(pay_leg_notional))
+                    pay_leg_notional.run_generate()
+                    output_.pay_leg_notional = str(FloatUtil.to_int_or_float(pay_leg_notional.value))
+            except Exception as e:
+                output_.pay_leg_notional = str(e)
 
             # Pay leg currency
-            pay_leg_ccy = json_output.get("pay_leg_ccy")
-            if isinstance(pay_leg_ccy, str):
-                output_.pay_leg_basis = pay_leg_ccy
+            try:
+                pay_leg_ccy = json_output.get("pay_leg_ccy")
+                if isinstance(pay_leg_ccy, str):
+                    output_.pay_leg_basis = pay_leg_ccy
+            except Exception as e:
+                output_.pay_leg_basis = str(e)
 
             # Pay leg payment frequency
-            pay_leg_freq_months = json_output.get("pay_leg_freq_months")
-            if isinstance(pay_leg_freq_months, int):
-                output_.pay_leg_freq_months = str(FloatUtil.to_int_or_float(pay_leg_freq_months))
-            elif pay_leg_freq_months is not None:
-                pay_leg_freq_months_entry = NumberEntry(text=str(pay_leg_freq_months))
-                pay_leg_freq_months_entry.run_generate()
-                output_.pay_leg_freq_months = str(FloatUtil.to_int_or_float(pay_leg_freq_months_entry.value))
+            try:
+                pay_leg_freq_months = json_output.get("pay_leg_freq_months")
+                if isinstance(pay_leg_freq_months, int):
+                    output_.pay_leg_freq_months = str(FloatUtil.to_int_or_float(pay_leg_freq_months))
+                elif pay_leg_freq_months is not None:
+                    pay_leg_freq_months_entry = NumberEntry(text=str(pay_leg_freq_months))
+                    pay_leg_freq_months_entry.run_generate()
+                    output_.pay_leg_freq_months = str(FloatUtil.to_int_or_float(pay_leg_freq_months_entry.value))
+            except Exception as e:
+                output_.pay_leg_freq_months = str(e)
 
             # Pay leg basis
-            pay_leg_basis = json_output.get("pay_leg_basis")
-            if isinstance(pay_leg_basis, str):
-                output_.pay_leg_basis = pay_leg_basis
+            try:
+                pay_leg_basis = json_output.get("pay_leg_basis")
+                if isinstance(pay_leg_basis, str):
+                    output_.pay_leg_basis = pay_leg_basis
+            except Exception as e:
+                output_.pay_leg_basis = str(e)
 
             # Pay leg floating interest rate index
-            pay_leg_float_index = json_output.get("pay_leg_float_index")
-            if isinstance(pay_leg_float_index, str):
-                output_.pay_leg_float_index = pay_leg_float_index
+            try:
+                pay_leg_float_index = json_output.get("pay_leg_float_index")
+                if isinstance(pay_leg_float_index, str):
+                    output_.pay_leg_float_index = pay_leg_float_index
+            except Exception as e:
+                output_.pay_leg_float_index = str(e)
 
             # Pay leg spread in basis points
-            pay_leg_float_spread_bp = json_output.get("pay_leg_float_spread_bp")
-            if isinstance(pay_leg_float_spread_bp, float):
-                output_.pay_leg_float_spread_bp = str(FloatUtil.to_int_or_float(pay_leg_float_spread_bp))
-            elif pay_leg_float_spread_bp is not None:
-                pay_leg_float_spread_bp = NumberEntry(text=str(pay_leg_float_spread_bp))
-                pay_leg_float_spread_bp.run_generate()
-                output_.pay_leg_float_spread_bp = str(FloatUtil.to_int_or_float(pay_leg_float_spread_bp.value))
+            try:
+                pay_leg_float_spread_bp = json_output.get("pay_leg_float_spread_bp")
+                if isinstance(pay_leg_float_spread_bp, float):
+                    output_.pay_leg_float_spread_bp = str(FloatUtil.to_int_or_float(pay_leg_float_spread_bp))
+                elif pay_leg_float_spread_bp is not None:
+                    pay_leg_float_spread_bp = NumberEntry(text=str(pay_leg_float_spread_bp))
+                    pay_leg_float_spread_bp.run_generate()
+                    output_.pay_leg_float_spread_bp = str(FloatUtil.to_int_or_float(pay_leg_float_spread_bp.value))
+            except Exception as e:
+                output_.pay_leg_float_spread_bp = str(e)
 
             # Pay leg fixed rate in percent
-            pay_leg_fixed_rate_pct = json_output.get("pay_leg_fixed_rate_pct")
-            if isinstance(pay_leg_fixed_rate_pct, float):
-                output_.pay_leg_fixed_rate_pct = str(FloatUtil.to_int_or_float(pay_leg_fixed_rate_pct))
-            elif pay_leg_fixed_rate_pct is not None:
-                pay_leg_fixed_rate_pct = NumberEntry(text=str(pay_leg_fixed_rate_pct))
-                pay_leg_fixed_rate_pct.run_generate()
-                output_.pay_leg_fixed_rate_pct = str(FloatUtil.to_int_or_float(pay_leg_fixed_rate_pct.value))
+            try:
+                pay_leg_fixed_rate_pct = json_output.get("pay_leg_fixed_rate_pct")
+                if isinstance(pay_leg_fixed_rate_pct, float):
+                    output_.pay_leg_fixed_rate_pct = str(FloatUtil.to_int_or_float(pay_leg_fixed_rate_pct))
+                elif pay_leg_fixed_rate_pct is not None:
+                    pay_leg_fixed_rate_pct = NumberEntry(text=str(pay_leg_fixed_rate_pct))
+                    pay_leg_fixed_rate_pct.run_generate()
+                    output_.pay_leg_fixed_rate_pct = str(FloatUtil.to_int_or_float(pay_leg_fixed_rate_pct.value))
+            except Exception as e:
+                output_.pay_leg_fixed_rate_pct = str(e)
 
             # Receive leg notional
-            rec_leg_notional = json_output.get("rec_leg_notional")
-            if isinstance(rec_leg_notional, float):
-                output_.rec_leg_notional = str(FloatUtil.to_int_or_float(rec_leg_notional))
-            elif rec_leg_notional is not None:
-                rec_leg_notional = NumberEntry(text=str(rec_leg_notional))
-                rec_leg_notional.run_generate()
-                output_.rec_leg_notional = str(FloatUtil.to_int_or_float(rec_leg_notional.value))
+            try:
+                rec_leg_notional = json_output.get("rec_leg_notional")
+                if isinstance(rec_leg_notional, float):
+                    output_.rec_leg_notional = str(FloatUtil.to_int_or_float(rec_leg_notional))
+                elif rec_leg_notional is not None:
+                    rec_leg_notional = NumberEntry(text=str(rec_leg_notional))
+                    rec_leg_notional.run_generate()
+                    output_.rec_leg_notional = str(FloatUtil.to_int_or_float(rec_leg_notional.value))
+            except Exception as e:
+                output_.rec_leg_notional = str(e)
 
             # Receive leg currency
-            rec_leg_ccy = json_output.get("rec_leg_ccy")
-            if isinstance(rec_leg_ccy, str):
-                output_.rec_leg_basis = rec_leg_ccy
+            try:
+                rec_leg_ccy = json_output.get("rec_leg_ccy")
+                if isinstance(rec_leg_ccy, str):
+                    output_.rec_leg_basis = rec_leg_ccy
+            except Exception as e:
+                output_.rec_leg_basis = str(e)
 
             # Receive leg payment frequency
-            rec_leg_freq_months = json_output.get("rec_leg_freq_months")
-            if isinstance(rec_leg_freq_months, int):
-                output_.rec_leg_freq_months = str(FloatUtil.to_int_or_float(rec_leg_freq_months))
-            elif rec_leg_freq_months is not None:
-                rec_leg_freq_months_entry = NumberEntry(text=str(rec_leg_freq_months))
-                rec_leg_freq_months_entry.run_generate()
-                output_.rec_leg_freq_months = str(FloatUtil.to_int_or_float(rec_leg_freq_months_entry.value))
+            try:
+                rec_leg_freq_months = json_output.get("rec_leg_freq_months")
+                if isinstance(rec_leg_freq_months, int):
+                    output_.rec_leg_freq_months = str(FloatUtil.to_int_or_float(rec_leg_freq_months))
+                elif rec_leg_freq_months is not None:
+                    rec_leg_freq_months_entry = NumberEntry(text=str(rec_leg_freq_months))
+                    rec_leg_freq_months_entry.run_generate()
+                    output_.rec_leg_freq_months = str(FloatUtil.to_int_or_float(rec_leg_freq_months_entry.value))
+            except Exception as e:
+                output_.rec_leg_freq_months = str(e)
 
             # Receive leg basis
+
             rec_leg_basis = json_output.get("rec_leg_basis")
             if isinstance(rec_leg_basis, str):
                 output_.rec_leg_basis = rec_leg_basis
@@ -158,21 +198,27 @@ class OneStepSolution(HackathonSolution):
                 output_.rec_leg_float_index = rec_leg_float_index
 
             # Receive leg spread in basis points
-            rec_leg_float_spread_bp = json_output.get("rec_leg_float_spread_bp")
-            if isinstance(rec_leg_float_spread_bp, float):
-                output_.rec_leg_float_spread_bp = str(FloatUtil.to_int_or_float(rec_leg_float_spread_bp))
-            elif rec_leg_float_spread_bp is not None:
-                rec_leg_float_spread_bp = NumberEntry(text=str(rec_leg_float_spread_bp))
-                rec_leg_float_spread_bp.run_generate()
-                output_.rec_leg_float_spread_bp = str(FloatUtil.to_int_or_float(rec_leg_float_spread_bp.value))
+            try:
+                rec_leg_float_spread_bp = json_output.get("rec_leg_float_spread_bp")
+                if isinstance(rec_leg_float_spread_bp, float):
+                    output_.rec_leg_float_spread_bp = str(FloatUtil.to_int_or_float(rec_leg_float_spread_bp))
+                elif rec_leg_float_spread_bp is not None:
+                    rec_leg_float_spread_bp = NumberEntry(text=str(rec_leg_float_spread_bp))
+                    rec_leg_float_spread_bp.run_generate()
+                    output_.rec_leg_float_spread_bp = str(FloatUtil.to_int_or_float(rec_leg_float_spread_bp.value))
+            except Exception as e:
+                output_.rec_leg_float_spread_bp = str(e)
 
             # Receive leg fixed rate in percent
-            rec_leg_fixed_rate_pct = json_output.get("rec_leg_fixed_rate_pct")
-            if isinstance(rec_leg_fixed_rate_pct, float):
-                output_.rec_leg_fixed_rate_pct = str(FloatUtil.to_int_or_float(rec_leg_fixed_rate_pct))
-            elif rec_leg_fixed_rate_pct is not None:
-                rec_leg_fixed_rate_pct = NumberEntry(text=str(rec_leg_fixed_rate_pct))
-                rec_leg_fixed_rate_pct.run_generate()
-                output_.rec_leg_fixed_rate_pct = str(FloatUtil.to_int_or_float(rec_leg_fixed_rate_pct.value))
+            try:
+                rec_leg_fixed_rate_pct = json_output.get("rec_leg_fixed_rate_pct")
+                if isinstance(rec_leg_fixed_rate_pct, float):
+                    output_.rec_leg_fixed_rate_pct = str(FloatUtil.to_int_or_float(rec_leg_fixed_rate_pct))
+                elif rec_leg_fixed_rate_pct is not None:
+                    rec_leg_fixed_rate_pct = NumberEntry(text=str(rec_leg_fixed_rate_pct))
+                    rec_leg_fixed_rate_pct.run_generate()
+                    output_.rec_leg_fixed_rate_pct = str(FloatUtil.to_int_or_float(rec_leg_fixed_rate_pct.value))
+            except Exception as e:
+                output_.rec_leg_fixed_rate_pct = str(e)
 
         return output_
