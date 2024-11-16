@@ -23,7 +23,9 @@ from cl.tradeentry.entries.pay_freq_entry import PayFreqEntry
 from cl.tradeentry.entries.pay_receive_fixed_entry import PayReceiveFixedEntry
 from cl.tradeentry.entries.rates.swaps.rates_swap_leg_entry import RatesSwapLegEntry
 
-_SIDE = "The words Buy or Sell, or the words Pay or Receive"
+_SIDE = """The words Buy or Sell, or the words Pay or Receive, or an indication who pays or receives such as
+'Bank pays', 'Bank receives', 'We pay', 'We receive', 'Client pays', 'Client receives', etc.
+"""
 _FIXED_RATE = "Fixed rate"
 _PAY_FREQ = "Payment frequency"
 

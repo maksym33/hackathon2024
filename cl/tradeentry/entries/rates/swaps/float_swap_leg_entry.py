@@ -23,7 +23,9 @@ from cl.tradeentry.entries.rates.rates_index_entry import RatesIndexEntry
 from cl.tradeentry.entries.rates.rates_spread_entry import RatesSpreadEntry
 from cl.tradeentry.entries.rates.swaps.rates_swap_leg_entry import RatesSwapLegEntry
 
-_SIDE = "The words Buy or Sell, or the words Pay or Receive"
+_SIDE = """The words Buy or Sell, or the words Pay or Receive, or an indication who pays or receives such as
+'Bank pays', 'Bank receives', 'We pay', 'We receive', 'Client pays', 'Client receives', etc.
+"""
 _MATURITY = "Either maturity date as a date, or tenor (length) as the number of years and/or months"
 _EFFECTIVE_DATE = "Effective date as date"
 _PAY_FREQ = "Payment frequency"
