@@ -11,20 +11,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import Final
-
+from cl.runtime import Context
+from cl.runtime import RecordMixin
+from cl.runtime.plots.heat_map_plot import HeatMapPlot
+from cl.runtime.primitive.case_util import CaseUtil
+from cl.runtime.records.dataclasses_extensions import field
+from cl.runtime.records.dataclasses_extensions import missing
 from cl.hackathon.hackathon_input_key import HackathonInputKey
 from cl.hackathon.hackathon_output import HackathonOutput
 from cl.hackathon.hackathon_output_key import HackathonOutputKey
 from cl.hackathon.hackathon_score_item import HackathonScoreItem
 from cl.hackathon.hackathon_scoring_key import HackathonScoringKey
 from cl.hackathon.hackathon_solution_key import HackathonSolutionKey
-from cl.runtime import RecordMixin, Context
-from cl.runtime.plots.heat_map_plot import HeatMapPlot
-from cl.runtime.primitive.case_util import CaseUtil
-from cl.runtime.records.dataclasses_extensions import missing, field
 
 EXPECTED_RESULTS_SOLUTION_ID: Final[str] = "ExpectedResults"
 
@@ -46,10 +48,7 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
         return HackathonScoringKey(solution=self.solution)
 
     def get_score_item(
-        self,
-        input_key: HackathonInputKey,
-        actual_output: HackathonOutput,
-        expected_output: HackathonOutput
+        self, input_key: HackathonInputKey, actual_output: HackathonOutput, expected_output: HackathonOutput
     ) -> HackathonScoreItem:
         """Compare actual output with expected output and return HackathonScoreItem."""
 
@@ -84,7 +83,7 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
             actual_output=actual_output.get_key(),
             expected_output=expected_output.get_key(),
             matched_fields=matched_fields,
-            mismatched_fields=mismatched_fields
+            mismatched_fields=mismatched_fields,
         )
 
     def update_outputs(self):
@@ -128,7 +127,7 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
             input_key = input_.get_key()
 
             # Load outputs for current input with trial_id
-            for trial_index in range(1, self.trial_count+1):
+            for trial_index in range(1, self.trial_count + 1):
 
                 # Create actual output for current input and trial_index
                 actual_output_key = HackathonOutputKey(

@@ -69,7 +69,9 @@ class AnnotationSolution(HackathonSolution):
     currency_description: str = "Currency"
     """Description of the currency to use with the parameter annotation prompt."""
 
-    def _extract_notional(self, retriever: AnnotatingRetriever, input_description: str, leg_type: str | None = None) -> (float, str):
+    def _extract_notional(
+        self, retriever: AnnotatingRetriever, input_description: str, leg_type: str | None = None
+    ) -> (float, str):
         notional_amount = None
         notional_currency = None
         context = Context.current()
@@ -100,13 +102,16 @@ class AnnotationSolution(HackathonSolution):
         return notional_amount, notional_currency
 
     def _leg_entry_to_dict(self, trade_description: str, leg_type: str) -> Dict:
-        retriever_error_message_prefix = ("Error trying to extract the field from the trade description\n"
-                                          f"Leg description: {trade_description}\n")
+        retriever_error_message_prefix = (
+            "Error trying to extract the field from the trade description\n" f"Leg description: {trade_description}\n"
+        )
 
-        entry_error_message_template = ("Error trying to process an extracted field from the trade description\n"
-                                        "Extracted field: {extracted_field}\n"
-                                        f"Leg description: {trade_description}\n"
-                                        "{exception_message}")
+        entry_error_message_template = (
+            "Error trying to process an extracted field from the trade description\n"
+            "Extracted field: {extracted_field}\n"
+            f"Leg description: {trade_description}\n"
+            "{exception_message}"
+        )
 
         param_description_suffix = f" for the {leg_type}"
 
@@ -136,11 +141,13 @@ class AnnotationSolution(HackathonSolution):
             try:
                 freq_months = PayFreqMonthsEntry(text=extracted_freq_months)
                 freq_months.run_generate()
-                entry_dict["freq_months"] = str(FloatUtil.to_int_or_float(v)) if (
-                    v := freq_months.pay_freq_months) else None
+                entry_dict["freq_months"] = (
+                    str(FloatUtil.to_int_or_float(v)) if (v := freq_months.pay_freq_months) else None
+                )
             except Exception as e:
-                entry_dict["freq_months"] = entry_error_message_template.format(extracted_field=extracted_freq_months,
-                                                                                exception_message=str(e))
+                entry_dict["freq_months"] = entry_error_message_template.format(
+                    extracted_field=extracted_freq_months, exception_message=str(e)
+                )
 
         # Floating rate index
         extracted_float_index = None
@@ -158,8 +165,9 @@ class AnnotationSolution(HackathonSolution):
                 if rates_index_key := float_index.rates_index:
                     entry_dict["float_index"] = rates_index_key.rates_index_id
             except Exception as e:
-                entry_dict["float_index"] = entry_error_message_template.format(extracted_field=extracted_float_index,
-                                                                                exception_message=str(e))
+                entry_dict["float_index"] = entry_error_message_template.format(
+                    extracted_field=extracted_float_index, exception_message=str(e)
+                )
 
         # Floating rate spread
         extracted_float_spread = None
@@ -176,8 +184,9 @@ class AnnotationSolution(HackathonSolution):
                 float_spread.run_generate()
                 entry_dict["float_spread"] = str(FloatUtil.to_int_or_float(v)) if (v := float_spread.value) else None
             except Exception as e:
-                entry_dict["float_spread"] = entry_error_message_template.format(extracted_field=extracted_float_spread,
-                                                                                 exception_message=str(e))
+                entry_dict["float_spread"] = entry_error_message_template.format(
+                    extracted_field=extracted_float_spread, exception_message=str(e)
+                )
 
         # Day-count Basis
         extracted_basis = None
@@ -194,8 +203,9 @@ class AnnotationSolution(HackathonSolution):
                 basis.run_generate()
                 entry_dict["basis"] = basis.basis
             except Exception as e:
-                entry_dict["basis"] = entry_error_message_template.format(extracted_field=extracted_basis,
-                                                                          exception_message=str(e))
+                entry_dict["basis"] = entry_error_message_template.format(
+                    extracted_field=extracted_basis, exception_message=str(e)
+                )
 
         # Notional
         try:
@@ -225,8 +235,9 @@ class AnnotationSolution(HackathonSolution):
                     )
                     entry_dict["currency"] = notional_currency_entry_currency.iso_code
             except Exception as e:
-                entry_dict["currency"] = entry_error_message_template.format(extracted_field=extracted_currency,
-                                                                             exception_message=str(e))
+                entry_dict["currency"] = entry_error_message_template.format(
+                    extracted_field=extracted_currency, exception_message=str(e)
+                )
 
         # Fixed Rate
         extracted_fixed_rate = None
@@ -243,20 +254,25 @@ class AnnotationSolution(HackathonSolution):
                 fixed_rate.run_generate()
                 entry_dict["fixed_rate"] = str(FloatUtil.to_int_or_float(v)) if (v := fixed_rate.value) else None
             except Exception as e:
-                entry_dict["fixed_rate"] = entry_error_message_template.format(extracted_field=extracted_fixed_rate,
-                                                                               exception_message=str(e))
+                entry_dict["fixed_rate"] = entry_error_message_template.format(
+                    extracted_field=extracted_fixed_rate, exception_message=str(e)
+                )
 
         return entry_dict
 
     def _retrieve_trade_parameters(self, input_description: str) -> Dict:
 
-        error_message_prefix = ("Error trying to extract the field from the trade description\n"
-                                f"General trade information: {input_description}\n")
+        error_message_prefix = (
+            "Error trying to extract the field from the trade description\n"
+            f"General trade information: {input_description}\n"
+        )
 
-        entry_error_message_template = ("Error trying to process an extracted field from the trade description\n"
-                                        "Extracted field: {extracted_field}\n"
-                                        f"General trade information: {input_description}\n"
-                                        "{exception_message}")
+        entry_error_message_template = (
+            "Error trying to process an extracted field from the trade description\n"
+            "Extracted field: {extracted_field}\n"
+            f"General trade information: {input_description}\n"
+            "{exception_message}"
+        )
 
         trade_parameters = {}
 
@@ -288,11 +304,13 @@ class AnnotationSolution(HackathonSolution):
                 if date := maturity.date:
                     trade_parameters["maturity_date"] = date
                 else:
-                    trade_parameters["tenor_years"] = str(FloatUtil.to_int_or_float(v)) if (
-                        v := maturity.years) else None
+                    trade_parameters["tenor_years"] = (
+                        str(FloatUtil.to_int_or_float(v)) if (v := maturity.years) else None
+                    )
             except Exception as e:
-                formatted_error_message = entry_error_message_template.format(extracted_field=extracted_maturity,
-                                                                              exception_message=str(e))
+                formatted_error_message = entry_error_message_template.format(
+                    extracted_field=extracted_maturity, exception_message=str(e)
+                )
 
                 trade_parameters["maturity_date"] = formatted_error_message
                 trade_parameters["tenor_years"] = formatted_error_message
@@ -313,8 +331,9 @@ class AnnotationSolution(HackathonSolution):
                 if date := effective_date.date:
                     trade_parameters["effective_date"] = date
             except Exception as e:
-                trade_parameters["effective_date"] = entry_error_message_template.format(extracted_field=extracted_effective_date,
-                                                                                         exception_message=str(e))
+                trade_parameters["effective_date"] = entry_error_message_template.format(
+                    extracted_field=extracted_effective_date, exception_message=str(e)
+                )
 
         # Notional
         try:
@@ -373,4 +392,3 @@ class AnnotationSolution(HackathonSolution):
         output_.rec_leg_ccy = rec_leg_parameters.get("currency")
 
         return output_
-

@@ -15,13 +15,12 @@
 from dataclasses import dataclass
 from typing import List
 from typing_extensions import Self
-
-from cl.hackathon.hackathon_scoring import HackathonScoring
 from cl.runtime import Context
 from cl.runtime import RecordMixin
 from cl.runtime.records.dataclasses_extensions import missing
 from cl.hackathon.hackathon_input import HackathonInput
 from cl.hackathon.hackathon_output import HackathonOutput
+from cl.hackathon.hackathon_scoring import HackathonScoring
 from cl.hackathon.hackathon_solution_key import HackathonSolutionKey
 from cl.hackathon.hackathon_trade_group_key import HackathonTradeGroupKey
 

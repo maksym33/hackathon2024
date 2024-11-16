@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from dataclasses import field
 from typing import List
-from cl.hackathon.hackathon_score_item_key import HackathonScoreItemKey
 from cl.runtime import RecordMixin
+from cl.hackathon.hackathon_score_item_key import HackathonScoreItemKey
 
 
 @dataclass(slots=True, kw_only=True)
@@ -33,5 +34,5 @@ class HackathonScoreItem(HackathonScoreItemKey, RecordMixin[HackathonScoreItemKe
             scoring=self.scoring,
             input=self.input,
             actual_output=self.actual_output,
-            expected_output=self.expected_output
+            expected_output=self.expected_output,
         )
