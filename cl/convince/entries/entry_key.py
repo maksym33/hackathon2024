@@ -54,4 +54,3 @@ EntryId: {self.entry_id}
 
         # Return self to enable method chaining
         return self
-

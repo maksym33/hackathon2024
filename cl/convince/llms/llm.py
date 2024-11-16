@@ -15,11 +15,10 @@
 from abc import ABC
 from abc import abstractmethod
 from dataclasses import dataclass
-
-from cl.convince.llms.completion_util import CompletionUtil
 from cl.runtime.primitive.timestamp import Timestamp
 from cl.runtime.records.record_mixin import RecordMixin
 from cl.convince.llms.completion_cache import CompletionCache
+from cl.convince.llms.completion_util import CompletionUtil
 from cl.convince.llms.llm_key import LlmKey
 
 

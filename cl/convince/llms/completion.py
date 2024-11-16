@@ -15,17 +15,15 @@
 from abc import ABC
 from abc import abstractmethod
 from dataclasses import dataclass
-
 from typing_extensions import Self
-
-from cl.convince.llms.completion_key import CompletionKey
-from cl.convince.llms.llm_key import LlmKey
 from cl.runtime.experiments.trial_key import TrialKey
 from cl.runtime.log.exceptions.user_error import UserError
 from cl.runtime.primitive.string_util import StringUtil
 from cl.runtime.primitive.timestamp import Timestamp
 from cl.runtime.records.dataclasses_extensions import missing
 from cl.runtime.records.record_mixin import RecordMixin
+from cl.convince.llms.completion_key import CompletionKey
+from cl.convince.llms.llm_key import LlmKey
 
 
 @dataclass(slots=True, kw_only=True)
@@ -68,7 +66,10 @@ class Completion(CompletionKey, RecordMixin[CompletionKey], ABC):
         # Generate digest if multiline or more than 80 characters
         self.completion_id = StringUtil.digest(
             self.query,
-            text_params=(self.llm.llm_id, self.trial.trial_id,),
+            text_params=(
+                self.llm.llm_id,
+                self.trial.trial_id,
+            ),
         )
 
         # Return self to enable method chaining

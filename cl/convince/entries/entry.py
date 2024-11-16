@@ -76,8 +76,11 @@ class Entry(EntryKey, RecordMixin[EntryKey], ABC):
         # Generate digest if multiline or more than 80 characters
         self.entry_id = StringUtil.digest(
             self.text,
-            text_params=(self.entry_type, self.locale,),
-            hash_params=(self.data,)
+            text_params=(
+                self.entry_type,
+                self.locale,
+            ),
+            hash_params=(self.data,),
         )
 
         # Return self to enable method chaining
@@ -125,5 +128,3 @@ class Entry(EntryKey, RecordMixin[EntryKey], ABC):
         """Unmark verified."""
         self.verified = False
         Context.current().save_one(self)
-
-

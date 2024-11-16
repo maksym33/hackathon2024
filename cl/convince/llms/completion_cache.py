@@ -19,12 +19,11 @@ from dataclasses import dataclass
 from typing import Any
 from typing import Dict
 from typing import Iterable
-
-from cl.convince.llms.completion_util import CompletionUtil
 from cl.runtime.context.env_util import EnvUtil
 from cl.runtime.records.dataclasses_extensions import field
 from cl.runtime.settings.context_settings import ContextSettings
 from cl.runtime.settings.project_settings import ProjectSettings
+from cl.convince.llms.completion_util import CompletionUtil
 
 _supported_extensions = ["csv"]
 """The list of supported output file extensions (formats)."""
@@ -180,5 +179,6 @@ class CompletionCache:
                     )
 
                 # Read cached completions, ignoring request_id at position 0
-                self.__completion_dict.update({row[1]: row[2] for row_ in reader if (row := CompletionUtil.to_python_eol(row_))})
-
+                self.__completion_dict.update(
+                    {row[1]: row[2] for row_ in reader if (row := CompletionUtil.to_python_eol(row_))}
+                )
