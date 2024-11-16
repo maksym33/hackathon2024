@@ -39,7 +39,7 @@ Description of trade entry leg:
 class AnyLegEntry(Entry):
     """Capture any leg type from user input, leg type is determined from the input."""
 
-    leg: EntryKey = missing()
+    leg: EntryKey | None = None
     """Entry for the leg."""
 
     def get_base_type(self) -> Type:

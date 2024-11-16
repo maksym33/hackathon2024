@@ -25,5 +25,5 @@ from cl.tradeentry.entries.trade_entry import TradeEntry
 class AnyTradeEntry(TradeEntry):
     """Capture trade for any asset class from user input, trade type is determined from the input."""
 
-    trade: EntryKey = missing()
+    trade: EntryKey | None = None
     """Entry for the trade."""

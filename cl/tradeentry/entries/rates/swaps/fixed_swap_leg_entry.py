@@ -34,7 +34,7 @@ _PAY_FREQ = "Payment frequency"
 class FixedSwapLegEntry(RatesSwapLegEntry):
     """A series of interest rate payments with fixed coupon."""
 
-    fixed_rate: EntryKey = missing()
+    fixed_rate: EntryKey | None = None
     """Fixed rate entry."""
 
     def run_generate(self) -> None:

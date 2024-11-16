@@ -25,5 +25,5 @@ from cl.tradeentry.entries.trade_entry import TradeEntry
 class RatesTradeEntry(TradeEntry):
     """Capture an interest rate trade from user input, trade type is determined from the input."""
 
-    rates_trade: EntryKey = missing()
+    rates_trade: EntryKey | None = None
     """Entry for a rates trade."""
