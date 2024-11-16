@@ -62,7 +62,7 @@ class NumberEntry(Entry):
                 raise ErrorUtil.value_error(
                     self.text,
                     details=f"Numerical description of a number with suffix could not be parsed "
-                    f"using language code {self.lang}.",
+                    f"using language code {self.locale}.",
                     value_name="number",
                     method_name="run_generate",
                     data_type=NumberEntry.__name__,
