@@ -183,13 +183,16 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
         self.score = score
         self.max_score = max_score
 
-    def view_heatmap(self):
+    def view_heatmap(self) -> None:
         """Heatmap with average scores for each field and trade."""
 
         context = Context.current()
 
         scoring_items = context.load_all(HackathonScoreItem)
         filtered_scoring_items = [item for item in scoring_items if item.scoring == self.get_key()]
+
+        if len(filtered_scoring_items) == 0:
+            return None
 
         first_item = filtered_scoring_items[0]
         fields = first_item.matched_fields + first_item.mismatched_fields
