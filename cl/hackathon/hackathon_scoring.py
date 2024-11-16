@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from collections import defaultdict
+from collections import defaultdict, Counter
 from dataclasses import dataclass
-from typing import Final
+from typing import Final, List
+
+from cl.hackathon.hackathon_scoring_statistics import HackathonScoringStatistics
 from cl.runtime import Context
 from cl.runtime import RecordMixin
 from cl.runtime.plots.heat_map_plot import HeatMapPlot
@@ -218,3 +220,49 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
         heat_map_plot.y_label = "Trades"
 
         return heat_map_plot.get_view()
+
+    def view_statistics(self) -> List[HackathonScoringStatistics]:
+
+        context = Context.current()
+
+        # Load solution record
+        solution = context.load_one(HackathonSolutionKey, self.solution)
+
+        # Get solution inputs
+        inputs = solution.get_inputs()
+
+        all_outputs = context.load_all(HackathonOutput)
+
+        first_output = all_outputs[0]
+        expected_output_key_fields = first_output.get_key().__slots__
+        expected_output_fields = first_output.__slots__
+        fields_to_compare = [f for f in expected_output_fields if f not in expected_output_key_fields]
+
+        all_statistics = []
+
+        for input_ in inputs:
+            statistics = HackathonScoringStatistics(solution=self.solution, trade_id=input_.trade_id, entry_text=input_.entry_text)
+
+            filtered_outputs = [output for output in all_outputs if output.solution == self.solution and output.trade_group == solution.trade_group and output.trade_id == input_.trade_id]
+
+            for field_name in fields_to_compare:
+
+                if field_name == "entry_text":
+                    continue
+
+                field_values = [getattr(output, field_name, None) for output in filtered_outputs]
+
+                # TODO: Use 'Error' for long values
+
+                field_statistics = "\n".join(map(
+                    lambda x: f"{x[0]} ({x[1]}/{self.trial_count})" if x[1] > 1 else x[0],
+                    Counter(field_values).items()
+                ))
+
+                setattr(statistics, field_name, field_statistics)
+
+            context.save_one(statistics)
+            all_statistics.append(statistics)
+
+        return all_statistics
+
