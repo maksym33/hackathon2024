@@ -26,7 +26,12 @@ def test_rates_swap_entry():
     with TestingContext():
         guard = RegressionGuard()
 
-        fixed_for_floating_swap_description = """Swap Details, Notional - 10,000,000,000, Bank pays - 6M USD Term SOFR, semi-annual, act/360, Bank receives - USD fixed 3.45%, semi-annual, act/360, Notional exchange -  None, Start date - 10 November 2009, Tenor - 5y"""
+        fixed_for_floating_swap_description = """Notional: 10,000,000,000
+Bank pays: 6M USD Term SOFR, semi-annual, act/360
+Bank receives: USD fixed 3.45%, semi-annual, act/360
+Notional exchange:  None
+Start date: 10 November 2009
+Tenor: 5y"""
         rates_swap_entry = RatesSwapEntry(text=fixed_for_floating_swap_description)
         rates_swap_entry.init()
         rates_swap_entry.run_generate()
