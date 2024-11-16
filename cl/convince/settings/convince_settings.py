@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 from dataclasses import dataclass
 from typing import Tuple
 from typing_extensions import Self
@@ -26,6 +27,12 @@ class ConvinceSettings(Settings):
     locale: str | None = None
     """Locale in BCP 47 ll-CC where ll is language and CC is country for AI applications, no effect on front end."""
 
+    load_completions_from_csv: bool | None = None
+    """Completions are loaded from CSV files by default, use this field to change."""
+
+    save_completions_to_csv: bool | None = None
+    """Completions are saved to CSV files by default on Windows only, use this field to change."""
+
     _language: str | None = None
     """Two-letter lowercase language code for AI applications, no effect on front end."""
 
@@ -37,6 +44,14 @@ class ConvinceSettings(Settings):
         # Set default locale
         if self.locale is None:
             self.locale = "en-US"
+
+        # Load completions from a local file unless turned off explicitly
+        if self.load_completions_from_csv is None:
+            self.load_completions_from_csv = True
+
+        # Save completions to a local file on Windows only
+        if self.save_completions_to_csv is None:
+            self.save_completions_to_csv = (os.name == "nt")
 
         # Validate locale and get language and region
         language, country = self.parse_locale(self.locale)

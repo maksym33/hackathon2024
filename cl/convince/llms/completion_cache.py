@@ -19,6 +19,7 @@ from typing import Any
 from typing import Dict
 from cl.convince.llms.completion import Completion
 from cl.convince.llms.llm_key import LlmKey
+from cl.convince.settings.convince_settings import ConvinceSettings
 from cl.runtime import Context
 from cl.runtime.context.env_util import EnvUtil
 from cl.runtime.experiments.trial_key import TrialKey
@@ -104,8 +105,8 @@ class CompletionCache:
     def add(self, request_id: str, query: str, completion: str, *, trial_id: str | int | None = None) -> None:
         """Add to file even if already exits, the latest will take precedence during lookup."""
 
+        # Save completions to DB (including preloads) outside a test
         if not Settings.is_inside_test:
-            # Add completions to DB (including preloads) outside a test
 
             # Create and save a completion record
             completion = Completion(
@@ -117,8 +118,8 @@ class CompletionCache:
             )
             Context.current().save_one(completion)
 
-        else:
-            # Use completions from a local file inside a test
+        # Save completions to a file unless explicitly turned off in ConvinceSettings
+        if ConvinceSettings.instance().save_completions_to_csv:
 
             # Check if the file already exists
             is_new = not os.path.exists(self.output_path)
@@ -197,7 +198,8 @@ class CompletionCache:
 
     def load_cache_file(self) -> None:
         """Load cache file."""
-        if os.path.exists(self.output_path):
+        # Load if the file exists unless explicitly turned off in ConvinceSettings
+        if ConvinceSettings.instance().load_completions_from_csv and os.path.exists(self.output_path):
             # Populate the dictionary from file if exists but not yet loaded
             with open(self.output_path, mode="r", newline="", encoding="utf-8") as file:
                 reader = csv.reader(file, delimiter=",", quotechar='"', escapechar="\\", lineterminator=os.linesep)
@@ -237,4 +239,3 @@ class CompletionCache:
                     self.__completion_dict.update(
                         {row[1]: row[2] for row_ in reader if (row := CompletionUtil.to_python_eol(row_))}
                     )
-
