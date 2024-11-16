@@ -27,7 +27,7 @@ def test_fixed_leg_swap_entry():
         )
         fixed_swap_leg_entry.init()
         fixed_swap_leg_entry.run_generate()
-        guard.write(str(fixed_swap_leg_entry))
+        guard.write(fixed_swap_leg_entry)
 
         RegressionGuard().verify_all()
 

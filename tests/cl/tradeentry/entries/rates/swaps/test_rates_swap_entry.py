@@ -35,7 +35,7 @@ Tenor: 5y"""
         rates_swap_entry = RatesSwapEntry(text=fixed_for_floating_swap_description)
         rates_swap_entry.init()
         rates_swap_entry.run_generate()
-        guard.write(str(rates_swap_entry))
+        guard.write(rates_swap_entry)
 
         RegressionGuard().verify_all()
 

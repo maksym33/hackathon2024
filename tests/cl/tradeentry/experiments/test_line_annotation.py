@@ -98,7 +98,7 @@ def _testing_formatted_string(trade_description: str, run_count: int) -> plt.Fig
             json_result = RetrieverUtil.extract_json(result)
             guard = RegressionGuard(channel=llm.llm_id)
             if json_result is not None:
-                guard.write(str(json_result))
+                guard.write(json_result)
             else:
                 guard.write("ERROR: can not extract json")
 
