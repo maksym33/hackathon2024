@@ -15,6 +15,8 @@
 from dataclasses import dataclass
 from typing import List
 from typing_extensions import Self
+
+from cl.hackathon.hackathon_scoring_key import HackathonScoringKey
 from cl.runtime import Context
 from cl.runtime import RecordMixin
 from cl.runtime.records.dataclasses_extensions import missing
@@ -46,7 +48,12 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey])
 
     def init(self) -> Self:
         """Similar to __init__ but can use fields set after construction, return self to enable method chaining."""
-        pass  # TODO: Provide initialization
+        # Save scoring object if does not exist
+        solution_key = self.get_key()
+        scoring_key = HackathonScoringKey(solution=solution_key)
+        if Context.current().load_one(HackathonScoring, scoring_key, is_record_optional=True) is None:
+            scoring_obj = HackathonScoring(solution=solution_key)
+            Context.current().save_one(scoring_obj)
 
         # Return self to enable method chaining
         return self
@@ -58,6 +65,16 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey])
     def view_outputs(self) -> List[HackathonOutput]:
         """Return the list of outputs (each with its score)."""
         return self.get_outputs()
+
+    def view_score(self) -> HackathonScoring:
+        """View the score object."""
+        # Save scoring object if does not exist
+        solution_key = self.get_key()
+        scoring_key = HackathonScoringKey(solution=solution_key)
+        if (result := Context.current().load_one(HackathonScoring, scoring_key, is_record_optional=True)) is None:
+            result = HackathonScoring(solution=solution_key)
+            Context.current().save_one(result)
+        return result
 
     def get_trade_ids_list(self) -> List[int]:
         """Return the list of trade ids from the trade_ids string."""
@@ -119,13 +136,5 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey])
 
     def run_score(self) -> None:
         """Create scoring object for solution."""
-        scoring_obj = HackathonScoring(solution=self.get_key())
+        HackathonScoring(solution=self.get_key()).run_score()
 
-        # TODO (Roman): consider update outputs for scoring elsewhere
-        scoring_obj.update_outputs()
-
-        # Compare solution outputs with expected outputs and save HackathonScoreItems for each pair
-        scoring_obj.calculate()
-
-        # Save scoring object with total score
-        Context.current().save_one(scoring_obj)

@@ -15,7 +15,7 @@
 from collections import defaultdict, Counter
 from dataclasses import dataclass
 from typing import Final, List
-
+from typing_extensions import Self
 from cl.hackathon.hackathon_scoring_statistics import HackathonScoringStatistics
 from cl.runtime import Context
 from cl.runtime import RecordMixin
@@ -37,17 +37,46 @@ EXPECTED_RESULTS_SOLUTION_ID: Final[str] = "ExpectedResults"
 class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
     """Class to perform scoring for hackathon solution."""
 
-    score: int = missing()
+    trial_count: int | None = None
+    """Number of trials for each input."""
+    
+    score: int | None = None
     """Total score for hackathon solution."""
 
-    maximum_score: int = missing()
+    max_score: int | None = None
     """Maximum possible score for solution."""
-
-    trial_count: int = field(default=10)
-    """Number of trials for each input."""
 
     def get_key(self):
         return HackathonScoringKey(solution=self.solution)
+
+    def init(self) -> Self:
+        """Similar to __init__ but can use fields set after construction, return self to enable method chaining."""
+        if self.trial_count is None:
+            self.trial_count = 1
+
+        # Return self to enable method chaining
+        return self
+    
+    def run_score(self) -> None:
+        """Create scoring object for solution."""
+
+        # Reset to prevent the old score from being visible duirng the scoring run
+        self.run_reset()
+
+        # TODO (Roman): Consider updating outputs for scoring elsewhere
+        self.update_outputs()
+
+        # Compare solution outputs with expected outputs and save HackathonScoreItems for each pair
+        self.calculate()
+
+        # Save scoring object with total score
+        Context.current().save_one(self)
+        
+    def run_reset(self) -> None:
+        """Reset the score."""
+        self.score = None
+        self.max_score = None
+        Context.current().save_one(self)
 
     def get_score_item(
         self, input_key: HackathonInputKey, actual_output: HackathonOutput, expected_output: HackathonOutput
@@ -111,7 +140,7 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
         # Set initial values of scoring fields
         details = []
         score = 0
-        maximum_score = 0
+        max_score = 0
 
         # Iterate over inputs, calculate scores and sum them up
         # It is assumed that all outputs exist
@@ -146,13 +175,13 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
 
                 # Sum up scores
                 score += len(score_item.matched_fields)
-                maximum_score += len(score_item.matched_fields) + len(score_item.mismatched_fields)
+                max_score += len(score_item.matched_fields) + len(score_item.mismatched_fields)
 
                 details.append(score_item.get_key())
 
         # Update self with calculated values
         self.score = score
-        self.maximum_score = maximum_score
+        self.max_score = max_score
 
     def view_heatmap(self):
         """Heatmap with average scores for each field and trade."""
