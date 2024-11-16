@@ -1,1 +1,17 @@
-RatesSwapEntry(entry_id='Notional: 10,000,000,000 Bank pays: 6M USD Term SOFR, semi-annual, act/360 Bank (Trade, en-US, ab75c115a8589eb922538f49b934a080)', entry_type='Trade', text='Notional: 10,000,000,000\nBank pays: 6M USD Term SOFR, semi-annual, act/360\nBank receives: USD fixed 3.45%, semi-annual, act/360\nNotional exchange:  None\nStart date: 10 November 2009\nTenor: 5y', locale='en-US', data=None, verified=None, legs=[EntryKey(entry_id='Bank pays: 6M USD Term SOFR, semi-annual, act/360 (AnyLeg, en-US)'), EntryKey(entry_id='Bank receives: USD fixed 3.45%, semi-annual, act/360 (AnyLeg, en-US)')])
+entry_id: 'Notional: 10,000,000,000 Bank pays: 6M USD Term SOFR, semi-annual, act/360 Bank (Trade, en-US, ab75c115a8589eb922538f49b934a080)'
+entry_type: Trade
+text: |-
+  Notional: 10,000,000,000
+  Bank pays: 6M USD Term SOFR, semi-annual, act/360
+  Bank receives: USD fixed 3.45%, semi-annual, act/360
+  Notional exchange:  None
+  Start date: 10 November 2009
+  Tenor: 5y
+locale: en-US
+legs:
+- entry_id: 'Bank pays: 6M USD Term SOFR, semi-annual, act/360 (AnyLeg, en-US)'
+  _type: EntryKey
+- entry_id: 'Bank receives: USD fixed 3.45%, semi-annual, act/360 (AnyLeg, en-US)'
+  _type: EntryKey
+_type: RatesSwapEntry
+

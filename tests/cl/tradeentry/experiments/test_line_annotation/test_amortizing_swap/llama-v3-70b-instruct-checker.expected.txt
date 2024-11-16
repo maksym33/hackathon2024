@@ -127,8 +127,7 @@ FixedLegFixedRate:
   - message: 'ERROR: the rows are not the same'
     input_row: '3: Party A receives: USD fixed 3.20%, semi-annual, act/360'
     extracted_row: '3: Party A receives: USD fixed 3.20%%, semi-annual, act/360'
-    formatted_row: '3: Party A receives: USD fixed {FixedLegFixedRate}%, semi-annual,
-      act/360'
+    formatted_row: '3: Party A receives: USD fixed {FixedLegFixedRate}%, semi-annual, act/360'
   status: BAD
 FixedLegFrequency:
   status: OK
@@ -301,8 +300,7 @@ FixedLegFixedRate:
   - message: 'ERROR: the rows are not the same'
     input_row: '3: Party A receives: USD fixed 3.20%, semi-annual, act/360'
     extracted_row: '3: Party A receives: USD fixed 3.20%%, semi-annual, act/360'
-    formatted_row: '3: Party A receives: USD fixed {FixedLegFixedRate}%, semi-annual,
-      act/360'
+    formatted_row: '3: Party A receives: USD fixed {FixedLegFixedRate}%, semi-annual, act/360'
   status: BAD
 FixedLegFrequency:
   status: OK
@@ -419,8 +417,7 @@ FixedLegFixedRate:
   - message: 'ERROR: the rows are not the same'
     input_row: '3: Party A receives: USD fixed 3.20%, semi-annual, act/360'
     extracted_row: '3: Party A receives: USD fixed 3.20%%, semi-annual, act/360'
-    formatted_row: '3: Party A receives: USD fixed {FixedLegFixedRate}%, semi-annual,
-      act/360'
+    formatted_row: '3: Party A receives: USD fixed {FixedLegFixedRate}%, semi-annual, act/360'
   status: BAD
 FixedLegFrequency:
   status: OK
@@ -593,8 +590,7 @@ FixedLegFixedRate:
   - message: 'ERROR: the rows are not the same'
     input_row: '3: Party A receives: USD fixed 3.20%, semi-annual, act/360'
     extracted_row: '3: Party A receives: USD fixed 3.20%%, semi-annual, act/360'
-    formatted_row: '3: Party A receives: USD fixed {FixedLegFixedRate}%, semi-annual,
-      act/360'
+    formatted_row: '3: Party A receives: USD fixed {FixedLegFixedRate}%, semi-annual, act/360'
   status: BAD
 FixedLegFrequency:
   status: OK
@@ -627,8 +623,7 @@ FixedLegFixedRate:
   - message: 'ERROR: the rows are not the same'
     input_row: '3: Party A receives: USD fixed 3.20%, semi-annual, act/360'
     extracted_row: '3: Party A receives: USD fixed 3.20%%, semi-annual, act/360'
-    formatted_row: '3: Party A receives: USD fixed {FixedLegFixedRate}%, semi-annual,
-      act/360'
+    formatted_row: '3: Party A receives: USD fixed {FixedLegFixedRate}%, semi-annual, act/360'
   status: BAD
 FixedLegFrequency:
   status: OK
@@ -880,8 +875,7 @@ FixedLegFixedRate:
   - message: 'ERROR: the rows are not the same'
     input_row: '3: Party A receives: USD fixed 3.20%, semi-annual, act/360'
     extracted_row: '3: Party A receives: USD fixed 3.20%%, semi-annual, act/360'
-    formatted_row: '3: Party A receives: USD fixed {FixedLegFixedRate}%, semi-annual,
-      act/360'
+    formatted_row: '3: Party A receives: USD fixed {FixedLegFixedRate}%, semi-annual, act/360'
   status: BAD
 FixedLegFrequency:
   status: OK
@@ -993,8 +987,7 @@ FixedLegFixedRate:
   - message: 'ERROR: the rows are not the same'
     input_row: '3: Party A receives: USD fixed 3.20%, semi-annual, act/360'
     extracted_row: '3: Party A receives: USD fixed 3.20%%, semi-annual, act/360'
-    formatted_row: '3: Party A receives: USD fixed {FixedLegFixedRate}%, semi-annual,
-      act/360'
+    formatted_row: '3: Party A receives: USD fixed {FixedLegFixedRate}%, semi-annual, act/360'
   status: BAD
 FixedLegFrequency:
   status: OK
@@ -1195,8 +1188,7 @@ FixedLegFixedRate:
   - message: 'ERROR: the rows are not the same'
     input_row: '3: Party A receives: USD fixed 3.20%, semi-annual, act/360'
     extracted_row: '3: Party A receives: USD fixed 3.20%%, semi-annual, act/360'
-    formatted_row: '3: Party A receives: USD fixed {FixedLegFixedRate}%, semi-annual,
-      act/360'
+    formatted_row: '3: Party A receives: USD fixed {FixedLegFixedRate}%, semi-annual, act/360'
   status: BAD
 FixedLegFrequency:
   status: OK
