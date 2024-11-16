@@ -12,18 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import collections
 import csv
 import os
 from dataclasses import dataclass
 from typing import Any
 from typing import Dict
-from typing import Iterable
+from cl.convince.llms.completion import Completion
+from cl.convince.llms.llm_key import LlmKey
+from cl.runtime import Context
 from cl.runtime.context.env_util import EnvUtil
+from cl.runtime.experiments.trial_key import TrialKey
 from cl.runtime.records.dataclasses_extensions import field
 from cl.runtime.settings.context_settings import ContextSettings
 from cl.runtime.settings.project_settings import ProjectSettings
 from cl.convince.llms.completion_util import CompletionUtil
+from cl.runtime.settings.settings import Settings
 
 _supported_extensions = ["csv"]
 """The list of supported output file extensions (formats)."""
@@ -101,63 +104,96 @@ class CompletionCache:
     def add(self, request_id: str, query: str, completion: str, *, trial_id: str | int | None = None) -> None:
         """Add to file even if already exits, the latest will take precedence during lookup."""
 
-        # Check if the file already exists
-        is_new = not os.path.exists(self.output_path)
+        if not Settings.is_inside_test:
+            # Add completions to DB (including preloads) outside a test
 
-        # If file does not exist, create directory if directory does not exist
-        if is_new:
-            output_dir = os.path.dirname(self.output_path)
-            if not os.path.exists(output_dir):
-                os.makedirs(output_dir)
+            # Create and save a completion record
+            completion = Completion(
+                llm=LlmKey(llm_id=self.channel),
+                trial=TrialKey(trial_id=trial_id) if trial_id is not None else None,
+                query=query,
+                completion=completion,
+                timestamp=request_id,
+            )
+            Context.current().save_one(completion)
 
-        if self.ext == "csv":
-            with open(self.output_path, mode="a", newline="", encoding="utf-8") as file:
-                writer = csv.writer(
-                    file,
-                    delimiter=",",
-                    quotechar='"',
-                    quoting=csv.QUOTE_MINIMAL,
-                    escapechar="\\",
-                    lineterminator=os.linesep,
-                )
-
-                if is_new:
-                    # Write the headers if the file is new
-                    writer.writerow(CompletionUtil.to_os_eol(_csv_headers))
-
-                # NOT ADDING THE VALUE TO COMPLETION DICT HERE IS NOT A BUG
-                # Because we are not adding to the dict here but only writing to a file,
-                # the model will not reuse cached completions within the same session,
-                # preventing incorrect measurement of stability
-
-                # Get cache key with trial_id, EOL normalization, and stripped leading and trailing whitespace
-                cache_key = CompletionUtil.normalize_key(query, trial_id=trial_id)
-
-                # Remove leading and trailing whitespace and normalize EOL in value
-                cached_value = CompletionUtil.normalize_value(completion)
-
-                # Write the new completion without checking if one already exists
-                writer.writerow(CompletionUtil.to_os_eol([request_id, cache_key, cached_value]))
-
-                # Flush immediately to ensure all of the output is on disk in the event of exception
-                file.flush()
         else:
-            # Should not be reached here because of a previous check in __init__
-            _error_extension_not_supported(self.ext)
+            # Use completions from a local file inside a test
+
+            # Check if the file already exists
+            is_new = not os.path.exists(self.output_path)
+
+            # If file does not exist, create directory if directory does not exist
+            if is_new:
+                output_dir = os.path.dirname(self.output_path)
+                if not os.path.exists(output_dir):
+                    os.makedirs(output_dir)
+
+            if self.ext == "csv":
+                with open(self.output_path, mode="a", newline="", encoding="utf-8") as file:
+                    writer = csv.writer(
+                        file,
+                        delimiter=",",
+                        quotechar='"',
+                        quoting=csv.QUOTE_MINIMAL,
+                        escapechar="\\",
+                        lineterminator=os.linesep,
+                    )
+
+                    if is_new:
+                        # Write the headers if the file is new
+                        writer.writerow(CompletionUtil.to_os_eol(_csv_headers))
+
+                    # NOT ADDING THE VALUE TO COMPLETION DICT HERE IS NOT A BUG
+                    # Because we are not adding to the dict here but only writing to a file,
+                    # the model will not reuse cached completions within the same session,
+                    # preventing incorrect measurement of stability
+
+                    # Get cache key with trial_id, EOL normalization, and stripped leading and trailing whitespace
+                    cache_key = CompletionUtil.normalize_key(query, trial_id=trial_id)
+
+                    # Remove leading and trailing whitespace and normalize EOL in value
+                    cached_value = CompletionUtil.normalize_value(completion)
+
+                    # Write the new completion without checking if one already exists
+                    writer.writerow(CompletionUtil.to_os_eol([request_id, cache_key, cached_value]))
+
+                    # Flush immediately to ensure all of the output is on disk in the event of exception
+                    file.flush()
+            else:
+                # Should not be reached here because of a previous check in __init__
+                _error_extension_not_supported(self.ext)
 
     def get(self, query: str, *, trial_id: str | int | None = None) -> str | None:
         """Return completion for the specified query if found and None otherwise."""
 
-        # Add trial_id, strip leading and trailing whitespace, and normalize EOL
-        cache_key = CompletionUtil.normalize_key(query, trial_id=trial_id)
+        if not Settings.is_inside_test:
+            # Use completions from DB (including preloads) outside a test
 
-        # Look up with trial ID
-        result = self.__completion_dict.get(cache_key, None)
+            # Set only those fields that are required for computing the key
+            completion_key = Completion(
+                llm=LlmKey(llm_id=self.channel),
+                trial=TrialKey(trial_id=trial_id) if trial_id is not None else None,
+                query=query,
+            ).get_key()
 
-        if result is not None:
-            # Remove leading and trailing whitespace and normalize EOL in value
-            result = CompletionUtil.normalize_value(result)
-        return result
+            # Return completion string from DB or None if the record is not found
+            completion = Context.current().load_one(Completion, completion_key, is_record_optional=True)
+            result = completion.completion if completion is not None else None
+            return result
+        else:
+            # Use completions from a local file inside a test
+
+            # Add trial_id, strip leading and trailing whitespace, and normalize EOL
+            cache_key = CompletionUtil.normalize_key(query, trial_id=trial_id)
+
+            # Look up with trial ID
+            result = self.__completion_dict.get(cache_key, None)
+
+            if result is not None:
+                # Remove leading and trailing whitespace and normalize EOL in value
+                result = CompletionUtil.normalize_value(result)
+            return result
 
     def load_cache_file(self) -> None:
         """Load cache file."""
@@ -178,7 +214,27 @@ class CompletionCache:
                         f"Actual headers: {headers_in_file_str}."
                     )
 
-                # Read cached completions, ignoring request_id at position 0
-                self.__completion_dict.update(
-                    {row[1]: row[2] for row_ in reader if (row := CompletionUtil.to_python_eol(row_))}
-                )
+                if not Settings.is_inside_test:
+                    # Add completions to DB outside a test
+
+                    # Create and save a completion record
+                    context = Context.current()
+                    tuple(
+                        context.save_one(
+                            Completion(
+                                llm=LlmKey(llm_id=self.channel),
+                                query=row[1],
+                                completion=row[2],
+                                timestamp=row[0],
+                            ),
+                        ) for row_ in reader if (row := CompletionUtil.to_python_eol(row_))
+                    )
+
+                else:
+                    # Add to an in-memory dictionary inside a test
+
+                    # Add cached completions, ignoring request_id at position 0
+                    self.__completion_dict.update(
+                        {row[1]: row[2] for row_ in reader if (row := CompletionUtil.to_python_eol(row_))}
+                    )
+

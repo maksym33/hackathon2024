@@ -42,12 +42,9 @@ class EntryKey(KeyMixin):
             if "(" not in self.entry_id or ")" not in self.entry_id:
                 raise UserError(
                     f"""
-The field 'EntryId' must have one of the following two formats:
+The field 'EntryId' does not conform to one of the valid formats:
 Format 1: digest (type, locale)
 Format 2: digest (type, locale, md5)
-where 'digest' is shortened text and 'md5' is the MD5 hash of the full text
-and data in hexadecimal format with no delimiters. The MD5 hash is only included
-if the text is multiline or exceeds 80 characters and/or the data field is not empty.
 EntryId: {self.entry_id}
 """
                 )

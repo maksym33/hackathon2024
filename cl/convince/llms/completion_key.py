@@ -39,12 +39,9 @@ class CompletionKey(KeyMixin):
             if "(" not in self.completion_id or ")" not in self.completion_id:
                 raise UserError(
                     f"""
-The field 'CompletionId' must have one of the following two formats:
+The field 'CompletionId' does not conform to one of the valid formats:
 Format 1: digest (llm, trial_id)
 Format 2: digest (llm, trial_id, md5)
-where 'digest' is shortened query and 'md5' is the MD5 hash of the full query
-and data in hexadecimal format with no delimiters. The MD5 hash is only included
-if the query exceeds 80 characters in length.
 CompletionId: {self.completion_id}
 """
                 )
