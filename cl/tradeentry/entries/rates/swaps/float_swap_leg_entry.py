@@ -50,6 +50,9 @@ class FloatSwapLegEntry(RatesSwapLegEntry):
     def run_generate(self) -> None:
         """Retrieve parameters from this entry and save the resulting entries."""
 
+        # Reset before regenerating to prevent stale field values
+        self.run_reset()
+
         # Get retriever
         # TODO: Make configurable
         retriever = AnnotatingRetriever(

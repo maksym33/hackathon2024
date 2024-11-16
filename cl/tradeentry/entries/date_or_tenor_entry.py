@@ -55,6 +55,9 @@ class DateOrTenorEntry(Entry):
     def run_generate(self) -> None:
         # TODO: Check if the entry already exists in DB
 
+        # Reset before regenerating to prevent stale field values
+        self.run_reset()
+
         # Try to parse as tenor first
         if matches := re.findall(_TENOR_RE, self.text.lower()):
 

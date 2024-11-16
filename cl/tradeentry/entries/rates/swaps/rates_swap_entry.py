@@ -119,6 +119,9 @@ class RatesSwapEntry(TradeEntry):
     def run_generate(self) -> None:
         """Identify which part of the user input describes each leg and create an AnyLegEntry for each one."""
 
+        # Reset before regenerating to prevent stale field values
+        self.run_reset()
+
         leg_descriptions = self.extract_legs(_PROMPT_TEMPLATE)
 
         self.legs = []

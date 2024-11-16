@@ -37,13 +37,9 @@ class PayFreqMonthsEntry(Entry):
     def run_generate(self) -> None:
         """Retrieve parameters from this entry and save the resulting entries."""
 
-        # TODO: Check if the entry already exists in DB
+        # Reset before regenerating to prevent stale field values
+        self.run_reset()
 
-        if self.verified:
-            raise UserError(
-                f"Entry {self.entry_id} is marked as verified, run Unmark Verified before running Propose."
-                f"This is a safety feature to prevent overwriting verified entries. "
-            )
         # Get retriever
         # TODO: Make configurable
         retriever = MultipleChoiceRetriever(

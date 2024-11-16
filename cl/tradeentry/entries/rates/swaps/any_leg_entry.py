@@ -93,6 +93,9 @@ class AnyLegEntry(Entry):
     def run_generate(self) -> None:
         """Determine the leg type from the input and create an object of the corresponding type."""
 
+        # Reset before regenerating to prevent stale field values
+        self.run_reset()
+
         leg_type = self.determine_leg_type(_PROMPT_TEMPLATE)
 
         if leg_type == "Floating":
