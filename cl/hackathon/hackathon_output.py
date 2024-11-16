@@ -13,6 +13,10 @@
 # limitations under the License.
 
 from dataclasses import dataclass
+from typing import List
+
+from cl.convince.retrievers.annotating_retrieval import AnnotatingRetrieval
+from cl.runtime import Context
 from cl.runtime import RecordMixin
 from cl.runtime.records.dataclasses_extensions import missing
 from cl.hackathon.hackathon_output_key import HackathonOutputKey
@@ -44,7 +48,7 @@ class HackathonOutput(HackathonOutputKey, RecordMixin[HackathonOutputKey]):
     """Pay leg payment frequency in months, for example 3."""
 
     pay_leg_basis: str | None = None
-    """Pay leg daycount basis as specified, for example actual/360."""
+    """Pay leg day-count basis as specified, for example actual/360."""
 
     pay_leg_float_index: str | None = None
     """Pay leg floating interest rate index as specified, e.g., '3m Term SOFR' (omit for a fixed leg)."""
@@ -65,7 +69,7 @@ class HackathonOutput(HackathonOutputKey, RecordMixin[HackathonOutputKey]):
     """Pay leg payment frequency in months, for example 3."""
 
     rec_leg_basis: str | None = None
-    """Pay leg daycount basis as specified, for example actual/360."""
+    """Pay leg day-count basis as specified, for example actual/360."""
 
     rec_leg_float_index: str | None = None
     """Receive leg floating interest rate index as specified, e.g., '3m Term SOFR' (omit for a fixed leg)."""
@@ -80,3 +84,13 @@ class HackathonOutput(HackathonOutputKey, RecordMixin[HackathonOutputKey]):
         return HackathonOutputKey(
             solution=self.solution, trade_group=self.trade_group, trade_id=self.trade_id, trial_id=self.trial_id
         )
+
+    def view_detailed_information(self) -> List[AnnotatingRetrieval]:
+
+        context = Context.current()
+
+        current_retriever_id = f"{self.solution.solution_id}::{self.trade_group.trade_group_id}::{self.trade_id}::{self.trial_id}"
+        retrievals = context.load_all(AnnotatingRetrieval)
+        filtered_retrievals = [retrieval for retrieval in retrievals if retrieval.retriever.retriever_id == current_retriever_id]
+
+        return filtered_retrievals

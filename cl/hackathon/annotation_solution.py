@@ -101,7 +101,7 @@ class AnnotationSolution(HackathonSolution):
 
         return notional_amount, notional_currency
 
-    def _leg_entry_to_dict(self, trade_description: str, leg_type: str) -> Dict:
+    def _leg_entry_to_dict(self, retriever: AnnotatingRetriever, trade_description: str, leg_type: str) -> Dict:
         retriever_error_message_prefix = (
             "Error trying to extract the field from the trade description\n" f"Leg description: {trade_description}\n"
         )
@@ -116,17 +116,6 @@ class AnnotationSolution(HackathonSolution):
         param_description_suffix = f" for the {leg_type}"
 
         entry_dict = {}
-
-        retriever = AnnotatingRetriever(
-            retriever_id="parameter_annotating_retriever",
-            llm=GptLlm(llm_id="gpt-4o"),
-            prompt=FormattedPrompt(
-                prompt_id="AnnotatingRetriever",
-                params_type=Retrieval.__name__,
-                template=self.parameter_annotation_prompt,
-            ),
-        )
-        retriever.init_all()
 
         # Payment Frequency
         extracted_freq_months = None
@@ -260,7 +249,7 @@ class AnnotationSolution(HackathonSolution):
 
         return entry_dict
 
-    def _retrieve_trade_parameters(self, input_description: str) -> Dict:
+    def _retrieve_trade_parameters(self, retriever: AnnotatingRetriever, input_description: str) -> Dict:
 
         error_message_prefix = (
             "Error trying to extract the field from the trade description\n"
@@ -275,17 +264,6 @@ class AnnotationSolution(HackathonSolution):
         )
 
         trade_parameters = {}
-
-        retriever = AnnotatingRetriever(
-            retriever_id="parameter_annotating_retriever",
-            llm=GptLlm(llm_id="gpt-4o"),
-            prompt=FormattedPrompt(
-                prompt_id="AnnotatingRetriever",
-                params_type=Retrieval.__name__,
-                template=self.parameter_annotation_prompt,
-            ),
-        )
-        retriever.init_all()
 
         # Maturity
         extracted_maturity = None
@@ -355,7 +333,19 @@ class AnnotationSolution(HackathonSolution):
             entry_text=input_.entry_text,
         )
 
-        trade_parameters = self._retrieve_trade_parameters(input_.entry_text)
+        retriever = AnnotatingRetriever(
+            retriever_id=f"{self.solution_id}::{self.trade_group.trade_group_id}::{input_.trade_id}::{trial_id}",
+            llm=GptLlm(llm_id="gpt-4o"),
+            prompt=FormattedPrompt(
+                prompt_id="AnnotatingRetriever",
+                params_type=Retrieval.__name__,
+                template=self.parameter_annotation_prompt,
+            ),
+        )
+        retriever.init_all()
+        Context.current().save_one(retriever)
+
+        trade_parameters = self._retrieve_trade_parameters(retriever, input_.entry_text)
 
         output_.maturity_date = trade_parameters.get("maturity_date")
         output_.tenor_years = trade_parameters.get("tenor_years")
@@ -370,7 +360,7 @@ class AnnotationSolution(HackathonSolution):
         output_.rec_leg_ccy = notional_currency
 
         # Populate pay leg
-        pay_leg_parameters = self._leg_entry_to_dict(input_.entry_text, "Pay leg")
+        pay_leg_parameters = self._leg_entry_to_dict(retriever, input_.entry_text, "Pay leg")
         output_.pay_leg_notional = pay_leg_parameters.get("notional_amount")
         output_.pay_leg_ccy = pay_leg_parameters.get("notional_currency")
         output_.pay_leg_basis = pay_leg_parameters.get("basis")
@@ -381,7 +371,7 @@ class AnnotationSolution(HackathonSolution):
         output_.pay_leg_ccy = pay_leg_parameters.get("currency")
 
         # Populate receive leg
-        rec_leg_parameters = self._leg_entry_to_dict(input_.entry_text, "Receive leg")
+        rec_leg_parameters = self._leg_entry_to_dict(retriever, input_.entry_text, "Receive leg")
         output_.rec_leg_notional = rec_leg_parameters.get("notional_amount")
         output_.rec_leg_ccy = rec_leg_parameters.get("notional_currency")
         output_.rec_leg_basis = rec_leg_parameters.get("basis")
