@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+from collections import defaultdict
 from dataclasses import dataclass
 from typing import Final
 
@@ -22,8 +22,9 @@ from cl.hackathon.hackathon_score_item import HackathonScoreItem
 from cl.hackathon.hackathon_scoring_key import HackathonScoringKey
 from cl.hackathon.hackathon_solution_key import HackathonSolutionKey
 from cl.runtime import RecordMixin, Context
+from cl.runtime.plots.heat_map_plot import HeatMapPlot
+from cl.runtime.primitive.case_util import CaseUtil
 from cl.runtime.records.dataclasses_extensions import missing, field
-
 
 EXPECTED_RESULTS_SOLUTION_ID: Final[str] = "ExpectedResults"
 
@@ -151,3 +152,70 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
         # Update self with calculated values
         self.score = score
         self.maximum_score = maximum_score
+
+    def view_heatmap(self):
+        """Heatmap with average scores for each field and trade."""
+
+        context = Context.current()
+
+        scoring_items = context.load_all(HackathonScoreItem)
+        filtered_scoring_items = [item for item in scoring_items if item.scoring == self.get_key()]
+
+        first_item = filtered_scoring_items[0]
+        fields = first_item.matched_fields + first_item.mismatched_fields
+
+        # Load solution record
+        solution = context.load_one(HackathonSolutionKey, self.solution)
+
+        # Get solution inputs
+        inputs = solution.get_inputs()
+
+        result_values = []
+
+        # Group scoring items by their input key for faster lookup
+        scoring_items_by_input = defaultdict(list)
+        for item in filtered_scoring_items:
+            scoring_items_by_input[item.input.trade_id].append(item)
+
+        # Main loop to process each hackathon input
+        for hackathon_input in inputs:
+            # Initialize the score dictionary with all fields set to 0
+            score_dict = {field_name: 0 for field_name in fields}
+            hackathon_input_key = hackathon_input.get_key()
+
+            # Get all scoring items for the current input key
+            scoring_items_for_input = scoring_items_by_input.get(hackathon_input_key.trade_id, [])
+
+            # Update scores for matched fields
+            for item in scoring_items_for_input:
+                for matched_field in item.matched_fields:
+                    score_dict[matched_field] += 1
+
+            # Append all field scores to the result list
+            result_values.extend(score_dict.values())
+
+        # Normalize the results
+        normalized_result_values = [round(result / self.trial_count, 2) for result in result_values]
+
+        maximum_values = [1] * len(fields) * len(inputs)
+
+        num_trades = len(inputs)
+        num_fields = len(fields)
+
+        row_labels = []
+
+        for i in range(num_trades):
+            row_labels += [f"Trade {i + 1}"] * num_fields
+
+        fields_labels = [CaseUtil.snake_to_title_case(file_name).replace("Leg ", "") for file_name in fields]
+        col_labels = fields_labels * num_trades
+
+        heat_map_plot = HeatMapPlot(plot_id="heat_map_plot")
+        heat_map_plot.row_labels = row_labels
+        heat_map_plot.col_labels = col_labels
+        heat_map_plot.received_values = normalized_result_values
+        heat_map_plot.expected_values = maximum_values
+        heat_map_plot.x_label = "Fields"
+        heat_map_plot.y_label = "Trades"
+
+        return heat_map_plot.get_view()
