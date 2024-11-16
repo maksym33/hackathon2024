@@ -23,7 +23,6 @@ from cl.convince.settings.convince_settings import ConvinceSettings
 from cl.runtime import Context
 from cl.runtime.context.env_util import EnvUtil
 from cl.runtime.experiments.trial_key import TrialKey
-from cl.runtime.records.dataclasses_extensions import field
 from cl.runtime.settings.context_settings import ContextSettings
 from cl.runtime.settings.project_settings import ProjectSettings
 from cl.convince.llms.completion_util import CompletionUtil
@@ -64,8 +63,8 @@ class CompletionCache:
     output_path: str | None = None
     """Path for the cache file where completions are stored."""
 
-    __completion_dict: Dict[str, str] = None  # TODO: Set using ContextVars
-    """Dictionary of completions indexed by query."""
+    _completions_loaded: bool = False
+    """Flag indicating stored completions were loaded."""
 
     def __post_init__(self):
         """
@@ -100,23 +99,28 @@ class CompletionCache:
         self.output_path = os.path.join(base_dir, cache_filename)
 
         # Load completion dictionary from disk
-        self.get_completion_dict()
+        self.load_completion_dict()
 
     def add(self, request_id: str, query: str, completion: str, *, trial_id: str | int | None = None) -> None:
         """Add to file even if already exits, the latest will take precedence during lookup."""
 
-        # Save completions to DB (including preloads) outside a test
-        if not Settings.is_inside_test:
+        # Get cache key with trial_id, EOL normalization, and stripped leading and trailing whitespace
+        query_with_trial_id = CompletionUtil.normalize_key(query, trial_id=trial_id)
 
-            # Create and save a completion record
-            completion = Completion(
-                llm=LlmKey(llm_id=self.channel),
-                trial=TrialKey(trial_id=trial_id) if trial_id is not None else None,
-                query=query,
-                completion=completion,
-                timestamp=request_id,
-            )
-            Context.current().save_one(completion)
+        # Remove leading and trailing whitespace and normalize EOL in value
+        completion = CompletionUtil.normalize_value(completion)
+
+        # Create and save a completion record
+        completion_record = Completion(
+            llm=LlmKey(llm_id=self.channel),
+            query=query_with_trial_id,
+            completion=completion,
+            trial=TrialKey(trial_id=trial_id) if trial_id is not None else None,
+            timestamp=request_id,
+        )
+
+        # Save completions to DB (including preloads) outside a test
+        Context.current().save_one(completion_record)
 
         # Save completions to a file unless explicitly turned off in ConvinceSettings
         if ConvinceSettings.instance().save_completions_to_csv:
@@ -150,14 +154,12 @@ class CompletionCache:
                     # the model will not reuse cached completions within the same session,
                     # preventing incorrect measurement of stability
 
-                    # Get cache key with trial_id, EOL normalization, and stripped leading and trailing whitespace
-                    cache_key = CompletionUtil.normalize_key(query, trial_id=trial_id)
-
-                    # Remove leading and trailing whitespace and normalize EOL in value
-                    cached_value = CompletionUtil.normalize_value(completion.completion)
-
                     # Write the new completion without checking if one already exists
-                    writer.writerow(CompletionUtil.to_os_eol([request_id, cache_key, cached_value]))
+                    writer.writerow(CompletionUtil.to_os_eol([
+                        request_id,
+                        completion_record.query,
+                        completion_record.completion
+                    ]))
 
                     # Flush immediately to ensure all of the output is on disk in the event of exception
                     file.flush()
@@ -168,39 +170,27 @@ class CompletionCache:
     def get(self, query: str, *, trial_id: str | int | None = None) -> str | None:
         """Return completion for the specified query if found and None otherwise."""
 
-        if not Settings.is_inside_test:
-            # Use completions from DB (including preloads) outside a test
+        # Get cache key with trial_id, EOL normalization, and stripped leading and trailing whitespace
+        query_with_trial_id = CompletionUtil.normalize_key(query, trial_id=trial_id)
 
-            # Set only those fields that are required for computing the key
-            completion_key = Completion(
-                llm=LlmKey(llm_id=self.channel),
-                trial=TrialKey(trial_id=trial_id) if trial_id is not None else None,
-                query=query,
-            ).get_key()
+        # Set only those fields that are required for computing the key
+        completion_key = Completion(
+            llm=LlmKey(llm_id=self.channel),
+            query=query_with_trial_id,
+            trial=TrialKey(trial_id=trial_id) if trial_id is not None else None,
+        ).get_key()
 
-            # Return completion string from DB or None if the record is not found
-            completion = Context.current().load_one(Completion, completion_key, is_record_optional=True)
-            result = completion.completion if completion is not None else None
-            return result
-        else:
-            # Use completions from a local file inside a test
+        # Return completion string from DB or None if the record is not found
+        completion = Context.current().load_one(Completion, completion_key, is_record_optional=True)
+        result = completion.completion if completion is not None else None
+        return result
 
-            # Add trial_id, strip leading and trailing whitespace, and normalize EOL
-            cache_key = CompletionUtil.normalize_key(query, trial_id=trial_id)
-
-            # Look up with trial ID
-            completion_dict = self.get_completion_dict()
-            result = completion_dict.get(cache_key, None)
-
-            if result is not None:
-                # Remove leading and trailing whitespace and normalize EOL in value
-                result = CompletionUtil.normalize_value(result)
-            return result
-
-    def get_completion_dict(self) -> Dict:
+    def load_completion_dict(self) -> None:
         """Load cache file."""
         # Load if the file exists unless explicitly turned off in ConvinceSettings
-        if self.__completion_dict is None:
+        if not self._completions_loaded:
+            self._completions_loaded = True
+
             if ConvinceSettings.instance().load_completions_from_csv and os.path.exists(self.output_path):
                 # Populate the dictionary from file if exists but not yet loaded
                 with open(self.output_path, mode="r", newline="", encoding="utf-8") as file:
@@ -230,14 +220,5 @@ class CompletionCache:
                         for row_ in reader if (row := CompletionUtil.to_python_eol(row_))
                     ]
 
-                    if not Settings.is_inside_test:
-                        # Save to DB unless inside a test
-                        context.save_many(completions)
-
-                    # Add to an in-memory dictionary, ignoring request_id at position 0
-                    self.__completion_dict = {x.query: x.completion for x in completions}
-            else:
-                # Create an empty dictionary
-                self.__completion_dict = {}
-
-        return self.__completion_dict
+                    # Save to DB unless inside a test
+                    context.save_many(completions)
