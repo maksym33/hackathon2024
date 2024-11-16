@@ -64,7 +64,7 @@ class CompletionCache:
     output_path: str | None = None
     """Path for the cache file where completions are stored."""
 
-    __completion_dict: Dict[str, str] = field(default_factory=lambda: {})  # TODO: Set using ContextVars
+    __completion_dict: Dict[str, str] = None  # TODO: Set using ContextVars
     """Dictionary of completions indexed by query."""
 
     def __post_init__(self):
@@ -99,8 +99,8 @@ class CompletionCache:
             cache_filename = f"{self.channel}.completions.{self.ext}"
         self.output_path = os.path.join(base_dir, cache_filename)
 
-        # Load cache file from disk
-        self.load_cache_file()
+        # Load completion dictionary from disk
+        self.get_completion_dict()
 
     def add(self, request_id: str, query: str, completion: str, *, trial_id: str | int | None = None) -> None:
         """Add to file even if already exits, the latest will take precedence during lookup."""
@@ -154,7 +154,7 @@ class CompletionCache:
                     cache_key = CompletionUtil.normalize_key(query, trial_id=trial_id)
 
                     # Remove leading and trailing whitespace and normalize EOL in value
-                    cached_value = CompletionUtil.normalize_value(completion)
+                    cached_value = CompletionUtil.normalize_value(completion.completion)
 
                     # Write the new completion without checking if one already exists
                     writer.writerow(CompletionUtil.to_os_eol([request_id, cache_key, cached_value]))
@@ -189,53 +189,55 @@ class CompletionCache:
             cache_key = CompletionUtil.normalize_key(query, trial_id=trial_id)
 
             # Look up with trial ID
-            result = self.__completion_dict.get(cache_key, None)
+            completion_dict = self.get_completion_dict()
+            result = completion_dict.get(cache_key, None)
 
             if result is not None:
                 # Remove leading and trailing whitespace and normalize EOL in value
                 result = CompletionUtil.normalize_value(result)
             return result
 
-    def load_cache_file(self) -> None:
+    def get_completion_dict(self) -> Dict:
         """Load cache file."""
         # Load if the file exists unless explicitly turned off in ConvinceSettings
-        if ConvinceSettings.instance().load_completions_from_csv and os.path.exists(self.output_path):
-            # Populate the dictionary from file if exists but not yet loaded
-            with open(self.output_path, mode="r", newline="", encoding="utf-8") as file:
-                reader = csv.reader(file, delimiter=",", quotechar='"', escapechar="\\", lineterminator=os.linesep)
+        if self.__completion_dict is None:
+            if ConvinceSettings.instance().load_completions_from_csv and os.path.exists(self.output_path):
+                # Populate the dictionary from file if exists but not yet loaded
+                with open(self.output_path, mode="r", newline="", encoding="utf-8") as file:
+                    reader = csv.reader(file, delimiter=",", quotechar='"', escapechar="\\", lineterminator=os.linesep)
 
-                # Read and validate the headers
-                headers_in_file = next(reader, None)
-                if headers_in_file != _csv_headers:
-                    max_len = 20
-                    headers_in_file = [h if len(h) < max_len else f"{h[:max_len]}..." for h in headers_in_file]
-                    headers_in_file_str = ", ".join(headers_in_file)
-                    expected_headers_str = ", ".join(_csv_headers)
-                    raise ValueError(
-                        f"Expected column headers in completions cache are {expected_headers_str}. "
-                        f"Actual headers: {headers_in_file_str}."
-                    )
-
-                if not Settings.is_inside_test:
-                    # Add completions to DB outside a test
+                    # Read and validate the headers
+                    headers_in_file = next(reader, None)
+                    if headers_in_file != _csv_headers:
+                        max_len = 20
+                        headers_in_file = [h if len(h) < max_len else f"{h[:max_len]}..." for h in headers_in_file]
+                        headers_in_file_str = ", ".join(headers_in_file)
+                        expected_headers_str = ", ".join(_csv_headers)
+                        raise ValueError(
+                            f"Expected column headers in completions cache are {expected_headers_str}. "
+                            f"Actual headers: {headers_in_file_str}."
+                        )
 
                     # Create and save a completion record
                     context = Context.current()
-                    tuple(
-                        context.save_one(
-                            Completion(
-                                llm=LlmKey(llm_id=self.channel),
-                                query=row[1],
-                                completion=row[2],
-                                timestamp=row[0],
-                            ),
-                        ) for row_ in reader if (row := CompletionUtil.to_python_eol(row_))
-                    )
+                    completions = [
+                        Completion(
+                            llm=LlmKey(llm_id=self.channel),
+                            query=row[1],
+                            completion=row[2],
+                            timestamp=row[0],
+                        )
+                        for row_ in reader if (row := CompletionUtil.to_python_eol(row_))
+                    ]
 
-                else:
-                    # Add to an in-memory dictionary inside a test
+                    if not Settings.is_inside_test:
+                        # Save to DB unless inside a test
+                        context.save_many(completions)
 
-                    # Add cached completions, ignoring request_id at position 0
-                    self.__completion_dict.update(
-                        {row[1]: row[2] for row_ in reader if (row := CompletionUtil.to_python_eol(row_))}
-                    )
+                    # Add to an in-memory dictionary, ignoring request_id at position 0
+                    self.__completion_dict = {x.query: x.completion for x in completions}
+            else:
+                # Create an empty dictionary
+                self.__completion_dict = {}
+
+        return self.__completion_dict
