@@ -19,6 +19,8 @@ from dataclasses import dataclass
 from typing import Any
 from typing import Dict
 from typing import Iterable
+
+from cl.convince.llms.completion_util import CompletionUtil
 from cl.runtime.context.env_util import EnvUtil
 from cl.runtime.records.dataclasses_extensions import field
 from cl.runtime.settings.context_settings import ContextSettings
@@ -122,7 +124,7 @@ class CompletionCache:
 
                 if is_new:
                     # Write the headers if the file is new
-                    writer.writerow(self.to_os_eol(_csv_headers))
+                    writer.writerow(CompletionUtil.to_os_eol(_csv_headers))
 
                 # NOT ADDING THE VALUE TO COMPLETION DICT HERE IS NOT A BUG
                 # Because we are not adding to the dict here but only writing to a file,
@@ -130,13 +132,13 @@ class CompletionCache:
                 # preventing incorrect measurement of stability
 
                 # Get cache key with trial_id, EOL normalization, and stripped leading and trailing whitespace
-                cache_key = self.normalize_key(query, trial_id=trial_id)
+                cache_key = CompletionUtil.normalize_key(query, trial_id=trial_id)
 
                 # Remove leading and trailing whitespace and normalize EOL in value
-                cached_value = self.normalize_value(completion)
+                cached_value = CompletionUtil.normalize_value(completion)
 
                 # Write the new completion without checking if one already exists
-                writer.writerow(self.to_os_eol([request_id, cache_key, cached_value]))
+                writer.writerow(CompletionUtil.to_os_eol([request_id, cache_key, cached_value]))
 
                 # Flush immediately to ensure all of the output is on disk in the event of exception
                 file.flush()
@@ -148,14 +150,14 @@ class CompletionCache:
         """Return completion for the specified query if found and None otherwise."""
 
         # Add trial_id, strip leading and trailing whitespace, and normalize EOL
-        cache_key = self.normalize_key(query, trial_id=trial_id)
+        cache_key = CompletionUtil.normalize_key(query, trial_id=trial_id)
 
         # Look up with trial ID
         result = self.__completion_dict.get(cache_key, None)
 
         if result is not None:
             # Remove leading and trailing whitespace and normalize EOL in value
-            result = self.normalize_value(result)
+            result = CompletionUtil.normalize_value(result)
         return result
 
     def load_cache_file(self) -> None:
@@ -178,64 +180,5 @@ class CompletionCache:
                     )
 
                 # Read cached completions, ignoring request_id at position 0
-                self.__completion_dict.update({row[1]: row[2] for row_ in reader if (row := self.to_python_eol(row_))})
+                self.__completion_dict.update({row[1]: row[2] for row_ in reader if (row := CompletionUtil.to_python_eol(row_))})
 
-    @classmethod
-    def normalize_key(cls, query: str, trial_id: str | int | None = None) -> str:
-        """Add trial_id, strip leading and trailing whitespace, and normalize EOL."""
-
-        # Strip leading and trailing whitespace and EOL
-        result = query.strip()
-
-        # Add trial_id to the beginning of cached query key
-        if trial_id is not None:
-            result = f"TrialID: {str(trial_id)}\n{result}"
-
-        # Normalize EOL
-        result = cls.to_python_eol(result)
-        return result
-
-    @classmethod
-    def normalize_value(cls, value: str) -> str:
-        """Strip leading and trailing whitespace, and normalize EOL."""
-
-        # Strip leading and trailing whitespace and EOL
-        result = value.strip()
-
-        # Normalize EOL
-        result = cls.to_python_eol(result)
-        return result
-
-    @classmethod
-    def to_python_eol(cls, data: Iterable[str] | str | None):
-        """Convert all types of EOL to \n for Python strings."""
-        if data is None:
-            return None
-        if not isinstance(data, str) and isinstance(data, collections.abc.Iterable):
-            # If data is iterable return list of adjusted elements
-            # Convert EOL only, do not strip leading or trailing whitespace
-            return [cls.to_python_eol(x) for x in data]
-        else:
-            # Replace endings format to \n
-            data = data.replace("\r\r\n", "\n")
-            data = data.replace("\r\n", "\n")
-            return data
-
-    @classmethod
-    def to_os_eol(cls, data: Iterable[str] | str | None):
-        """Convert all types of EOL to 'os.linesep' for writing the file to disk."""
-        if data is None:
-            return None
-        if not isinstance(data, str) and isinstance(data, collections.abc.Iterable):
-            # If data is iterable return list of adjusted elements
-            return [cls.to_os_eol(x) for x in data]
-        else:
-            # Raise an exception if data contains os.linesep characters that are not \n, since
-            # they will be lost after normalization.
-            if os.linesep != "\n" and os.linesep in data:
-                raise RuntimeError("Can not normalize data contains os.linesep characters that are not \\n.")
-
-            # Replace \n to os.linesep
-            adjusted_data = data.replace("\n", os.linesep)
-
-            return adjusted_data

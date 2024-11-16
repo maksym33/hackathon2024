@@ -18,6 +18,7 @@ from typing import List
 from typing_extensions import Self
 from cl.runtime import Context
 from cl.runtime.log.exceptions.user_error import UserError
+from cl.runtime.primitive.bool_util import BoolUtil
 from cl.runtime.primitive.string_util import StringUtil
 from cl.runtime.records.dataclasses_extensions import missing
 from cl.convince.entries.entry import Entry
@@ -148,7 +149,7 @@ class MultipleChoiceRetriever(Retriever):
                     retrieval.param_value = retrieval.param_value.strip()
 
                 # Self-reported success or failure
-                success = Entry.parse_required_bool(retrieval.success, field_name="success")
+                success = BoolUtil.parse_required_bool(retrieval.success, field_name="success")
                 if not success:
                     # Parameter is not found, continue with the next trial
                     continue

@@ -15,6 +15,8 @@
 from abc import ABC
 from abc import abstractmethod
 from dataclasses import dataclass
+
+from cl.convince.llms.completion_util import CompletionUtil
 from cl.runtime.primitive.timestamp import Timestamp
 from cl.runtime.records.record_mixin import RecordMixin
 from cl.convince.llms.completion_cache import CompletionCache
@@ -35,7 +37,7 @@ class Llm(LlmKey, RecordMixin[LlmKey], ABC):
         """Text-in, text-out single query completion without model-specific tags (uses response caching)."""
 
         # Remove leading and trailing whitespace and normalize EOL in query
-        query = CompletionCache.normalize_value(query)
+        query = CompletionUtil.normalize_value(query)
 
         # Create completion cache if does not exist
         if self._completion_cache is None:
@@ -56,7 +58,7 @@ class Llm(LlmKey, RecordMixin[LlmKey], ABC):
             self._completion_cache.add(request_id, query, result, trial_id=trial_id)
 
         # Remove leading and trailing whitespace and normalize EOL in result
-        result = CompletionCache.normalize_value(result)
+        result = CompletionUtil.normalize_value(result)
         return result
 
     @abstractmethod

@@ -18,6 +18,7 @@ from typing import List
 from typing_extensions import Self
 from cl.runtime import Context
 from cl.runtime.log.exceptions.user_error import UserError
+from cl.runtime.primitive.bool_util import BoolUtil
 from cl.runtime.primitive.string_util import StringUtil
 from cl.runtime.records.dataclasses_extensions import missing
 from cl.convince.entries.entry import Entry
@@ -134,7 +135,7 @@ class AnnotatingRetriever(Retriever):
                     raise UserError(retrieval.justification)
 
                 # Return None if not found
-                success = Entry.parse_required_bool(retrieval.success, field_name="success")
+                success = BoolUtil.parse_required_bool(retrieval.success, field_name="success")
                 if not success:
                     # Parameter is not found
                     if is_required:
