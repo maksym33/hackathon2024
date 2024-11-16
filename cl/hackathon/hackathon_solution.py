@@ -56,7 +56,7 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey])
         """Return the list of inputs specified by the trade list."""
         return self.get_inputs()
 
-    def view_outputs(self) -> List[HackathonInput]:
+    def view_outputs(self) -> List[HackathonOutput]:
         """Return the list of outputs (each with its score)."""
         return self.get_outputs()
 
