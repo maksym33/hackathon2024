@@ -65,7 +65,7 @@ class RatesSwapEntry(TradeEntry):
 
         # Default max_retries
         if self.max_retries is None:
-            self.max_retries = 2
+            self.max_retries = 1
 
         # Return self to enable method chaining
         return self
