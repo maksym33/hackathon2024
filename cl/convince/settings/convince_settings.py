@@ -51,7 +51,7 @@ class ConvinceSettings(Settings):
 
         # Save completions to a local file on Windows only
         if self.save_completions_to_csv is None:
-            self.save_completions_to_csv = (os.name == "nt")
+            self.save_completions_to_csv = os.name == "nt"
 
         # Validate locale and get language and region
         language, country = self.parse_locale(self.locale)

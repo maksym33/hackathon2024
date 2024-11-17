@@ -61,9 +61,7 @@ class Completion(CompletionKey, RecordMixin[CompletionKey], ABC):
         # add MD5 hash if multiline or more than 80 characters
         self.completion_id = StringUtil.digest(
             self.query,
-            text_params=(
-                self.llm.llm_id,
-            ),
+            text_params=(self.llm.llm_id,),
         )
 
         return CompletionKey(completion_id=self.completion_id)

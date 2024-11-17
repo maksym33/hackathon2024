@@ -17,16 +17,16 @@ import os
 from dataclasses import dataclass
 from typing import Any
 from typing import Dict
-from cl.convince.llms.completion import Completion
-from cl.convince.llms.llm_key import LlmKey
-from cl.convince.settings.convince_settings import ConvinceSettings
 from cl.runtime import Context
 from cl.runtime.context.env_util import EnvUtil
 from cl.runtime.experiments.trial_key import TrialKey
 from cl.runtime.settings.context_settings import ContextSettings
 from cl.runtime.settings.project_settings import ProjectSettings
-from cl.convince.llms.completion_util import CompletionUtil
 from cl.runtime.settings.settings import Settings
+from cl.convince.llms.completion import Completion
+from cl.convince.llms.completion_util import CompletionUtil
+from cl.convince.llms.llm_key import LlmKey
+from cl.convince.settings.convince_settings import ConvinceSettings
 
 _supported_extensions = ["csv"]
 """The list of supported output file extensions (formats)."""
@@ -155,11 +155,9 @@ class CompletionCache:
                     # preventing incorrect measurement of stability
 
                     # Write the new completion without checking if one already exists
-                    writer.writerow(CompletionUtil.to_os_eol([
-                        request_id,
-                        completion_record.query,
-                        completion_record.completion
-                    ]))
+                    writer.writerow(
+                        CompletionUtil.to_os_eol([request_id, completion_record.query, completion_record.completion])
+                    )
 
                     # Flush immediately to ensure all of the output is on disk in the event of exception
                     file.flush()
@@ -217,7 +215,8 @@ class CompletionCache:
                             completion=row[2],
                             timestamp=row[0],
                         )
-                        for row_ in reader if (row := CompletionUtil.to_python_eol(row_))
+                        for row_ in reader
+                        if (row := CompletionUtil.to_python_eol(row_))
                     ]
 
                     # Save to DB unless inside a test
