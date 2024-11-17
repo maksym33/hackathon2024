@@ -118,10 +118,11 @@ class AmountEntry(Entry):
             # Try to load an existing entry using reverse lookup
             amount = NumberEntry(text=amount_description, locale=self.locale)
             amount.init()
+            amount.run_generate()
+            self.amount = amount
             if (loaded := context.load_one(NumberEntry, amount.get_key(), is_record_optional=True)) is None:
                 # Save only if does not exist
                 context.save_one(amount)
-                self.amount = amount
             else:
                 # Otherwise update the verified status
                 verified = verified and loaded.verified
