@@ -33,7 +33,7 @@ Bank receives: USD fixed 3.45%, semi-annual, act/360
 Notional exchange:  None
 Start date: 10 November 2009
 Tenor: 5y"""
-        rates_swap_entry = RatesSwapEntry(text=fixed_for_floating_swap_description)
+        rates_swap_entry = RatesSwapEntry(text=fixed_for_floating_swap_description).init()
         rates_swap_entry.init()
         rates_swap_entry.run_generate()
         guard.write(rates_swap_entry)

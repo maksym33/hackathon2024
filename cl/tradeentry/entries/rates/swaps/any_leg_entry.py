@@ -14,7 +14,11 @@
 
 from dataclasses import dataclass
 from typing import Type
+
+from typing_extensions import Self
+
 from cl.runtime import Context
+from cl.runtime.experiments.trial_key import TrialKey
 from cl.runtime.log.exceptions.user_error import UserError
 from cl.runtime.records.dataclasses_extensions import missing
 from cl.convince.entries.entry import Entry
@@ -43,8 +47,21 @@ class AnyLegEntry(Entry):
     leg: EntryKey | None = None
     """Entry for the leg."""
 
+    max_retries: int = missing()
+    """How many times to retry the annotation in case changes other than braces are detected."""
+
     def get_base_type(self) -> Type:
         return AnyLegEntry
+
+    def init(self) -> Self:
+        """Similar to __init__ but can use fields set after construction, return self to enable method chaining."""
+
+        # Default max_retries
+        if self.max_retries is None:
+            self.max_retries = 2
+
+        # Return self to enable method chaining
+        return self
 
     def determine_leg_type(self, leg_type_prompt: str) -> str | None:
         """Determine leg type, after which this record will be replaced by a record of this type."""
@@ -54,43 +71,47 @@ class AnyLegEntry(Entry):
         llm = context.load_one(Llm, context.full_llm)
 
         input_text = self.text
-        trial_count = 2
-        for trial_index in range(trial_count):
+        for retry_index in range(self.max_retries):
+            is_last_trial = retry_index == self.max_retries - 1
 
-            # Generate trial label
-            trial_label = str(trial_index)
-            is_last_trial = trial_index == trial_count - 1
+            # Append retry_index to trial_id to avoid reusing a cached completion
+            context = Context.current()
+            if context.trial is not None:
+                trial_id = f"{context.trial.trial_id}.{retry_index}"
+            else:
+                trial_id = str(retry_index)
+            with Context(trial=TrialKey(trial_id=trial_id)) as context:
 
-            try:
-                # Create a brace extraction prompt using input parameters
-                rendered_prompt = leg_type_prompt.format(input_text=input_text)
+                try:
+                    # Create a brace extraction prompt using input parameters
+                    rendered_prompt = leg_type_prompt.format(input_text=input_text)
 
-                # Run completion
-                completion = llm.completion(rendered_prompt, trial_id=trial_label)
+                    # Run completion
+                    completion = llm.completion(rendered_prompt)
 
-                # Extract the results
-                json_result = RetrieverUtil.extract_json(completion)
-                if json_result is not None:
-                    leg_type = json_result.get("LegType", None)
-                    if leg_type != "Fixed" and leg_type != "Floating":
-                        raise UserError(f"Undefined leg type: {leg_type}")
+                    # Extract the results
+                    json_result = RetrieverUtil.extract_json(completion)
+                    if json_result is not None:
+                        leg_type = json_result.get("LegType", None)
+                        if leg_type != "Fixed" and leg_type != "Floating":
+                            raise UserError(f"Undefined leg type: {leg_type}")
 
-                else:
-                    raise UserError(f"Could not extract JSON from the LLM response. " f"LLM response:\n{completion}\n")
+                    else:
+                        raise UserError(f"Could not extract JSON from the LLM response. " f"LLM response:\n{completion}\n")
 
-                return leg_type
+                    return leg_type
 
-            except Exception as e:
-                if is_last_trial:
-                    # Rethrow only when the last trial is reached
-                    raise UserError(
-                        f"Unable to extract parameter from the input text after {trial_count} trials.\n"
-                        f"Input text: {input_text}\n"
-                        f"Last trial error information: {str(e)}\n"
-                    )
-                else:
-                    # Otherwise continue
-                    pass
+                except Exception as e:
+                    if is_last_trial:
+                        # Rethrow only when the last trial is reached
+                        raise UserError(
+                            f"Unable to extract parameter from the input text after {trial_count} trials.\n"
+                            f"Input text: {input_text}\n"
+                            f"Last trial error information: {str(e)}\n"
+                        )
+                    else:
+                        # Otherwise continue
+                        pass
 
         # The method should always return from the loop, adding as a backup in case this changes in the future
         raise UserError(f"Unable to extract parameter from the input text.\n" f"Input text: {input_text}\n")

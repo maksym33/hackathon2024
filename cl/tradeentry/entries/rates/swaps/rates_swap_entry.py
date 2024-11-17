@@ -15,7 +15,11 @@
 import re
 from dataclasses import dataclass
 from typing import List
+
+from typing_extensions import Self
+
 from cl.runtime import Context
+from cl.runtime.experiments.trial_key import TrialKey
 from cl.runtime.log.exceptions.user_error import UserError
 from cl.runtime.primitive.string_util import StringUtil
 from cl.convince.entries.entry_key import EntryKey
@@ -23,6 +27,7 @@ from cl.convince.llms.gpt.gpt_llm import GptLlm
 from cl.convince.llms.llm import Llm
 from cl.convince.retrievers import retrieval
 from cl.convince.retrievers.annotating_retriever import AnnotatingRetriever
+from cl.runtime.records.dataclasses_extensions import missing
 from cl.tradeentry.entries.rates.swaps.any_leg_entry import AnyLegEntry
 from cl.tradeentry.entries.trade_entry import TradeEntry
 
@@ -52,6 +57,19 @@ class RatesSwapEntry(TradeEntry):
     legs: List[EntryKey] | None = None
     """List of swap legs."""
 
+    max_retries: int = missing()
+    """How many times to retry the annotation in case changes other than braces are detected."""
+
+    def init(self) -> Self:
+        """Similar to __init__ but can use fields set after construction, return self to enable method chaining."""
+
+        # Default max_retries
+        if self.max_retries is None:
+            self.max_retries = 2
+
+        # Return self to enable method chaining
+        return self
+
     def extract_legs(self, legs_annotation_prompt: str) -> List[str] | None:
         """Extract entry text for the legs from the entry text for the trade."""
 
@@ -61,62 +79,67 @@ class RatesSwapEntry(TradeEntry):
 
         input_text = self.text
         trial_count = 2
-        for trial_index in range(trial_count):
+        for retry_index in range(self.max_retries):
+            is_last_trial = retry_index == self.max_retries - 1
 
-            # Generate trial label
-            trial_label = str(trial_index)
-            is_last_trial = trial_index == trial_count - 1
+            # Append retry_index to trial_id to avoid reusing a cached completion
+            context = Context.current()
+            if context.trial is not None:
+                trial_id = f"{context.trial.trial_id}.{retry_index}"
+            else:
+                trial_id = str(retry_index)
+            with Context(trial=TrialKey(trial_id=trial_id)) as context:
 
-            try:
-                # Create a brace extraction prompt using input parameters
-                rendered_prompt = legs_annotation_prompt.format(input_text=input_text)
+                try:
+                    # Create a brace extraction prompt using input parameters
+                    rendered_prompt = legs_annotation_prompt.format(input_text=input_text)
 
-                # Get text annotated with braces and check that the only difference is braces and whitespace
-                completion = llm.completion(rendered_prompt, trial_id=trial_label)
+                    # Get text annotated with braces and check that the only difference is braces and whitespace
+                    completion = llm.completion(rendered_prompt)
 
-                # Remove triple backticks and curly brackets
-                to_compare = completion.replace("`", "").strip().replace("{", "").replace("}", "").strip()
-                if to_compare != input_text:
-                    if not is_last_trial:
-                        # Continue if not the last trial
-                        continue
-                    else:
-                        # Otherwise report an error
-                        # TODO: Use unified diff
-                        raise UserError(
-                            f"Annotated text has changes other than curly braces.\n"
-                            f"Input text: ```{input_text}```\n"
-                            f"Annotated text: ```{completion}```\n"
-                        )
-
-                # Extract legs descriptions inside braces
-                extracted_legs = []
-                matches = re.findall(_BRACES_RE, completion)
-                for match in matches:
-                    if "{" in match or "}" in match:
+                    # Remove triple backticks and curly brackets
+                    to_compare = completion.replace("`", "").strip().replace("{", "").replace("}", "").strip()
+                    if to_compare != input_text:
                         if not is_last_trial:
+                            # Continue if not the last trial
                             continue
                         else:
+                            # Otherwise report an error
+                            # TODO: Use unified diff
                             raise UserError(
-                                f"Nested curly braces are present in annotated text.\n"
+                                f"Annotated text has changes other than curly braces.\n"
+                                f"Input text: ```{input_text}```\n"
                                 f"Annotated text: ```{completion}```\n"
                             )
+
+                    # Extract legs descriptions inside braces
+                    extracted_legs = []
+                    matches = re.findall(_BRACES_RE, completion)
+                    for match in matches:
+                        if "{" in match or "}" in match:
+                            if not is_last_trial:
+                                continue
+                            else:
+                                raise UserError(
+                                    f"Nested curly braces are present in annotated text.\n"
+                                    f"Annotated text: ```{completion}```\n"
+                                )
+                        else:
+                            extracted_legs.append(match)
+
+                    return extracted_legs
+
+                except Exception as e:
+                    if is_last_trial:
+                        # Rethrow only when the last trial is reached
+                        raise UserError(
+                            f"Unable to extract legs from the input text after {trial_count} trials.\n"
+                            f"Input text: {input_text}\n"
+                            f"Last trial error information: {str(e)}\n"
+                        )
                     else:
-                        extracted_legs.append(match)
-
-                return extracted_legs
-
-            except Exception as e:
-                if is_last_trial:
-                    # Rethrow only when the last trial is reached
-                    raise UserError(
-                        f"Unable to extract legs from the input text after {trial_count} trials.\n"
-                        f"Input text: {input_text}\n"
-                        f"Last trial error information: {str(e)}\n"
-                    )
-                else:
-                    # Otherwise continue
-                    pass
+                        # Otherwise continue
+                        pass
 
         # The method should always return from the loop, adding as a backup in case this changes in the future
         raise UserError(f"Unable to extract legs from the input text.\n" f"Input text: {input_text}\n")
@@ -131,7 +154,7 @@ class RatesSwapEntry(TradeEntry):
 
         self.legs = []
         for leg_title in leg_descriptions:
-            leg_entry = AnyLegEntry(text=leg_title)
+            leg_entry = AnyLegEntry(text=leg_title).init()
             leg_entry.run_generate()
             Context.current().save_one(leg_entry)
             self.legs.append(leg_entry.get_key())
