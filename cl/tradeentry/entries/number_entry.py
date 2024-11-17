@@ -31,7 +31,7 @@ _CURRENCY_ISO_CODE = "Currency code in strict ISO-4217 format of three uppercase
 """Parameter description for the currency ISO-4217 code."""
 
 _NUMBER_WITH_SUFFIX_RE = re.compile(
-    r"(\d+(\.\d+)?)([kmb]|mm|bb|bn|thousand|thousands|mil|million|millions|billion|billions)?"
+    r"(\d+(\.\d+)?)([kmb]|mm|bb|bn|thousand|thousands|mil|million|millions|billion|billions)?\b"
 )
 """Matches a number with decimal point separator and suffixes."""
 
@@ -75,7 +75,7 @@ class NumberEntry(Entry):
             except Exception as e:  # noqa
                 raise ErrorUtil.value_error(
                     self.text,
-                    details=f"Text description of a number could not be parsed using language code {self.lang}.",
+                    details=f"Text description of a number could not be parsed using language code {self.locale}.",
                     value_name="number",
                     method_name="run_generate",
                     data_type=NumberEntry.__name__,
