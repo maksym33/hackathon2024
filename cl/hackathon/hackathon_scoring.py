@@ -16,6 +16,8 @@ from collections import defaultdict, Counter
 from dataclasses import dataclass
 from typing import Final, List
 from typing_extensions import Self
+
+from cl.hackathon.hackathon_input import HackathonInput
 from cl.hackathon.hackathon_scoring_statistics import HackathonScoringStatistics
 from cl.runtime import Context
 from cl.runtime import RecordMixin
@@ -173,8 +175,6 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
         # Update self with calculated values
         self.score = score
         self.max_score = max_score
-
-        self.maximum_score = maximum_score
 
     def _get_inputs(self) -> List[HackathonInput]:
         """Return the list of inputs specified by solution."""
