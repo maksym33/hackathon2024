@@ -179,10 +179,10 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
             scoring_items_by_input[item.input.trade_id].append(item)
 
         # Main loop to process each hackathon input
-        for hackathon_input in inputs:
+        for input_ in inputs:
             # Initialize the score dictionary with all fields set to 0
             score_dict = {field_name: 0 for field_name in fields}
-            hackathon_input_key = hackathon_input.get_key()
+            hackathon_input_key = input_.get_key()
 
             # Get all scoring items for the current input key
             scoring_items_for_input = scoring_items_by_input.get(hackathon_input_key.trade_id, [])
@@ -222,6 +222,7 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
         return heat_map_plot.get_view()
 
     def view_statistics(self) -> List[HackathonScoringStatistics]:
+        """Generate scoring statistics for a hackathon solution."""
 
         context = Context.current()
 
@@ -231,36 +232,45 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
         # Get solution inputs
         inputs = solution.get_inputs()
 
+        # Load all hackathon outputs
         all_outputs = context.load_all(HackathonOutput)
 
+        # Identify fields to compare, excluding key fields and 'entry_text'
         first_output = all_outputs[0]
         expected_output_key_fields = first_output.get_key().__slots__
         expected_output_fields = first_output.__slots__
-        fields_to_compare = [f for f in expected_output_fields if f not in expected_output_key_fields]
+        fields_to_compare = [f for f in expected_output_fields if
+                             f not in expected_output_key_fields and f != "entry_text"]
 
         all_statistics = []
-
         for input_ in inputs:
-            statistics = HackathonScoringStatistics(solution=self.solution, trade_id=input_.trade_id, entry_text=input_.entry_text)
+            # Initialize statistics object for each input
+            statistics = HackathonScoringStatistics(
+                solution=self.solution,
+                trade_id=input_.trade_id,
+                entry_text=input_.entry_text
+            )
 
-            filtered_outputs = [output for output in all_outputs if output.solution == self.solution and output.trade_group == solution.trade_group and output.trade_id == input_.trade_id]
+            # Filter outputs corresponding to the current input
+            filtered_outputs = [output for output in all_outputs
+                                if output.solution == self.solution and output.trade_group == solution.trade_group
+                                and output.trade_id == input_.trade_id]
 
             for field_name in fields_to_compare:
-
-                if field_name == "entry_text":
-                    continue
-
+                # Gather values for the current field
                 field_values = [getattr(output, field_name, None) for output in filtered_outputs]
+                field_values = ["Error" if val and val.startswith("Error") else val for val in field_values]
 
-                # TODO: Use 'Error' for long values
-
+                # Generate statistics summary for the field
                 field_statistics = "\n".join(map(
                     lambda x: f"{x[0]} ({x[1]}/{self.trial_count})" if x[1] > 1 else x[0],
                     Counter(field_values).items()
                 ))
 
+                # Assign the statistics to the corresponding field in the statistics object
                 setattr(statistics, field_name, field_statistics)
 
+            # Save and collect the statistics object
             context.save_one(statistics)
             all_statistics.append(statistics)
 
