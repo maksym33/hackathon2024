@@ -24,7 +24,7 @@ class CompletionUtil:
     """Helper methods for LLM completions."""
 
     @classmethod
-    def normalize_query(cls, query: str) -> str:
+    def format_query(cls, query: str) -> str:
         """Add trial_id, strip leading and trailing whitespace, and normalize EOL."""
 
         # Strip leading and trailing whitespace and EOL
@@ -40,7 +40,7 @@ class CompletionUtil:
         return result
 
     @classmethod
-    def normalize_completion(cls, value: str) -> str:
+    def format_completion(cls, value: str) -> str:
         """Strip leading and trailing whitespace, and normalize EOL."""
 
         # Strip leading and trailing whitespace and EOL

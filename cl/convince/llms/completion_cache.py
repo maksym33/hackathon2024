@@ -105,7 +105,7 @@ class CompletionCache:
         """Add to file even if already exits, the latest will take precedence during lookup."""
 
         # Remove leading and trailing whitespace and normalize EOL in value
-        completion = CompletionUtil.normalize_completion(completion)
+        completion = CompletionUtil.format_completion(completion)
 
         # Create and save a completion record
         completion_record = Completion(
