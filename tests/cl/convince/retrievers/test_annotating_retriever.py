@@ -41,21 +41,20 @@ def _test_extract(input_text: str, param_description: str, param_samples: List[s
     param_samples_str = "".join(f"  - {x}\n" for x in param_samples) if param_samples is not None else None
     stub_full_llms = get_stub_full_llms()
     for llm in stub_full_llms:
-        retriever = AnnotatingRetriever(
-            retriever_id="test_annotating_retriever",
-        )
-        retriever.init_all()
-        guard = RegressionGuard(channel=llm.llm_id)
-        param_value = retriever.retrieve(input_text=input_text, param_description=param_description)
-        guard.write(f"Input Text: {input_text} Retrieved Value: {param_value}")
+        with TestingContext(full_llm=llm):
+            retriever = AnnotatingRetriever(
+                retriever_id="test_annotating_retriever",
+            )
+            retriever.init_all()
+            guard = RegressionGuard(channel=llm.llm_id)
+            param_value = retriever.retrieve(input_text=input_text, param_description=param_description)
+            guard.write(f"Input Text: {input_text} Retrieved Value: {param_value}")
     RegressionGuard().verify_all()
 
 
 def test_zero_shot():
     """Test without samples."""
-
-    with TestingContext():
-        _test_extract(ENTRY_TEXT, PARAM_DESCRIPTION)
+    _test_extract(ENTRY_TEXT, PARAM_DESCRIPTION)
 
 
 if __name__ == "__main__":

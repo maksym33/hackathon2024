@@ -90,9 +90,12 @@ class MultipleChoiceRetriever(Retriever):
         param_description: str,
         valid_choices: List[str],
     ) -> MultipleChoiceRetrieval:
-        # Get LLM and prompt
+
+        # Load the full LLM specified by the context
         context = Context.current()
         llm = context.load_one(Llm, context.full_llm)
+
+        # Load the prompt
         prompt = Context.current().load_one(Prompt, self.prompt)
         valid_choices_str = "; ".join(valid_choices)
 

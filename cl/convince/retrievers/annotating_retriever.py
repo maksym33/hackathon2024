@@ -83,12 +83,15 @@ class AnnotatingRetriever(Retriever):
         is_required: bool = False,  # TODO: Make this parameter required
         param_samples: List[str] | None = None,
     ) -> str | None:
-        # Get LLM and prompt
+
+        # Load the full LLM specified by the context
         context = Context.current()
         llm = context.load_one(Llm, context.full_llm)
+
+        # Load the prompt
         prompt = context.load_one(Prompt, self.prompt)
 
-        trial_count = 2
+        trial_count = 2  # TODO(Context) Add to the context
         for trial_index in range(trial_count):
 
             # Generate trial label
