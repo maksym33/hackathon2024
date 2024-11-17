@@ -151,6 +151,7 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
                 solution=HackathonSolutionKey(solution_id=EXPECTED_RESULTS_SOLUTION_ID),
                 trade_group=solution.trade_group,
                 trade_id=input_.trade_id,
+                trial_id="0",
             )
             expected_output = context.load_one(HackathonOutput, expected_output_key)
 

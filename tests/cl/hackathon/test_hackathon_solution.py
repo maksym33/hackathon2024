@@ -13,11 +13,10 @@
 # limitations under the License.
 
 from cl.hackathon.hackathon_solution import HackathonSolution
-from cl.hackathon.hackathon_trade_group_key import HackathonTradeGroupKey
 
 
 def test_get_trade_ids_list():
-    solution = HackathonSolution(trade_group=HackathonTradeGroupKey(trade_group_id="test"))
+    solution = HackathonSolution(trade_group="Test")
 
     solution.trade_ids = "1-3"
     # Basic range

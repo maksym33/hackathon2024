@@ -81,7 +81,10 @@ class HackathonOutput(HackathonOutputKey, RecordMixin[HackathonOutputKey]):
 
     def get_key(self) -> HackathonOutputKey:
         return HackathonOutputKey(
-            solution=self.solution, trade_group=self.trade_group, trade_id=self.trade_id, trial_id=self.trial_id
+            solution=self.solution,
+            trade_group=self.trade_group,
+            trade_id=self.trade_id,
+            trial_id=self.trial_id,
         )
 
     def view_detailed_information(self) -> List[AnnotatingRetrieval]:
@@ -89,7 +92,7 @@ class HackathonOutput(HackathonOutputKey, RecordMixin[HackathonOutputKey]):
         context = Context.current()
 
         current_retriever_id = (
-            f"{self.solution.solution_id}::{self.trade_group.trade_group_id}::{self.trade_id}::{self.trial_id}"
+            f"{self.solution.solution_id}::{self.trade_group}::{self.trade_id}::{self.trial_id}"
         )
         retrievals = context.load_all(AnnotatingRetrieval)
         filtered_retrievals = [

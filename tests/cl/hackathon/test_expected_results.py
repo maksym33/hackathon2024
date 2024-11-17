@@ -58,7 +58,7 @@ def test_expected_results():
             )
             output = context.load_one(HackathonOutput, output_key, is_record_optional=True)
             if output is None:
-                raise UserError(f"Expected output record is not found for trade_id={input_key.trade_id}")
+                raise UserError(f"Expected output record is not found for output key {output_key}")
 
             # Perform additional checks
             if input.entry_text.strip().lower() != output.entry_text.strip().lower():

@@ -24,14 +24,13 @@ from cl.hackathon.hackathon_output import HackathonOutput
 from cl.hackathon.hackathon_scoring import HackathonScoring
 from cl.hackathon.hackathon_scoring_key import HackathonScoringKey
 from cl.hackathon.hackathon_solution_key import HackathonSolutionKey
-from cl.hackathon.hackathon_trade_group_key import HackathonTradeGroupKey
 
 
 @dataclass(slots=True, kw_only=True)
 class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey], ABC):
     """Define parameters to convert trade entry text to the trade and perform scoring."""
 
-    trade_group: HackathonTradeGroupKey = missing()
+    trade_group: str = missing()
     """Trade group for which scoring will be performed."""
 
     trade_ids: str | None = None

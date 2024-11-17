@@ -342,7 +342,7 @@ class AnnotationSolution(HackathonSolution):
         with Context(trial=TrialKey(trial_id=str(trial_id))) as context:
 
             retriever = AnnotatingRetriever(
-                retriever_id=f"{self.solution_id}::{self.trade_group.trade_group_id}::{input_.trade_id}::{trial_id}",
+                retriever_id=f"{self.solution_id}::{self.trade_group}::{input_.trade_id}::{trial_id}",
                 prompt=FormattedPrompt(
                     prompt_id="AnnotatingRetriever",
                     params_type=Retrieval.__name__,
