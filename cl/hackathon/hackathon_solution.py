@@ -16,7 +16,7 @@ import copy
 from abc import ABC, abstractmethod
 from collections import defaultdict, Counter
 from dataclasses import dataclass
-from typing import List
+from typing import List, Final, Tuple
 from typing_extensions import Self
 
 from cl.convince.llms.llm_key import LlmKey
@@ -34,6 +34,14 @@ from cl.runtime.records.dataclasses_extensions import missing
 from cl.hackathon.hackathon_input import HackathonInput
 from cl.hackathon.hackathon_output import HackathonOutput
 from cl.hackathon.hackathon_solution_key import HackathonSolutionKey
+from cl.tradeentry.entries.date_entry import DateEntry
+from cl.tradeentry.entries.number_entry import NumberEntry
+
+COMPARE_AS_NUMBER_FIELDS: Final[Tuple] = ("tenor_years", "pay_leg_notional", "pay_leg_freq_months",
+                                          "pay_leg_float_spread_bp", "pay_leg_fixed_rate_pct", "rec_leg_notional",
+                                          "rec_leg_freq_months", "rec_leg_float_spread_bp", "rec_leg_fixed_rate_pct")
+
+ERROR_KEYWORDS: Final[Tuple] = ("error", "escalation", "?")
 
 
 @dataclass(slots=True, kw_only=True)
@@ -251,7 +259,7 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
 
         # Get solution inputs
         context = Context.current()
-        inputs = self._get_inputs()
+        inputs = self.get_inputs()
 
         # Set initial values of scoring fields
         details = []
@@ -312,11 +320,6 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
         target_number_entry.run_generate()
         return source_number_entry.value == target_number_entry.value
 
-    def _get_inputs(self) -> List[HackathonInput]:
-        """Return the list of inputs specified by solution."""
-        solution = Context.current().load_one(HackathonSolutionKey, self.solution)
-        return solution.get_inputs()
-
     def view_heatmap(self) -> View | None:
         """Heatmap with average scores for each field and trade."""
 
@@ -331,7 +334,7 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
         fields = first_item.matched_fields + first_item.mismatched_fields + first_item.error_fields
 
         # Get solution inputs
-        inputs = self._get_inputs()
+        inputs = self.get_inputs()
         result_values = []
 
         # Group scoring items by their input key for faster lookup
@@ -387,7 +390,7 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
 
         # Get solution inputs
         context = Context.current()
-        inputs = self._get_inputs()
+        inputs = self.get_inputs()
 
         # Load all hackathon outputs
         all_outputs = context.load_all(HackathonOutput)
