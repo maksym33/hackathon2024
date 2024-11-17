@@ -14,17 +14,16 @@
 
 from collections import defaultdict, Counter
 from dataclasses import dataclass
-from typing import Final, List
+from typing import List
 from typing_extensions import Self
 
 from cl.hackathon.hackathon_input import HackathonInput
 from cl.hackathon.hackathon_scoring_statistics import HackathonScoringStatistics
 from cl.runtime import Context
 from cl.runtime import RecordMixin
+from cl.runtime import View
 from cl.runtime.plots.heat_map_plot import HeatMapPlot
 from cl.runtime.primitive.case_util import CaseUtil
-from cl.runtime.records.dataclasses_extensions import field
-from cl.runtime.records.dataclasses_extensions import missing
 from cl.hackathon.hackathon_input_key import HackathonInputKey
 from cl.hackathon.hackathon_output import HackathonOutput
 from cl.hackathon.hackathon_output_key import HackathonOutputKey
@@ -60,7 +59,7 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
     def run_score(self) -> None:
         """Create scoring object for solution."""
 
-        # Reset to prevent the old score from being visible duirng the scoring run
+        # Reset to prevent the old score from being visible during the scoring run
         self.run_reset()
 
         # TODO (Roman): Consider updating outputs for scoring elsewhere
@@ -123,7 +122,7 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
         solution = Context.current().load_one(HackathonSolutionKey, self.solution)
 
         # Run processing trial_count times
-        for trial_index in range(1, self.trial_count + 1):
+        for trial_index in range(self.trial_count):
             solution.process_all_inputs(trial_id=str(trial_index))
 
     def calculate(self):
@@ -150,7 +149,7 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
             input_key = input_.get_key()
 
             # Load outputs for current input with trial_id
-            for trial_index in range(1, self.trial_count + 1):
+            for trial_index in range(self.trial_count):
                 trial_id = str(trial_index)
 
                 # Create actual output for current input and trial_index
@@ -181,7 +180,7 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
         solution = Context.current().load_one(HackathonSolutionKey, self.solution)
         return solution.get_inputs()
 
-    def view_heatmap(self) -> None:
+    def view_heatmap(self) -> View | None:
         """Heatmap with average scores for each field and trade."""
 
         context = Context.current()
@@ -293,8 +292,7 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
 
                 # Generate statistics summary for the field
                 field_statistics = f"{expected_field_value} (exp)\n" + "\n".join(map(
-                    lambda x: f"{x[0]} ({x[1]}/{self.trial_count})" if x[1] > 1 else x[0],
-                    Counter(actual_field_values).items()
+                    lambda x: f"{x[0]} ({x[1]}/{self.trial_count})", Counter(actual_field_values).items()
                 ))
 
                 # Assign the statistics to the corresponding field in the statistics object
@@ -305,4 +303,3 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
             all_statistics.append(statistics)
 
         return all_statistics
-
