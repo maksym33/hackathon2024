@@ -13,6 +13,8 @@
 # limitations under the License.
 
 from dataclasses import dataclass
+
+from cl.convince.llms.llm_key import LlmKey
 from cl.runtime import Context
 from cl.runtime.experiments.trial_key import TrialKey
 from cl.runtime.log.exceptions.user_error import UserError
@@ -48,7 +50,10 @@ class OneStepSolution(HackathonSolution):
         if Context.current().trial is not None:
             raise UserError("Cannot override TrialId that is already set, exiting.")  # TODO: Append?
 
-        with Context(trial=TrialKey(trial_id=str(trial_id))) as context:
+        with Context(
+                full_llm=self.llm,
+                trial=TrialKey(trial_id=str(trial_id))
+        ) as context:
 
             # Load the full LLM specified by the context
             llm = context.load_one(Llm, context.full_llm)

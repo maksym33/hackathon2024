@@ -16,6 +16,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List
 from typing_extensions import Self
+
+from cl.convince.llms.llm_key import LlmKey
 from cl.runtime import Context
 from cl.runtime import RecordMixin
 from cl.runtime.records.dataclasses_extensions import missing
@@ -29,6 +31,9 @@ from cl.hackathon.hackathon_solution_key import HackathonSolutionKey
 @dataclass(slots=True, kw_only=True)
 class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey], ABC):
     """Define parameters to convert trade entry text to the trade and perform scoring."""
+
+    llm: LlmKey = missing()
+    """LLM that will be used to generate the output."""
 
     trade_group: str = missing()
     """Trade group for which scoring will be performed."""

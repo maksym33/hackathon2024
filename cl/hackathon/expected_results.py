@@ -13,7 +13,9 @@
 # limitations under the License.
 
 from dataclasses import dataclass
+from typing_extensions import Self
 
+from cl.convince.llms.llm_key import LlmKey
 from cl.hackathon.hackathon_input import HackathonInput
 from cl.hackathon.hackathon_output import HackathonOutput
 from cl.hackathon.hackathon_solution import HackathonSolution
@@ -27,3 +29,10 @@ class ExpectedResults(HackathonSolution):
         """Process one input and return one output."""
         raise RuntimeError("Solution ExpectedResults is used only to hold the expected results for "
                            "scoring. It does not have a Generate method.")
+
+    def init(self) -> Self:
+        """Similar to __init__ but can use fields set after construction, return self to enable method chaining."""
+        self.llm = LlmKey(llm_id="Not required")
+        
+        # Return self to enable method chaining
+        return self
