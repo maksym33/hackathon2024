@@ -14,14 +14,13 @@
 
 from dataclasses import dataclass
 from typing import Type
-
-from cl.convince.llms.llm import Llm
 from cl.runtime import Context
 from cl.runtime.log.exceptions.user_error import UserError
 from cl.runtime.records.dataclasses_extensions import missing
 from cl.convince.entries.entry import Entry
 from cl.convince.entries.entry_key import EntryKey
 from cl.convince.llms.gpt.gpt_llm import GptLlm
+from cl.convince.llms.llm import Llm
 from cl.convince.retrievers.retriever_util import RetrieverUtil
 from cl.tradeentry.entries.rates.swaps.fixed_swap_leg_entry import FixedSwapLegEntry
 from cl.tradeentry.entries.rates.swaps.float_swap_leg_entry import FloatSwapLegEntry

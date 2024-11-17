@@ -15,13 +15,12 @@
 import re
 from dataclasses import dataclass
 from typing import List
-
-from cl.convince.llms.llm import Llm
 from cl.runtime import Context
 from cl.runtime.log.exceptions.user_error import UserError
 from cl.runtime.primitive.string_util import StringUtil
 from cl.convince.entries.entry_key import EntryKey
 from cl.convince.llms.gpt.gpt_llm import GptLlm
+from cl.convince.llms.llm import Llm
 from cl.convince.retrievers import retrieval
 from cl.convince.retrievers.annotating_retriever import AnnotatingRetriever
 from cl.tradeentry.entries.rates.swaps.any_leg_entry import AnyLegEntry

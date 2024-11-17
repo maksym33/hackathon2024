@@ -74,9 +74,9 @@ class VanillaSwapEntry(TradeEntry):
 
         # Pay or receive fixed flag is described side
         if pay_receive_fixed_description := retriever.retrieve(
-                input_text=input_text,
-                param_description=_SIDE,
-                is_required=False,
+            input_text=input_text,
+            param_description=_SIDE,
+            is_required=False,
         ):
             pay_receive_fixed = PayReceiveFixedEntry(text=pay_receive_fixed_description)
             context.save_one(pay_receive_fixed)
@@ -84,9 +84,9 @@ class VanillaSwapEntry(TradeEntry):
 
         # Tenor
         if maturity_description := retriever.retrieve(
-                input_text=input_text,
-                param_description=_MATURITY,
-                is_required=False,
+            input_text=input_text,
+            param_description=_MATURITY,
+            is_required=False,
         ):
             maturity = DateOrTenorEntry(text=maturity_description)
             context.save_one(maturity)
@@ -94,9 +94,9 @@ class VanillaSwapEntry(TradeEntry):
 
         # Floating rate index
         if float_index_description := retriever.retrieve(
-                input_text=input_text,
-                param_description=_FLOAT_INDEX,
-                is_required=False,
+            input_text=input_text,
+            param_description=_FLOAT_INDEX,
+            is_required=False,
         ):
             float_index = RatesIndexEntry(text=float_index_description)
             context.save_one(float_index)
@@ -104,9 +104,9 @@ class VanillaSwapEntry(TradeEntry):
 
         # Fixed Rate
         if fixed_rate_description := retriever.retrieve(
-                input_text=input_text,
-                param_description=_FIXED_RATE,
-                is_required=False,
+            input_text=input_text,
+            param_description=_FIXED_RATE,
+            is_required=False,
         ):
             fixed_rate = FixedRateEntry(text=fixed_rate_description)
             context.save_one(fixed_rate)
