@@ -30,8 +30,6 @@ from cl.hackathon.hackathon_score_item import HackathonScoreItem
 from cl.hackathon.hackathon_scoring_key import HackathonScoringKey
 from cl.hackathon.hackathon_solution_key import HackathonSolutionKey
 
-EXPECTED_RESULTS_SOLUTION_ID: Final[str] = "ExpectedResults"
-
 
 @dataclass(slots=True, kw_only=True)
 class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
@@ -131,11 +129,8 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
 
         context = Context.current()
 
-        # Load solution record
-        solution = context.load_one(HackathonSolutionKey, self.solution)
-
         # Get solution inputs
-        inputs = solution.get_inputs()
+        inputs = self._get_inputs()
 
         # Set initial values of scoring fields
         details = []
@@ -146,14 +141,8 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
         # It is assumed that all outputs exist
         for input_ in inputs:
 
-            # Create expected output key for current input
-            expected_output_key = HackathonOutputKey(
-                solution=HackathonSolutionKey(solution_id=EXPECTED_RESULTS_SOLUTION_ID),
-                trade_group=solution.trade_group,
-                trade_id=input_.trade_id,
-                trial_id="0",
-            )
-            expected_output = context.load_one(HackathonOutput, expected_output_key)
+            # Get expected output key for current input
+            expected_output = input_.get_expected_output()
 
             # Remember input key to create score items
             input_key = input_.get_key()
@@ -165,7 +154,7 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
                 # Create actual output for current input and trial_index
                 actual_output_key = HackathonOutputKey(
                     solution=self.solution,
-                    trade_group=solution.trade_group,
+                    trade_group=input_.trade_group,
                     trade_id=input_.trade_id,
                     trial_id=trial_id,
                 )
@@ -185,6 +174,13 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
         self.score = score
         self.max_score = max_score
 
+        self.maximum_score = maximum_score
+
+    def _get_inputs(self) -> List[HackathonInput]:
+        """Return the list of inputs specified by solution."""
+        solution = Context.current().load_one(HackathonSolutionKey, self.solution)
+        return solution.get_inputs()
+
     def view_heatmap(self) -> None:
         """Heatmap with average scores for each field and trade."""
 
@@ -199,11 +195,8 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
         first_item = filtered_scoring_items[0]
         fields = first_item.matched_fields + first_item.mismatched_fields
 
-        # Load solution record
-        solution = context.load_one(HackathonSolutionKey, self.solution)
-
         # Get solution inputs
-        inputs = solution.get_inputs()
+        inputs = self._get_inputs()
 
         result_values = []
 
@@ -260,11 +253,8 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
 
         context = Context.current()
 
-        # Load solution record
-        solution = context.load_one(HackathonSolutionKey, self.solution)
-
         # Get solution inputs
-        inputs = solution.get_inputs()
+        inputs = self._get_inputs()
 
         # Load all hackathon outputs
         all_outputs = context.load_all(HackathonOutput)
@@ -287,18 +277,24 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
 
             # Filter outputs corresponding to the current input
             filtered_outputs = [output for output in all_outputs
-                                if output.solution == self.solution and output.trade_group == solution.trade_group
+                                if output.solution == self.solution and output.trade_group == input_.trade_group
                                 and output.trade_id == input_.trade_id]
+
+            # Get expected output key for current input
+            expected_output = input_.get_expected_output()
 
             for field_name in fields_to_compare:
                 # Gather values for the current field
-                field_values = [getattr(output, field_name, None) for output in filtered_outputs]
-                field_values = ["Error" if val and val.startswith("Error") else val for val in field_values]
+                actual_field_values = [getattr(output, field_name, None) for output in filtered_outputs]
+                actual_field_values = ["Error" if val and val.startswith("Error") else val
+                                       for val in actual_field_values]
+
+                expected_field_value = getattr(expected_output, field_name, None)
 
                 # Generate statistics summary for the field
-                field_statistics = "\n".join(map(
+                field_statistics = f"{expected_field_value} (exp)\n" + "\n".join(map(
                     lambda x: f"{x[0]} ({x[1]}/{self.trial_count})" if x[1] > 1 else x[0],
-                    Counter(field_values).items()
+                    Counter(actual_field_values).items()
                 ))
 
                 # Assign the statistics to the corresponding field in the statistics object

@@ -13,9 +13,17 @@
 # limitations under the License.
 
 from dataclasses import dataclass
+from typing import Final
+
+from cl.hackathon.hackathon_output import HackathonOutput
+from cl.hackathon.hackathon_output_key import HackathonOutputKey
+from cl.hackathon.hackathon_solution_key import HackathonSolutionKey
+from cl.runtime import Context
 from cl.runtime import RecordMixin
 from cl.runtime.records.dataclasses_extensions import missing
 from cl.hackathon.hackathon_input_key import HackathonInputKey
+
+EXPECTED_RESULTS_SOLUTION_ID: Final[str] = "ExpectedResults"
 
 
 @dataclass(slots=True, kw_only=True)
@@ -27,3 +35,13 @@ class HackathonInput(HackathonInputKey, RecordMixin[HackathonInputKey]):
 
     def get_key(self) -> HackathonInputKey:
         return HackathonInputKey(trade_group=self.trade_group, trade_id=self.trade_id)
+
+    def get_expected_output(self) -> HackathonOutput:
+        expected_output_key = HackathonOutputKey(
+            solution=HackathonSolutionKey(solution_id=EXPECTED_RESULTS_SOLUTION_ID),
+            trade_group=self.trade_group,
+            trade_id=self.trade_id,
+            trial_id="0",
+        )
+        expected_output = Context.current().load_one(HackathonOutput, expected_output_key)
+        return expected_output
