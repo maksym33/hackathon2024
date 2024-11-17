@@ -13,9 +13,17 @@
 # limitations under the License.
 
 from dataclasses import dataclass
+
+from cl.hackathon.hackathon_input import HackathonInput
+from cl.hackathon.hackathon_output import HackathonOutput
 from cl.hackathon.hackathon_solution import HackathonSolution
 
 
 @dataclass(slots=True, kw_only=True)
 class ExpectedResults(HackathonSolution):
     """Solution key under which the expected (correct) outputs are recorded."""
+
+    def _process_input(self, input_: HackathonInput, *, trial_id: str) -> HackathonOutput:
+        """Process one input and return one output."""
+        raise RuntimeError("Solution ExpectedResults is used only to hold the expected results for "
+                           "scoring. It does not have a Generate method.")

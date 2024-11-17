@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List
 from typing_extensions import Self
@@ -27,7 +28,7 @@ from cl.hackathon.hackathon_trade_group_key import HackathonTradeGroupKey
 
 
 @dataclass(slots=True, kw_only=True)
-class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey]):
+class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey], ABC):
     """Define parameters to convert trade entry text to the trade and perform scoring."""
 
     trade_group: HackathonTradeGroupKey = missing()
@@ -115,14 +116,14 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey])
 
         return [x for x in outputs if x.solution.solution_id == self.solution_id]
 
-    def _process_input(self, input_: HackathonInput, trial_id: str) -> HackathonOutput:
-        """Process input and return output. Must be implemented in subclasses."""
-        pass
+    @abstractmethod
+    def _process_input(self, input_: HackathonInput, *, trial_id: str) -> HackathonOutput:
+        """Process one input and return one output."""
 
-    def process_all_inputs(self, trial_id: str) -> None:
+    def process_all_inputs(self, *, trial_id: str) -> None:
         # Process inputs
         for input_ in self.get_inputs():
-            output_ = self._process_input(input_, trial_id)
+            output_ = self._process_input(input_, trial_id=trial_id)
             output_.trial_id = trial_id
             Context.current().save_one(output_)
 
@@ -130,8 +131,8 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey])
 
     def run_generate(self) -> None:
         """Load, filter, and process HackathonInput data, then save results."""
-        # Process inputs
-        self.process_all_inputs()
+        # Process all inputs assigning trial_id of 0
+        self.process_all_inputs(trial_id="0")
 
     def run_score(self) -> None:
         """Create scoring object for solution."""

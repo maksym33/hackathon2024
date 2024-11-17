@@ -326,7 +326,7 @@ class AnnotationSolution(HackathonSolution):
 
         return trade_parameters
 
-    def _process_input(self, input_: HackathonInput, trial_id: str) -> HackathonOutput:
+    def _process_input(self, input_: HackathonInput, *, trial_id: str) -> HackathonOutput:
 
         output_ = HackathonOutput(
             solution=self.get_key(),
