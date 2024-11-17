@@ -34,10 +34,6 @@ default:
   runtime_preload_dirs:
     - cl
 
-  # Default LLms for TradeEntry (documented in TradeEntrySettings class)
-  tradeentry_mini_llm: gpt-4o-mini
-  tradeentry_full_llm: gpt-4o
-
 # Test environment
 test:
 
