@@ -299,7 +299,7 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
                 # Sum up scores
                 score += len(score_item.matched_fields)
                 score += 0.5 * len(score_item.error_fields)
-                max_score += len(score_item.matched_fields) + len(score_item.mismatched_fields)
+                max_score += len(score_item.matched_fields) + len(score_item.mismatched_fields) + len(score_item.error_fields)
 
                 details.append(score_item.get_key())
 
