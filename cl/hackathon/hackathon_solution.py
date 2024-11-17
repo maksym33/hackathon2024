@@ -115,11 +115,11 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey])
 
         return [x for x in outputs if x.solution.solution_id == self.solution_id]
 
-    def _process_input(self, input_: HackathonInput, trial_id: int) -> HackathonOutput:
+    def _process_input(self, input_: HackathonInput, trial_id: str) -> HackathonOutput:
         """Process input and return output. Must be implemented in subclasses."""
         pass
 
-    def process_all_inputs(self, trial_id: int = 0) -> None:
+    def process_all_inputs(self, trial_id: str) -> None:
         # Process inputs
         for input_ in self.get_inputs():
             output_ = self._process_input(input_, trial_id)

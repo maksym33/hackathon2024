@@ -34,7 +34,7 @@ class HackathonOutputKey(KeyMixin):
     trade_id: int = missing()
     """Unique trade identifier within the trade group."""
 
-    trial_id: int = field(default=0)
+    trial_id: str = missing()
     """Trial id."""
 
     @classmethod

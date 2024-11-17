@@ -124,7 +124,7 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
 
         # Run processing trial_count times
         for trial_index in range(1, self.trial_count + 1):
-            solution.process_all_inputs(trial_id=trial_index)
+            solution.process_all_inputs(trial_id=str(trial_index))
 
     def calculate(self):
         """Calculate scoring info and record to self."""
@@ -159,13 +159,14 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
 
             # Load outputs for current input with trial_id
             for trial_index in range(1, self.trial_count + 1):
+                trial_id = str(trial_index)
 
                 # Create actual output for current input and trial_index
                 actual_output_key = HackathonOutputKey(
                     solution=self.solution,
                     trade_group=solution.trade_group,
                     trade_id=input_.trade_id,
-                    trial_id=trial_index,
+                    trial_id=trial_id,
                 )
                 actual_output = context.load_one(HackathonOutput, actual_output_key)
 

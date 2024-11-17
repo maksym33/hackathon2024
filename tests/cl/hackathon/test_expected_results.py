@@ -54,6 +54,7 @@ def test_expected_results():
                 solution=expected_results.get_key(),
                 trade_group=input.trade_group,
                 trade_id=input.trade_id,
+                trial_id="0",
             )
             output = context.load_one(HackathonOutput, output_key, is_record_optional=True)
             if output is None:
