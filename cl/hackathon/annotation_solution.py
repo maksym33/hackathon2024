@@ -15,13 +15,11 @@
 from dataclasses import dataclass
 from typing import Dict
 
-from cl.convince.llms.llm_key import LlmKey
 from cl.runtime import Context
 from cl.runtime.experiments.trial_key import TrialKey
 from cl.runtime.log.exceptions.user_error import UserError
 from cl.runtime.primitive.float_util import FloatUtil
 from cl.runtime.records.dataclasses_extensions import missing
-from cl.convince.llms.gpt.gpt_llm import GptLlm
 from cl.convince.prompts.formatted_prompt import FormattedPrompt
 from cl.convince.retrievers.annotating_retriever import AnnotatingRetriever
 from cl.convince.retrievers.retrieval import Retrieval
@@ -29,10 +27,8 @@ from cl.tradeentry.entries.amount_entry import AmountEntry
 from cl.tradeentry.entries.currency_entry import CurrencyEntry
 from cl.tradeentry.entries.date_entry import DateEntry
 from cl.tradeentry.entries.date_or_tenor_entry import DateOrTenorEntry
-from cl.tradeentry.entries.day_count_basis_entry import DayCountBasisEntry
 from cl.tradeentry.entries.number_entry import NumberEntry
 from cl.tradeentry.entries.pay_freq_months_entry import PayFreqMonthsEntry
-from cl.tradeentry.entries.rates.rates_index_entry import RatesIndexEntry
 from cl.tradeentry.trades.currency_key import CurrencyKey
 from cl.hackathon.hackathon_input import HackathonInput
 from cl.hackathon.hackathon_output import HackathonOutput
@@ -143,24 +139,13 @@ class AnnotationSolution(HackathonSolution):
                 )
 
         # Floating rate index
-        extracted_float_index = None
         try:
             extracted_float_index = retriever.retrieve(
                 input_text=trade_description, param_description=self.float_index_description + param_description_suffix
             )
+            entry_dict["float_index"] = extracted_float_index
         except Exception as e:
             entry_dict["float_index"] = retriever_error_message_prefix + str(e)
-
-        if extracted_float_index is not None:
-            try:
-                float_index = RatesIndexEntry(text=extracted_float_index)
-                float_index.run_generate()
-                if rates_index_key := float_index.rates_index:
-                    entry_dict["float_index"] = rates_index_key.rates_index_id
-            except Exception as e:
-                entry_dict["float_index"] = entry_error_message_template.format(
-                    extracted_field=extracted_float_index, exception_message=str(e)
-                )
 
         # Floating rate spread
         extracted_float_spread = None
@@ -182,32 +167,13 @@ class AnnotationSolution(HackathonSolution):
                 )
 
         # Day-count Basis
-        extracted_basis = None
         try:
             extracted_basis = retriever.retrieve(
                 input_text=trade_description, param_description=self.basis_description + param_description_suffix
             )
+            entry_dict["basis"] = extracted_basis
         except Exception as e:
             entry_dict["basis"] = retriever_error_message_prefix + str(e)
-
-        if extracted_basis is not None:
-            try:
-                basis = DayCountBasisEntry(text=extracted_basis)
-                basis.run_generate()
-                entry_dict["basis"] = basis.basis
-            except Exception as e:
-                entry_dict["basis"] = entry_error_message_template.format(
-                    extracted_field=extracted_basis, exception_message=str(e)
-                )
-
-        # Notional
-        try:
-            notional_amount, notional_currency = self._extract_notional(retriever, trade_description)
-            entry_dict["notional_amount"] = notional_amount
-            entry_dict["notional_currency"] = notional_currency
-        except Exception as e:
-            entry_dict["notional_amount"] = retriever_error_message_prefix + str(e)
-            entry_dict["notional_currency"] = retriever_error_message_prefix + str(e)
 
         # Currency
         extracted_currency = None
@@ -373,8 +339,6 @@ class AnnotationSolution(HackathonSolution):
 
             # Populate pay leg
             pay_leg_parameters = self._leg_entry_to_dict(retriever, input_.entry_text, "Pay leg")
-            output_.pay_leg_notional = pay_leg_parameters.get("notional_amount")
-            output_.pay_leg_ccy = pay_leg_parameters.get("notional_currency")
             output_.pay_leg_basis = pay_leg_parameters.get("basis")
             output_.pay_leg_freq_months = pay_leg_parameters.get("freq_months")
             output_.pay_leg_float_index = pay_leg_parameters.get("float_index")
@@ -384,8 +348,6 @@ class AnnotationSolution(HackathonSolution):
 
             # Populate receive leg
             rec_leg_parameters = self._leg_entry_to_dict(retriever, input_.entry_text, "Receive leg")
-            output_.rec_leg_notional = rec_leg_parameters.get("notional_amount")
-            output_.rec_leg_ccy = rec_leg_parameters.get("notional_currency")
             output_.rec_leg_basis = rec_leg_parameters.get("basis")
             output_.rec_leg_freq_months = rec_leg_parameters.get("freq_months")
             output_.rec_leg_float_index = rec_leg_parameters.get("float_index")
