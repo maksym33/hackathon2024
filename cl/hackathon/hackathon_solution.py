@@ -12,19 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 from abc import ABC, abstractmethod
+from collections import defaultdict, Counter
 from dataclasses import dataclass
 from typing import List
 from typing_extensions import Self
 
 from cl.convince.llms.llm_key import LlmKey
-from cl.runtime import Context
+from cl.hackathon.hackathon_input_key import HackathonInputKey
+from cl.hackathon.hackathon_output_key import HackathonOutputKey
+from cl.hackathon.hackathon_score_item import HackathonScoreItem
+from cl.hackathon.hackathon_scoring_statistics import HackathonScoringStatistics
+from cl.runtime import Context, View
 from cl.runtime import RecordMixin
+from cl.runtime.log.exceptions.user_error import UserError
+from cl.runtime.plots.heat_map_plot import HeatMapPlot
+from cl.runtime.primitive.case_util import CaseUtil
+from cl.runtime.primitive.timestamp import Timestamp
 from cl.runtime.records.dataclasses_extensions import missing
 from cl.hackathon.hackathon_input import HackathonInput
 from cl.hackathon.hackathon_output import HackathonOutput
-from cl.hackathon.hackathon_scoring import HackathonScoring
-from cl.hackathon.hackathon_scoring_key import HackathonScoringKey
 from cl.hackathon.hackathon_solution_key import HackathonSolutionKey
 
 
@@ -47,17 +55,23 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
         Example: for '1-3, 5' only trades with id 1, 2, 3, 5 will be scored
     """
 
+    trial_count: str | None = None
+    """Number of trials per each input used for this scoring."""
+
+    score: str | None = None
+    """Total score for hackathon solution."""
+
+    max_score: str | None = None
+    """Maximum possible score for solution."""
+
     def get_key(self) -> HackathonSolutionKey:
         return HackathonSolutionKey(solution_id=self.solution_id)
 
     def init(self) -> Self:
         """Similar to __init__ but can use fields set after construction, return self to enable method chaining."""
-        # Save scoring object if does not exist
-        solution_key = self.get_key()
-        scoring_key = HackathonScoringKey(solution=solution_key)
-        if Context.current().load_one(HackathonScoring, scoring_key, is_record_optional=True) is None:
-            scoring_obj = HackathonScoring(solution=solution_key)
-            Context.current().save_one(scoring_obj)
+
+        if ".Scored." not in self.solution_id and self.trial_count is not None:
+            raise UserError("The 'trial_count' field must not be set before scoring. It populated during scoring.")
 
         # Return self to enable method chaining
         return self
@@ -69,16 +83,6 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
     def view_outputs(self) -> List[HackathonOutput]:
         """Return the list of outputs (each with its score)."""
         return self.get_outputs()
-
-    def view_score(self) -> HackathonScoring:
-        """View the score object."""
-        # Save scoring object if does not exist
-        solution_key = self.get_key()
-        scoring_key = HackathonScoringKey(solution=solution_key)
-        if (result := Context.current().load_one(HackathonScoring, scoring_key, is_record_optional=True)) is None:
-            result = HackathonScoring(solution=solution_key)
-            Context.current().save_one(result)
-        return result
 
     def get_trade_ids_list(self) -> List[int]:
         """Return the list of trade ids from the trade_ids string."""
@@ -133,35 +137,63 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
 
         Context.current().save_one(self)
 
-    def run_generate(self) -> None:
-        """Load, filter, and process HackathonInput data, then save results."""
+    def run_debug(self) -> None:
+        """Run sequentially for debugging purposes."""
         # Process all inputs assigning trial_id of 0
         self.process_all_inputs(trial_id="0")
 
-    def run_score(self) -> None:
-        """Create scoring object for solution."""
-        HackathonScoring(solution=self.get_key()).run_score()
+    def run_score_one_trial(self) -> None:
+        """Perform scoring."""
+        self._run_score(1)
 
+    def run_score_three_trials(self) -> None:
+        """Perform scoring."""
+        self._run_score(3)
 
-    def run_score(self) -> None:
-        """Create scoring object for solution."""
+    def run_score_ten_trials(self) -> None:
+        """Perform scoring."""
+        self._run_score(10)
 
-        # Reset to prevent the old score from being visible during the scoring run
-        self.run_reset()
+    def run_cancel_scoring(self) -> None:
+        """Cancel the ongoing scoring."""
+        self.score = "Scoring cancelled"
+        self.max_score = "Scoring cancelled"
+        Context.current().save_one(self)
 
-        # TODO (Roman): Consider updating outputs for scoring elsewhere
-        self.update_outputs()
+    def _run_score(self, trial_count: int) -> None:
+        """Perform scoring."""
+
+        # Perform pre-scoring checks
+        if ".Scored." in self.solution_id:
+            raise UserError("Launch scoring from a solution that does not have 'Scored' as part of its name")
+        if self.trial_count is not None:
+            raise UserError("The 'trial_count' field must not be set before scoring. It populated during scoring.")
+        if self.score is not None:
+            raise UserError("The 'score' field must not be set before scoring. It populated during scoring.")
+        if self.max_score is not None:
+            raise UserError("The 'max_score' field must not be set before scoring. It populated during scoring.")
+        if "Scoring cancelled" in self.score:
+            raise UserError("Scoring has been cancelled for this record, create a new scoring record.")
+
+        # Copy solution under a new name for scoring
+        scored_solution = copy.deepcopy(self)
+        timestamp = Timestamp.create()
+        scored_solution.solution_id = f"{self.solution_id}.Scored.{timestamp}"
+
+        """Reset the score."""
+        scored_solution.score = "Scoring in progress"
+        scored_solution.max_score = "Scoring in progress"
+        scored_solution.trial_count = str(trial_count)
+        Context.current().save_one(scored_solution)
+
+        # Run processing trial_count times
+        for trial_index in range(trial_count):
+            self.process_all_inputs(trial_id=str(trial_index))
 
         # Compare solution outputs with expected outputs and save HackathonScoreItems for each pair
         self.calculate()
 
         # Save scoring object with total score
-        Context.current().save_one(self)
-
-    def run_reset(self) -> None:
-        """Reset the score."""
-        self.score = None
-        self.max_score = None
         Context.current().save_one(self)
 
     def get_score_item(
@@ -206,30 +238,19 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
 
         # Create and return score item
         return HackathonScoreItem(
-            scoring=self.get_key(),
+            solution=self.get_key(),
             input=input_key,
             actual_output=actual_output.get_key(),
             expected_output=expected_output.get_key(),
             matched_fields=matched_fields,
             mismatched_fields=mismatched_fields,
-            error_fields=error_fields
         )
-
-    def update_outputs(self):
-
-        # Load solution record
-        solution = Context.current().load_one(HackathonSolutionKey, self.solution)
-
-        # Run processing trial_count times
-        for trial_index in range(self.trial_count):
-            solution.process_all_inputs(trial_id=str(trial_index))
 
     def calculate(self):
         """Calculate scoring info and record to self."""
 
-        context = Context.current()
-
         # Get solution inputs
+        context = Context.current()
         inputs = self._get_inputs()
 
         # Set initial values of scoring fields
@@ -248,12 +269,12 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
             input_key = input_.get_key()
 
             # Load outputs for current input with trial_id
-            for trial_index in range(self.trial_count):
+            for trial_index in range(int(self.trial_count)):
                 trial_id = str(trial_index)
 
                 # Create actual output for current input and trial_index
                 actual_output_key = HackathonOutputKey(
-                    solution=self.solution,
+                    solution=self.get_key(),
                     trade_group=input_.trade_group,
                     trade_id=input_.trade_id,
                     trial_id=trial_id,
@@ -300,7 +321,6 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
         """Heatmap with average scores for each field and trade."""
 
         context = Context.current()
-
         scoring_items = context.load_all(HackathonScoreItem)
         filtered_scoring_items = [item for item in scoring_items if item.scoring == self.get_key()]
 
@@ -312,7 +332,6 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
 
         # Get solution inputs
         inputs = self._get_inputs()
-
         result_values = []
 
         # Group scoring items by their input key for faster lookup
@@ -338,7 +357,7 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
             result_values.extend(score_dict.values())
 
         # Normalize the results
-        normalized_result_values = [round(result / self.trial_count, 2) for result in result_values]
+        normalized_result_values = [round(result / int(self.trial_count), 2) for result in result_values]
 
         maximum_values = [1] * len(fields) * len(inputs)
 
@@ -366,9 +385,8 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
     def view_statistics(self) -> List[HackathonScoringStatistics]:
         """Generate scoring statistics for a hackathon solution."""
 
-        context = Context.current()
-
         # Get solution inputs
+        context = Context.current()
         inputs = self._get_inputs()
 
         # Load all hackathon outputs
@@ -385,7 +403,8 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
         for input_ in inputs:
             # Initialize statistics object for each input
             statistics = HackathonScoringStatistics(
-                solution=self.solution,
+                solution=self.get_key(),
+                trade_group=self.trade_group,
                 trade_id=input_.trade_id,
                 entry_text=input_.entry_text
             )

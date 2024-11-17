@@ -14,28 +14,29 @@
 
 from dataclasses import dataclass
 from typing import Type
+
+from cl.hackathon.hackathon_solution_key import HackathonSolutionKey
 from cl.runtime.records.dataclasses_extensions import missing
 from cl.runtime.records.key_mixin import KeyMixin
 from cl.hackathon.hackathon_input_key import HackathonInputKey
 from cl.hackathon.hackathon_output_key import HackathonOutputKey
-from cl.hackathon.hackathon_scoring_key import HackathonScoringKey
 
 
 @dataclass(slots=True, kw_only=True)
 class HackathonScoreItemKey(KeyMixin):
     """Key for class with base scoring info."""
 
-    scoring: HackathonScoringKey = missing()
+    solution: HackathonSolutionKey = missing()
     """Related scoring."""
 
-    input: HackathonInputKey = missing()
-    """Related input."""
+    trade_group: str = missing()
+    """Trade group for which scoring will be performed."""
 
-    actual_output: HackathonOutputKey = missing()
-    """Actual output for input from solution."""
+    trade_id: str = missing()
+    """Unique trade identifier within the trade group."""
 
-    expected_output: HackathonOutputKey = missing()
-    """Expected output for input."""
+    trial_id: str = missing()
+    """Trial identifier."""
 
     @classmethod
     def get_key_type(cls) -> Type:

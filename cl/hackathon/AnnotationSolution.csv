@@ -1,5 +1,5 @@
 ﻿solution_id,trade_group,trade_ids,llm,parameter_annotation_prompt
-DefaultAnnotationSolution,Preview,,gpt-4o,"You will be provided with an input text and a description of a parameter.
+Annotation,Preview,,gpt-4o,"You will be provided with an input text and a description of a parameter.
 Your goal is to surround each piece of information about this parameter you find in the input text by curly braces.
 Use multiple non-nested pairs of opening and closing curly braces if you find more than one piece of information.
 

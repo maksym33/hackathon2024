@@ -1,5 +1,5 @@
 ﻿solution_id,trade_group,trade_ids,llm,prompt
-DefaultOneStepSolution,Preview,,gpt-4o,"You will be provided with a trade entry and a list with parameter descriptions.
+OneStep,Preview,,gpt-4o,"You will be provided with a trade entry and a list with parameter descriptions.
 Your task is try to find every parameter from the list and return it in the correct format specified in the parameter description.
 
 Every parameter description is a dictionary the parameter 'name' and 'description' keys.
