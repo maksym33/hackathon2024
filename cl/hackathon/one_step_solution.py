@@ -13,12 +13,11 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-
-from cl.convince.llms.llm import Llm
 from cl.runtime import Context
 from cl.runtime.primitive.float_util import FloatUtil
 from cl.runtime.records.dataclasses_extensions import missing
 from cl.convince.llms.gpt.gpt_llm import GptLlm
+from cl.convince.llms.llm import Llm
 from cl.convince.retrievers.retriever_util import RetrieverUtil
 from cl.tradeentry.entries.date_entry import DateEntry
 from cl.tradeentry.entries.number_entry import NumberEntry

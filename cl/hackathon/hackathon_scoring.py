@@ -39,7 +39,7 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
 
     trial_count: int | None = None
     """Number of trials for each input."""
-    
+
     score: int | None = None
     """Total score for hackathon solution."""
 
@@ -56,7 +56,7 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
 
         # Return self to enable method chaining
         return self
-    
+
     def run_score(self) -> None:
         """Create scoring object for solution."""
 
@@ -71,7 +71,7 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
 
         # Save scoring object with total score
         Context.current().save_one(self)
-        
+
     def run_reset(self) -> None:
         """Reset the score."""
         self.score = None

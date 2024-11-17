@@ -14,11 +14,10 @@
 
 from dataclasses import dataclass
 from typing import List
-
-from cl.convince.retrievers.annotating_retrieval import AnnotatingRetrieval
 from cl.runtime import Context
 from cl.runtime import RecordMixin
 from cl.runtime.records.dataclasses_extensions import missing
+from cl.convince.retrievers.annotating_retrieval import AnnotatingRetrieval
 from cl.hackathon.hackathon_output_key import HackathonOutputKey
 
 
@@ -89,8 +88,12 @@ class HackathonOutput(HackathonOutputKey, RecordMixin[HackathonOutputKey]):
 
         context = Context.current()
 
-        current_retriever_id = f"{self.solution.solution_id}::{self.trade_group.trade_group_id}::{self.trade_id}::{self.trial_id}"
+        current_retriever_id = (
+            f"{self.solution.solution_id}::{self.trade_group.trade_group_id}::{self.trade_id}::{self.trial_id}"
+        )
         retrievals = context.load_all(AnnotatingRetrieval)
-        filtered_retrievals = [retrieval for retrieval in retrievals if retrieval.retriever.retriever_id == current_retriever_id]
+        filtered_retrievals = [
+            retrieval for retrieval in retrievals if retrieval.retriever.retriever_id == current_retriever_id
+        ]
 
         return filtered_retrievals
