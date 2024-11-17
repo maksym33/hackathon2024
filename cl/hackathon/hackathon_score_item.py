@@ -29,6 +29,9 @@ class HackathonScoreItem(HackathonScoreItemKey, RecordMixin[HackathonScoreItemKe
     mismatched_fields: List[str] = field(default_factory=list)
     """List of mismatched fields."""
 
+    error_fields: List[str] = field(default_factory=list)
+    """List of fields recognized as having extraction difficulties."""
+
     def get_key(self):
         return HackathonScoreItemKey(
             scoring=self.scoring,

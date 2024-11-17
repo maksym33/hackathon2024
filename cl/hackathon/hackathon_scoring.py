@@ -14,7 +14,7 @@
 
 from collections import defaultdict, Counter
 from dataclasses import dataclass
-from typing import List
+from typing import List, Final, Tuple
 from typing_extensions import Self
 
 from cl.hackathon.hackathon_input import HackathonInput
@@ -30,6 +30,14 @@ from cl.hackathon.hackathon_output_key import HackathonOutputKey
 from cl.hackathon.hackathon_score_item import HackathonScoreItem
 from cl.hackathon.hackathon_scoring_key import HackathonScoringKey
 from cl.hackathon.hackathon_solution_key import HackathonSolutionKey
+from cl.tradeentry.entries.date_entry import DateEntry
+from cl.tradeentry.entries.number_entry import NumberEntry
+
+COMPARE_AS_NUMBER_FIELDS: Final[Tuple] = ("tenor_years", "pay_leg_notional", "pay_leg_freq_months",
+                                          "pay_leg_float_spread_bp", "pay_leg_fixed_rate_pct", "rec_leg_notional",
+                                          "rec_leg_freq_months", "rec_leg_float_spread_bp", "rec_leg_fixed_rate_pct")
+
+ERROR_KEYWORDS: Final[Tuple] = ("error", "escalation", "?")
 
 
 @dataclass(slots=True, kw_only=True)
@@ -39,7 +47,7 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
     trial_count: int | None = None
     """Number of trials for each input."""
 
-    score: int | None = None
+    score: float | None = None
     """Total score for hackathon solution."""
 
     max_score: int | None = None
@@ -88,20 +96,31 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
 
         matched_fields = []
         mismatched_fields = []
+        error_fields = []
 
         # Iterate over expected output fields and compare values
-        for field_name in [f for f in expected_output_fields if f not in expected_output_key_fields]:
-            # TODO (Roman): Use custom comparison rules
-
-            # Skip entry_text field
-            if field_name == "entry_text":
-                continue
+        for field_name in [f for f in expected_output_fields if f not in expected_output_key_fields and f != "entry_text"]:
 
             expected_field_value = getattr(expected_output, field_name, None)
             actual_field_value = getattr(actual_output, field_name, None)
 
+            # Check for error keywords
+            if actual_field_value and any(keyword in actual_field_value.lower() for keyword in ERROR_KEYWORDS):
+                error_fields.append(field_name)
+                continue
+
             # Check equality for all fields
-            if expected_field_value == actual_field_value:
+            if actual_field_value and expected_field_value:
+                if 'date' in field_name:
+                    comparison_result = self._compare_as_dates(actual_field_value, expected_field_value)
+                elif field_name in COMPARE_AS_NUMBER_FIELDS:
+                    comparison_result = self._compare_as_numbers(actual_field_value, expected_field_value)
+                else:
+                    comparison_result = (expected_field_value == actual_field_value)
+            else:
+                comparison_result = (expected_field_value == actual_field_value)
+
+            if comparison_result:
                 matched_fields.append(field_name)
             else:
                 mismatched_fields.append(field_name)
@@ -114,6 +133,7 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
             expected_output=expected_output.get_key(),
             matched_fields=matched_fields,
             mismatched_fields=mismatched_fields,
+            error_fields=error_fields
         )
 
     def update_outputs(self):
@@ -167,6 +187,7 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
 
                 # Sum up scores
                 score += len(score_item.matched_fields)
+                score += 0.5 * len(score_item.error_fields)
                 max_score += len(score_item.matched_fields) + len(score_item.mismatched_fields)
 
                 details.append(score_item.get_key())
@@ -174,6 +195,22 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
         # Update self with calculated values
         self.score = score
         self.max_score = max_score
+
+    @staticmethod
+    def _compare_as_dates(source_date_text: str, target_date_text: str) -> bool:
+        source_date_entry = DateEntry(text=source_date_text)
+        source_date_entry.run_generate()
+        target_date_entry = DateEntry(text=target_date_text)
+        target_date_entry.run_generate()
+        return source_date_entry.date == target_date_entry.date
+
+    @staticmethod
+    def _compare_as_numbers(source_number_text: str, target_number_text: str) -> bool:
+        source_number_entry = NumberEntry(text=source_number_text)
+        source_number_entry.run_generate()
+        target_number_entry = NumberEntry(text=target_number_text)
+        target_number_entry.run_generate()
+        return source_number_entry.value == target_number_entry.value
 
     def _get_inputs(self) -> List[HackathonInput]:
         """Return the list of inputs specified by solution."""
@@ -192,7 +229,7 @@ class HackathonScoring(HackathonScoringKey, RecordMixin[HackathonScoringKey]):
             return None
 
         first_item = filtered_scoring_items[0]
-        fields = first_item.matched_fields + first_item.mismatched_fields
+        fields = first_item.matched_fields + first_item.mismatched_fields + first_item.error_fields
 
         # Get solution inputs
         inputs = self._get_inputs()
