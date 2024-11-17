@@ -69,18 +69,12 @@ class AnnotationSolution(HackathonSolution):
     currency_description: str = "Currency"
     """Description of the currency to use with the parameter annotation prompt."""
 
-    def _extract_notional(
-        self, retriever: AnnotatingRetriever, input_description: str, leg_type: str | None = None
-    ) -> (float, str):
+    def _extract_notional(self, retriever: AnnotatingRetriever, input_description: str, leg_type: str) -> (float, str):
         notional_amount = None
         notional_currency = None
         context = Context.current()
 
-        if leg_type is not None:
-            param_description = self.notional_description + f"for the {leg_type}"
-        else:
-            param_description = self.notional_description
-
+        param_description = self.notional_description + f" for the {leg_type}"
         if extracted_notional := retriever.retrieve(input_text=input_description, param_description=param_description):
             notional = AmountEntry(text=extracted_notional)
             notional.run_generate()
@@ -174,6 +168,15 @@ class AnnotationSolution(HackathonSolution):
             entry_dict["basis"] = extracted_basis
         except Exception as e:
             entry_dict["basis"] = retriever_error_message_prefix + str(e)
+
+        # Notional
+        try:
+            notional_amount, notional_currency = self._extract_notional(retriever, trade_description, leg_type)
+            entry_dict["notional_amount"] = str(FloatUtil.to_int_or_float(v)) if (v := notional_amount) else None
+            entry_dict["notional_currency"] = notional_currency
+        except Exception as e:
+            entry_dict["notional_amount"] = retriever_error_message_prefix + str(e)
+            entry_dict["notional_currency"] = retriever_error_message_prefix + str(e)
 
         # Currency
         extracted_currency = None
@@ -283,15 +286,6 @@ class AnnotationSolution(HackathonSolution):
                     extracted_field=extracted_effective_date, exception_message=str(e)
                 )
 
-        # Notional
-        try:
-            notional_amount, notional_currency = self._extract_notional(retriever, input_description)
-            trade_parameters["notional_amount"] = str(FloatUtil.to_int_or_float(v)) if (v := notional_amount) else None
-            trade_parameters["notional_currency"] = notional_currency
-        except Exception as e:
-            trade_parameters["notional_amount"] = error_message_prefix + str(e)
-            trade_parameters["notional_currency"] = error_message_prefix + str(e)
-
         return trade_parameters
 
     def _process_input(self, input_: HackathonInput, *, trial_id: str) -> HackathonOutput:
@@ -329,16 +323,10 @@ class AnnotationSolution(HackathonSolution):
             output_.tenor_years = trade_parameters.get("tenor_years")
             output_.effective_date = trade_parameters.get("effective_date")
 
-            notional_amount_str = trade_parameters.get("notional_amount")
-            output_.pay_leg_notional = notional_amount_str
-            output_.rec_leg_notional = notional_amount_str
-
-            notional_currency = trade_parameters.get("notional_currency")
-            output_.pay_leg_ccy = notional_currency
-            output_.rec_leg_ccy = notional_currency
-
             # Populate pay leg
             pay_leg_parameters = self._leg_entry_to_dict(retriever, input_.entry_text, "Pay leg")
+            output_.pay_leg_notional = pay_leg_parameters.get("notional_amount")
+            output_.pay_leg_ccy = pay_leg_parameters.get("notional_currency")
             output_.pay_leg_basis = pay_leg_parameters.get("basis")
             output_.pay_leg_freq_months = pay_leg_parameters.get("freq_months")
             output_.pay_leg_float_index = pay_leg_parameters.get("float_index")
@@ -348,6 +336,8 @@ class AnnotationSolution(HackathonSolution):
 
             # Populate receive leg
             rec_leg_parameters = self._leg_entry_to_dict(retriever, input_.entry_text, "Receive leg")
+            output_.rec_leg_notional = rec_leg_parameters.get("notional_amount")
+            output_.rec_leg_ccy = rec_leg_parameters.get("notional_currency")
             output_.rec_leg_basis = rec_leg_parameters.get("basis")
             output_.rec_leg_freq_months = rec_leg_parameters.get("freq_months")
             output_.rec_leg_float_index = rec_leg_parameters.get("float_index")
