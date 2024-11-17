@@ -64,6 +64,9 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
         Example: for '1-3, 5' only trades with id 1, 2, 3, 5 will be scored
     """
 
+    status: str | None = None
+    """Current status."""
+
     trial_count: str | None = None
     """Number of trials per each input used for this scoring."""
 
@@ -73,14 +76,14 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
     max_score: str | None = None
     """Maximum possible score for solution."""
 
+    scoring_statistics: List[HackathonScoringStatistics] | None = None
+    """Detailed scoring statistics for each trade across all trials."""
+
     def get_key(self) -> HackathonSolutionKey:
         return HackathonSolutionKey(solution_id=self.solution_id)
 
     def init(self) -> Self:
         """Similar to __init__ but can use fields set after construction, return self to enable method chaining."""
-
-        if ".Scored." not in self.solution_id and self.trial_count is not None:
-            raise UserError("The 'trial_count' field must not be set before scoring. It populated during scoring.")
 
         # Return self to enable method chaining
         return self
@@ -172,23 +175,13 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
     def _run_score(self, trial_count: int) -> None:
         """Perform scoring."""
 
-        # Perform pre-scoring checks
-        if ".Scored." in self.solution_id:
-            raise UserError("Launch scoring from a solution that does not have 'Scored' as part of its name")
-        if self.trial_count is not None:
-            raise UserError("The 'trial_count' field must not be set before scoring. It populated during scoring.")
-        if self.score is not None:
-            raise UserError("The 'score' field must not be set before scoring. It populated during scoring.")
-        if self.max_score is not None:
-            raise UserError("The 'max_score' field must not be set before scoring. It populated during scoring.")
-        if self.score is not None and "Scoring cancelled" in self.score:
-            raise UserError("Scoring has been cancelled for this record, create a new scoring record.")
+        context = Context.current()
+        timestamp = Timestamp.create()
+        base_solution_id = self.solution_id.split(".")[0]
 
         # Copy solution under a new name for scoring
-        context = Context.current()
         scored_solution = context.load_one(type(self), self.get_key())
-        timestamp = Timestamp.create()
-        scored_solution.solution_id = f"{self.solution_id}.Scored.{timestamp}"
+        scored_solution.solution_id = f"{base_solution_id}.{timestamp}"
 
         """Reset the score."""
         scored_solution.score = "Scoring in progress"
@@ -197,6 +190,8 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
         Context.current().save_one(scored_solution)
 
         # Run processing trial_count times
+        scored_solution.status = "Generating output for the trades"
+        context.save_one(self)
         for trial_index in range(trial_count):
             scored_solution.process_all_inputs(trial_id=str(trial_index))
 
@@ -204,7 +199,7 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
         scored_solution.calculate()
 
         # Save scoring object with total score
-        Context.current().save_one(scored_solution)
+        context.save_one(scored_solution)
 
     def get_score_item(
         self, input_key: HackathonInputKey, actual_output: HackathonOutput, expected_output: HackathonOutput
@@ -310,6 +305,13 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
         self.score = str(score)
         self.max_score = str(max_score)
 
+        # Calculate scoring statistics
+        self.status = "Calculating scoring statistics"
+        context.save_one(self)
+        self.calculate_scoring_statistics()
+        self.status = "Completed"
+        context.save_one(self)
+
     @staticmethod
     def _compare_as_dates(source_date_text: str, target_date_text: str) -> bool:
         source_date_entry = DateEntry(text=source_date_text)
@@ -395,7 +397,7 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
 
         return heat_map_plot.get_view()
 
-    def view_statistics(self) -> List[HackathonScoringStatistics]:
+    def calculate_scoring_statistics(self) -> None:
         """Generate scoring statistics for a hackathon solution."""
 
         # Get solution inputs
@@ -423,8 +425,9 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
             )
 
             # Filter outputs corresponding to the current input
+            self_key = self.get_key()
             filtered_outputs = [output for output in all_outputs
-                                if output.solution == self.solution and output.trade_group == input_.trade_group
+                                if output.solution == self_key and output.trade_group == input_.trade_group
                                 and output.trade_id == input_.trade_id]
 
             # Get expected output key for current input
@@ -450,4 +453,4 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
             context.save_one(statistics)
             all_statistics.append(statistics)
 
-        return all_statistics
+        self.scoring_statistics = all_statistics
