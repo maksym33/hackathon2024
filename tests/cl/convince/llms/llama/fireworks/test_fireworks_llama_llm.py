@@ -23,6 +23,7 @@ def test_smoke():
     with TestingContext():
         llms = [
             FireworksLlamaLlm(llm_id="llama-v3-8b-instruct"),
+            FireworksLlamaLlm(llm_id="llama-v3-8b-instruct-0.2", model_name="llama-v3-8b-instruct", temperature=0.2),
         ]
         for llm in llms:
             assert "4" in llm.completion("2 times 2?")

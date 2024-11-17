@@ -30,6 +30,16 @@ class FireworksLlamaLlm(LlamaLlm):
     max_tokens: int = 4096
     """Maximum number of tokens the model will generate in response to the query."""
 
+    temperature: float | None = None
+    """
+    The sampling temperature between 0 and 1 (optional, passed as 'temperature' to OpenAI SDK).
+
+    Notes:
+        Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it
+        more focused  and deterministic. If set to 0, the model will use log probability to automatically
+        increase the temperature until certain thresholds are hit.
+    """
+
     def uncached_completion(self, request_id: str, query: str) -> str:
         """Perform completion without CompletionCache lookup, call completion instead."""
 
@@ -50,7 +60,10 @@ class FireworksLlamaLlm(LlamaLlm):
         fireworks.client.api_key = api_key
 
         response = fireworks.client.Completion.create(
-            model=f"accounts/fireworks/models/{model_name}", prompt=prompt, max_tokens=self.max_tokens
+            model=f"accounts/fireworks/models/{model_name}",
+            prompt=prompt,
+            max_tokens=self.max_tokens,
+            temperature=self.temperature,
         )
         result = response.choices[0].text
         return result
