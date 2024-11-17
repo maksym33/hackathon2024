@@ -35,9 +35,23 @@ class TradeEntryConfig(Config):
                 opened_tabs=[
                     TabInfo(
                         type=BaseTypeInfo(
-                            name="TradeEntry",
-                            module="TradeEntry",
-                            label="TradeEntry",
+                            name="HackathonSolution",
+                            module="HackathonSolution",
+                            label="HackathonSolution",
+                        ),
+                    ),
+                    TabInfo(
+                        type=BaseTypeInfo(
+                            name="HackathonInput",
+                            module="HackathonInput",
+                            label="HackathonInput",
+                        ),
+                    ),
+                    TabInfo(
+                        type=BaseTypeInfo(
+                            name="HackathonOutput",
+                            module="HackathonOutput",
+                            label="HackathonOutput",
                         ),
                     ),
                 ],
