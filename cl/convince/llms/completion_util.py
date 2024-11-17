@@ -16,27 +16,31 @@ import collections
 import os
 from typing import Iterable
 
+from cl.runtime import Context
+from cl.runtime.primitive.string_util import StringUtil
+
 
 class CompletionUtil:
     """Helper methods for LLM completions."""
 
     @classmethod
-    def normalize_key(cls, query: str, trial_id: str | int | None = None) -> str:
+    def normalize_query(cls, query: str) -> str:
         """Add trial_id, strip leading and trailing whitespace, and normalize EOL."""
 
         # Strip leading and trailing whitespace and EOL
         result = query.strip()
 
         # Add trial_id to the beginning of cached query key
-        if trial_id is not None:
-            result = f"TrialID: {str(trial_id)}\n{result}"
+        context = Context.current()
+        if context.trial is not None:
+            result = f"TrialID: {context.trial.trial_id}\n{result}"
 
         # Normalize EOL
         result = cls.to_python_eol(result)
         return result
 
     @classmethod
-    def normalize_value(cls, value: str) -> str:
+    def normalize_completion(cls, value: str) -> str:
         """Strip leading and trailing whitespace, and normalize EOL."""
 
         # Strip leading and trailing whitespace and EOL

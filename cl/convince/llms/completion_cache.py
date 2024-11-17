@@ -101,18 +101,17 @@ class CompletionCache:
         # Load completion dictionary from disk
         self.load_completion_dict()
 
-    def add(self, request_id: str, query: str, completion: str, *, trial_id: str | int | None = None) -> None:
+    def add(self, request_id: str, query: str, completion: str) -> None:
         """Add to file even if already exits, the latest will take precedence during lookup."""
 
         # Remove leading and trailing whitespace and normalize EOL in value
-        completion = CompletionUtil.normalize_value(completion)
+        completion = CompletionUtil.normalize_completion(completion)
 
         # Create and save a completion record
         completion_record = Completion(
             llm=LlmKey(llm_id=self.channel),
-            query=query_with_trial_id,
+            query=query,
             completion=completion,
-            trial=TrialKey(trial_id=trial_id) if trial_id is not None else None,
             timestamp=request_id,
         )
 
@@ -162,15 +161,11 @@ class CompletionCache:
                 # Should not be reached here because of a previous check in __init__
                 _error_extension_not_supported(self.ext)
 
-    def get(self, query: str, *, trial_id: str | int | None = None) -> str | None:
+    def get(self, query: str) -> str | None:
         """Return completion for the specified query if found and None otherwise."""
 
         # Set only those fields that are required for computing the key
-        completion_key = Completion(
-            llm=LlmKey(llm_id=self.channel),
-            query=query,
-            trial=TrialKey(trial_id=trial_id) if trial_id is not None else None,
-        ).get_key()
+        completion_key = Completion(llm=LlmKey(llm_id=self.channel), query=query).get_key()
 
         # Return completion string from DB or None if the record is not found
         completion = Context.current().load_one(Completion, completion_key, is_record_optional=True)

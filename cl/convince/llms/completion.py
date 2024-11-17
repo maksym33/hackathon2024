@@ -38,9 +38,6 @@ class Completion(CompletionKey, RecordMixin[CompletionKey], ABC):
     query: str = missing()
     """Query for which the completion is recorded."""
 
-    trial: TrialKey | None = None
-    """Trial for which the completion is recorded."""
-
     completion: str = missing()
     """Completion returned by the LLM."""
 
@@ -49,6 +46,9 @@ class Completion(CompletionKey, RecordMixin[CompletionKey], ABC):
     Globally unique UUIDv7 (RFC-9562) timestamp in time-ordered dash-delimited string format with additional
     strict time ordering guarantees within the same process, thread and context.
     """
+ 
+    trial: TrialKey | None = None
+    """Trial for which the completion is recorded."""
 
     def get_key(self) -> CompletionKey:
         # Check that the fields required to compute the key are set
@@ -59,11 +59,7 @@ class Completion(CompletionKey, RecordMixin[CompletionKey], ABC):
 
         # Create a unique identifier using StringUtil.digest, this will
         # add MD5 hash if multiline or more than 80 characters
-        self.completion_id = StringUtil.digest(
-            self.query,
-            text_params=(self.llm.llm_id,),
-        )
-
+        self.completion_id = StringUtil.digest(self.query, text_params=(self.llm.llm_id,))
         return CompletionKey(completion_id=self.completion_id)
 
     def init(self) -> Self:
