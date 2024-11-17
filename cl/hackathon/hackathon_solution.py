@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import copy
+import dataclasses
 from abc import ABC, abstractmethod
 from collections import defaultdict, Counter
 from dataclasses import dataclass
@@ -180,11 +181,12 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
             raise UserError("The 'score' field must not be set before scoring. It populated during scoring.")
         if self.max_score is not None:
             raise UserError("The 'max_score' field must not be set before scoring. It populated during scoring.")
-        if "Scoring cancelled" in self.score:
+        if self.score is not None and "Scoring cancelled" in self.score:
             raise UserError("Scoring has been cancelled for this record, create a new scoring record.")
 
         # Copy solution under a new name for scoring
-        scored_solution = copy.deepcopy(self)
+        context = Context.current()
+        scored_solution = context.load_one(type(self), self.get_key())
         timestamp = Timestamp.create()
         scored_solution.solution_id = f"{self.solution_id}.Scored.{timestamp}"
 
@@ -196,13 +198,13 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
 
         # Run processing trial_count times
         for trial_index in range(trial_count):
-            self.process_all_inputs(trial_id=str(trial_index))
+            scored_solution.process_all_inputs(trial_id=str(trial_index))
 
         # Compare solution outputs with expected outputs and save HackathonScoreItems for each pair
-        self.calculate()
+        scored_solution.calculate()
 
         # Save scoring object with total score
-        Context.current().save_one(self)
+        Context.current().save_one(scored_solution)
 
     def get_score_item(
         self, input_key: HackathonInputKey, actual_output: HackathonOutput, expected_output: HackathonOutput
@@ -246,12 +248,16 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
 
         # Create and return score item
         return HackathonScoreItem(
-            solution=self.get_key(),
+            solution=actual_output.solution,
+            trade_group=actual_output.trade_group,
+            trade_id=actual_output.trade_id,
+            trial_id=actual_output.trial_id,
             input=input_key,
             actual_output=actual_output.get_key(),
             expected_output=expected_output.get_key(),
             matched_fields=matched_fields,
             mismatched_fields=mismatched_fields,
+            error_fields=error_fields,
         )
 
     def calculate(self):
@@ -301,8 +307,8 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
                 details.append(score_item.get_key())
 
         # Update self with calculated values
-        self.score = score
-        self.max_score = max_score
+        self.score = str(score)
+        self.max_score = str(max_score)
 
     @staticmethod
     def _compare_as_dates(source_date_text: str, target_date_text: str) -> bool:
@@ -325,8 +331,12 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
 
         context = Context.current()
         scoring_items = context.load_all(HackathonScoreItem)
-        filtered_scoring_items = [item for item in scoring_items if item.scoring == self.get_key()]
+        for item in scoring_items:
+            item.matched_fields = item.matched_fields if item.matched_fields is not None else []
+            item.mismatched_fields = item.mismatched_fields if item.mismatched_fields is not None else []
+            item.error_fields = item.error_fields if item.error_fields is not None else []
 
+        filtered_scoring_items = [item for item in scoring_items if item.solution == self.get_key()]
         if len(filtered_scoring_items) == 0:
             return None
 

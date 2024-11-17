@@ -48,7 +48,7 @@ class HackathonScoreItem(HackathonScoreItemKey, RecordMixin[HackathonScoreItemKe
     def get_key(self):
         return HackathonScoreItemKey(
             solution=self.solution,
-            input=self.input,
-            actual_output=self.actual_output,
-            expected_output=self.expected_output,
+            trade_group=self.trade_group,
+            trade_id=self.trade_id,
+            trial_id=self.trial_id,
         )
