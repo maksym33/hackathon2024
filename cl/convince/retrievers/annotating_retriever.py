@@ -60,16 +60,11 @@ Parameter description: ```{ParamDescription}```
 class AnnotatingRetriever(Retriever):
     """Instructs the model to surround the requested parameter by curly braces and uses the annotations to retrieve."""
 
-    llm: LlmKey = missing()
-    """LLM used to perform the retrieval."""
-
     prompt: PromptKey = missing()
     """Prompt used to perform the retrieval."""
 
     def init(self) -> Self:
         """Similar to __init__ but can use fields set after construction, return self to enable method chaining."""
-        if self.llm is None:
-            self.llm = GptLlm(llm_id="gpt-4o")  # TODO: Review the handling of defaults
         if self.prompt is None:
             self.prompt = FormattedPrompt(
                 prompt_id="AnnotatingRetriever",
@@ -90,7 +85,7 @@ class AnnotatingRetriever(Retriever):
     ) -> str | None:
         # Get LLM and prompt
         context = Context.current()
-        llm = context.load_one(Llm, self.llm)
+        llm = context.load_one(Llm, context.full_llm)
         prompt = context.load_one(Prompt, self.prompt)
 
         trial_count = 2

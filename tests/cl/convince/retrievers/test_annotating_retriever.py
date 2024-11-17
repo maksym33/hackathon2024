@@ -43,7 +43,6 @@ def _test_extract(input_text: str, param_description: str, param_samples: List[s
     for llm in stub_full_llms:
         retriever = AnnotatingRetriever(
             retriever_id="test_annotating_retriever",
-            llm=llm,
         )
         retriever.init_all()
         guard = RegressionGuard(channel=llm.llm_id)
