@@ -35,26 +35,26 @@ class Llm(LlmKey, RecordMixin[LlmKey], ABC):
     def completion(self, query: str, *, trial_id: str | int | None = None) -> str:
         """Text-in, text-out single query completion without model-specific tags (uses response caching)."""
 
-        # Remove leading and trailing whitespace and normalize EOL in query
-        query = CompletionUtil.normalize_value(query)
+        # Get cache key with trial_id, EOL normalization, and stripped leading and trailing whitespace
+        query_with_trial_id = CompletionUtil.normalize_key(query, trial_id=trial_id)
 
         # Create completion cache if does not exist
         if self._completion_cache is None:
             self._completion_cache = CompletionCache(channel=self.llm_id)
 
         # Try to find in completion cache by cache_key, make cloud provider call only if not found
-        if (result := self._completion_cache.get(query, trial_id=trial_id)) is None:
+        if (result := self._completion_cache.get(query_with_trial_id, trial_id=trial_id)) is None:
             # Request identifier is UUIDv7 timestamp in time-ordered dash-delimited format
             # is used to prevent LLM cloud provider caching and to identify LLM API calls
             # for audit log and error reporting purposes
             request_id = Timestamp.create()
 
             # Invoke LLM by calling the cloud provider API
-            result = self.uncached_completion(request_id, query)
+            result = self.uncached_completion(request_id, query_with_trial_id)
 
             # Save the result in cache before returning, request_id is recorded
             # but not taken into account during lookup
-            self._completion_cache.add(request_id, query, result, trial_id=trial_id)
+            self._completion_cache.add(request_id, query_with_trial_id, result, trial_id=trial_id)
 
         # Remove leading and trailing whitespace and normalize EOL in result
         result = CompletionUtil.normalize_value(result)

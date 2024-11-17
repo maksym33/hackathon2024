@@ -104,9 +104,6 @@ class CompletionCache:
     def add(self, request_id: str, query: str, completion: str, *, trial_id: str | int | None = None) -> None:
         """Add to file even if already exits, the latest will take precedence during lookup."""
 
-        # Get cache key with trial_id, EOL normalization, and stripped leading and trailing whitespace
-        query_with_trial_id = CompletionUtil.normalize_key(query, trial_id=trial_id)
-
         # Remove leading and trailing whitespace and normalize EOL in value
         completion = CompletionUtil.normalize_value(completion)
 
@@ -168,13 +165,10 @@ class CompletionCache:
     def get(self, query: str, *, trial_id: str | int | None = None) -> str | None:
         """Return completion for the specified query if found and None otherwise."""
 
-        # Get cache key with trial_id, EOL normalization, and stripped leading and trailing whitespace
-        query_with_trial_id = CompletionUtil.normalize_key(query, trial_id=trial_id)
-
         # Set only those fields that are required for computing the key
         completion_key = Completion(
             llm=LlmKey(llm_id=self.channel),
-            query=query_with_trial_id,
+            query=query,
             trial=TrialKey(trial_id=trial_id) if trial_id is not None else None,
         ).get_key()
 
