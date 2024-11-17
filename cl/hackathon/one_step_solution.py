@@ -13,6 +13,9 @@
 # limitations under the License.
 
 from dataclasses import dataclass
+
+from cl.convince.llms.llm import Llm
+from cl.runtime import Context
 from cl.runtime.primitive.float_util import FloatUtil
 from cl.runtime.records.dataclasses_extensions import missing
 from cl.convince.llms.gpt.gpt_llm import GptLlm
@@ -40,8 +43,9 @@ class OneStepSolution(HackathonSolution):
             entry_text=input_.entry_text,
         )
 
-        llm = GptLlm(llm_id="gpt-4o")
-
+        # Load the full LLM specified by the context
+        context = Context.current()
+        llm = context.load_one(Llm, context.full_llm)
         query = self.prompt.format(input_text=input_.entry_text)
 
         output = llm.completion(query)

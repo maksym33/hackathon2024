@@ -335,7 +335,6 @@ class AnnotationSolution(HackathonSolution):
 
         retriever = AnnotatingRetriever(
             retriever_id=f"{self.solution_id}::{self.trade_group.trade_group_id}::{input_.trade_id}::{trial_id}",
-            llm=GptLlm(llm_id="gpt-4o"),
             prompt=FormattedPrompt(
                 prompt_id="AnnotatingRetriever",
                 params_type=Retrieval.__name__,
