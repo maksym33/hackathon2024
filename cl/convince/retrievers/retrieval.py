@@ -15,6 +15,7 @@
 from dataclasses import dataclass
 from typing_extensions import Self
 from cl.runtime import RecordMixin
+from cl.runtime.experiments.trial_key import TrialKey
 from cl.runtime.primitive.timestamp import Timestamp
 from cl.runtime.records.dataclasses_extensions import missing
 from cl.convince.retrievers.retrieval_key import RetrievalKey
@@ -28,8 +29,8 @@ class Retrieval(RetrievalKey, RecordMixin[RetrievalKey]):  # TODO: Derive from T
     retriever: RetrieverKey = missing()
     """Retriever which generated this retrieval."""
 
-    trial_label: str | None = None
-    """Optional trial label when running multiple trials."""
+    trial: TrialKey | None = None
+    """Optional trial key when running multiple trials."""
 
     def get_key(self) -> RetrievalKey:
         return RetrievalKey(retrieval_id=self.retrieval_id)
