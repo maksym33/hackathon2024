@@ -23,7 +23,7 @@ from cl.runtime.records.dataclasses_extensions import missing
 class HackathonScoringStatistics(HackathonScoringStatisticsKey, RecordMixin[HackathonScoringStatisticsKey]):
     """Statistics of hackathon scoring for a single hackathon trade calculated using the specified solution."""
 
-    trade_id: int = missing()
+    trade_id: str = missing()
     """Trade id for the specified trade."""
 
     entry_text: str = missing()

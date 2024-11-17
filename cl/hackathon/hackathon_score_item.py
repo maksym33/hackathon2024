@@ -15,13 +15,26 @@
 from dataclasses import dataclass
 from dataclasses import field
 from typing import List
+
+from cl.hackathon.hackathon_input_key import HackathonInputKey
+from cl.hackathon.hackathon_output_key import HackathonOutputKey
 from cl.runtime import RecordMixin
 from cl.hackathon.hackathon_score_item_key import HackathonScoreItemKey
+from cl.runtime.records.dataclasses_extensions import missing
 
 
 @dataclass(slots=True, kw_only=True)
 class HackathonScoreItem(HackathonScoreItemKey, RecordMixin[HackathonScoreItemKey]):
     """Base scoring info for specified actual and expected outputs."""
+
+    input: HackathonInputKey = missing()
+    """Related input."""
+
+    actual_output: HackathonOutputKey = missing()
+    """Actual output for input from solution."""
+
+    expected_output: HackathonOutputKey = missing()
+    """Expected output for input."""
 
     matched_fields: List[str] = field(default_factory=list)
     """List of matched fields."""
@@ -31,7 +44,7 @@ class HackathonScoreItem(HackathonScoreItemKey, RecordMixin[HackathonScoreItemKe
 
     def get_key(self):
         return HackathonScoreItemKey(
-            scoring=self.scoring,
+            solution=self.solution,
             input=self.input,
             actual_output=self.actual_output,
             expected_output=self.expected_output,

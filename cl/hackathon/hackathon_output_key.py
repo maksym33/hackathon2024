@@ -30,11 +30,11 @@ class HackathonOutputKey(KeyMixin):
     trade_group: str = missing()
     """Trade group for which trade_id is defined (trade_id is unique within the group)."""
 
-    trade_id: int = missing()
+    trade_id: str = missing()
     """Unique trade identifier within the trade group."""
 
     trial_id: str = missing()
-    """Trial id."""
+    """Trial identifier."""
 
     @classmethod
     def get_key_type(cls) -> Type:
