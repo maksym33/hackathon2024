@@ -73,7 +73,6 @@ class AmountEntry(Entry):
         context = Context.current()
         retriever = AnnotatingRetriever(
             retriever_id="AnnotatingRetriever",
-            llm=GptLlm(llm_id="gpt-4o"),
         )
         retriever.init_all()
 

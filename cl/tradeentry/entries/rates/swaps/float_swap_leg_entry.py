@@ -57,7 +57,6 @@ class FloatSwapLegEntry(RatesSwapLegEntry):
         # TODO: Make configurable
         retriever = AnnotatingRetriever(
             retriever_id="test_annotating_retriever",
-            llm=GptLlm(llm_id="gpt-4o"),
         )
         retriever.init_all()
 

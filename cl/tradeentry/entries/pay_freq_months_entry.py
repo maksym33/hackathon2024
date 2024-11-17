@@ -44,7 +44,6 @@ class PayFreqMonthsEntry(Entry):
         # TODO: Make configurable
         retriever = MultipleChoiceRetriever(
             retriever_id="MultipleChoiceRetriever",
-            llm=GptLlm(llm_id="gpt-4o"),
         )
         retriever.init_all()
 
