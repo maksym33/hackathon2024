@@ -123,12 +123,14 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
         inputs = Context.current().load_all(HackathonInput)
 
         # Filter inputs by trade_group and trade_ids
-        return [
+        trade_ids_list = self.get_trade_ids_list() if self.trade_ids is not None else None
+        result = [
             x
             for x in inputs
             if x.trade_group == self.trade_group
-            and not ((ids_list := self.get_trade_ids_list()) or x.trade_id in ids_list)
+            and ((trade_ids_list is None) or (int(x.trade_id) in trade_ids_list))
         ]
+        return result
 
     def get_outputs(self) -> List[HackathonOutput]:
         """Return the list of outputs (each with its score)."""
