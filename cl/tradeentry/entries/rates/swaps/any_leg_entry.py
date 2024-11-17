@@ -14,6 +14,8 @@
 
 from dataclasses import dataclass
 from typing import Type
+
+from cl.convince.llms.llm import Llm
 from cl.runtime import Context
 from cl.runtime.log.exceptions.user_error import UserError
 from cl.runtime.records.dataclasses_extensions import missing
@@ -46,9 +48,13 @@ class AnyLegEntry(Entry):
         return AnyLegEntry
 
     def determine_leg_type(self, leg_type_prompt: str) -> str | None:
-        llm = GptLlm(llm_id="gpt-4o")
-        input_text = self.text
+        """Determine leg type, after which this record will be replaced by a record of this type."""
 
+        # Load the full LLM specified by the context
+        context = Context.current()
+        llm = context.load_one(Llm, context.full_llm)
+
+        input_text = self.text
         trial_count = 2
         for trial_index in range(trial_count):
 

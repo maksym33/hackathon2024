@@ -15,6 +15,8 @@
 import re
 from dataclasses import dataclass
 from typing import List
+
+from cl.convince.llms.llm import Llm
 from cl.runtime import Context
 from cl.runtime.log.exceptions.user_error import UserError
 from cl.runtime.primitive.string_util import StringUtil
@@ -52,9 +54,13 @@ class RatesSwapEntry(TradeEntry):
     """List of swap legs."""
 
     def extract_legs(self, legs_annotation_prompt: str) -> List[str] | None:
-        llm = GptLlm(llm_id="gpt-4o")
-        input_text = self.text
+        """Extract entry text for the legs from the entry text for the trade."""
 
+        # Load the full LLM specified by the context
+        context = Context.current()
+        llm = context.load_one(Llm, context.full_llm)
+
+        input_text = self.text
         trial_count = 2
         for trial_index in range(trial_count):
 
