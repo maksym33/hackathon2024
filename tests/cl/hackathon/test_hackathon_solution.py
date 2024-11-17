@@ -13,10 +13,11 @@
 # limitations under the License.
 
 from cl.hackathon.hackathon_solution import HackathonSolution
+from cl.hackathon.one_step_solution import OneStepSolution
 
 
 def test_get_trade_ids_list():
-    solution = HackathonSolution(trade_group="Test")
+    solution = OneStepSolution(trade_group="Test")
 
     solution.trade_ids = "1-3"
     # Basic range
