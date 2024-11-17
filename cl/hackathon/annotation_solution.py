@@ -105,13 +105,13 @@ class AnnotationSolution(HackathonSolution):
 
     def _leg_entry_to_dict(self, retriever: AnnotatingRetriever, trade_description: str, leg_type: str) -> Dict:
         retriever_error_message_prefix = (
-            "Error trying to extract the field from the trade description\n" f"Leg description: {trade_description}\n"
+            f"Error trying to extract the field from the trade description\nTrade description: {trade_description}\n"
         )
 
         entry_error_message_template = (
             "Error trying to process an extracted field from the trade description\n"
             "Extracted field: {extracted_field}\n"
-            f"Leg description: {trade_description}\n"
+            f"Trade description: {trade_description}\n"
             "{exception_message}"
         )
 
@@ -255,13 +255,13 @@ class AnnotationSolution(HackathonSolution):
 
         error_message_prefix = (
             "Error trying to extract the field from the trade description\n"
-            f"General trade information: {input_description}\n"
+            f"Trade description: {input_description}\n"
         )
 
         entry_error_message_template = (
             "Error trying to process an extracted field from the trade description\n"
             "Extracted field: {extracted_field}\n"
-            f"General trade information: {input_description}\n"
+            f"Trade description: {input_description}\n"
             "{exception_message}"
         )
 
