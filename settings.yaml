@@ -15,6 +15,11 @@ default:
     - stubs.cl.tradeentry
   runtime_context_db_class: cl.runtime.db.sql.sqlite_db.SqliteDb
 
+  runtime_context_experiment: SampleExperiment
+  runtime_context_trial: SampleTrial
+  runtime_context_mini_llm: gpt-4o-mini
+  runtime_context_full_llm: gpt-4o
+
   # Documented in ApiSettings class
   runtime_api_hostname: localhost
   runtime_api_port: 7008
