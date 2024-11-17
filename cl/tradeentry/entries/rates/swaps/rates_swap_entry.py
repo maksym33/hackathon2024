@@ -83,12 +83,15 @@ class RatesSwapEntry(TradeEntry):
             is_last_trial = retry_index == self.max_retries - 1
 
             # Append retry_index to trial_id to avoid reusing a cached completion
-            context = Context.current()
-            if context.trial is not None:
-                trial_id = f"{context.trial.trial_id}.{retry_index}"
+            if self.max_retries > 1:
+                context = Context.current()
+                if context.trial is not None:
+                    trial_key = TrialKey(trial_id=f"{context.trial.trial_id}\\{retry_index}")
+                else:
+                    trial_key = TrialKey(trial_id=str(retry_index))
             else:
-                trial_id = str(retry_index)
-            with Context(trial=TrialKey(trial_id=trial_id)) as context:
+                trial_key = context.trial
+            with Context(trial=trial_key) as context:
 
                 try:
                     # Create a brace extraction prompt using input parameters
