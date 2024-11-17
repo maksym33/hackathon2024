@@ -88,7 +88,7 @@ class HackathonOutput(HackathonOutputKey, RecordMixin[HackathonOutputKey]):
         )
 
     def view_detailed_information(self) -> List[AnnotatingRetrieval]:
-
+        """Return the list of used annotating retrievals."""
         context = Context.current()
 
         current_retriever_id = (
