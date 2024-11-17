@@ -25,7 +25,13 @@ class HackathonScoringStatisticsKey(KeyMixin):
     """Output fields for a single hackathon trade obtained using the specified solution."""
 
     solution: HackathonSolutionKey = missing()
-    """Solution for which the statistic are calculated."""
+    """Solution that generated the output."""
+
+    trade_group: str = missing()
+    """Trade group for which trade_id is defined (trade_id is unique within the group)."""
+
+    trade_id: str = missing()
+    """Unique trade identifier within the trade group."""
 
     @classmethod
     def get_key_type(cls) -> Type:

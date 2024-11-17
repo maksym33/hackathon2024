@@ -64,9 +64,6 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
     max_score: str | None = None
     """Maximum possible score for solution."""
 
-    scoring_cancelled: str | None = None
-    """Flag indicating scoring has been cancelled."""
-
     def get_key(self) -> HackathonSolutionKey:
         return HackathonSolutionKey(solution_id=self.solution_id)
 
@@ -140,14 +137,28 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
 
         Context.current().save_one(self)
 
-    def run_generate(self) -> None:
-        """Load, filter, and process HackathonInput data, then save results."""
+    def run_debug(self) -> None:
+        """Run sequentially for debugging purposes."""
         # Process all inputs assigning trial_id of 0
         self.process_all_inputs(trial_id="0")
 
     def run_score_one_trial(self) -> None:
         """Perform scoring."""
         self._run_score(1)
+
+    def run_score_three_trials(self) -> None:
+        """Perform scoring."""
+        self._run_score(3)
+
+    def run_score_ten_trials(self) -> None:
+        """Perform scoring."""
+        self._run_score(10)
+
+    def run_cancel_scoring(self) -> None:
+        """Cancel the ongoing scoring."""
+        self.score = "Scoring cancelled"
+        self.max_score = "Scoring cancelled"
+        Context.current().save_one(self)
 
     def _run_score(self, trial_count: int) -> None:
         """Perform scoring."""
@@ -161,8 +172,8 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
             raise UserError("The 'score' field must not be set before scoring. It populated during scoring.")
         if self.max_score is not None:
             raise UserError("The 'max_score' field must not be set before scoring. It populated during scoring.")
-        if self.scoring_cancelled is not None:
-            raise UserError("Solution has 'scoring_cancelled' flag set.")
+        if "Scoring cancelled" in self.score:
+            raise UserError("Scoring has been cancelled for this record, create a new scoring record.")
 
         # Copy solution under a new name for scoring
         scored_solution = copy.deepcopy(self)
@@ -175,10 +186,8 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
         scored_solution.trial_count = str(trial_count)
         Context.current().save_one(scored_solution)
 
-        return
-
         # Run processing trial_count times
-        for trial_index in range(int(self.trial_count)):
+        for trial_index in range(trial_count):
             self.process_all_inputs(trial_id=str(trial_index))
 
         # Compare solution outputs with expected outputs and save HackathonScoreItems for each pair
@@ -229,9 +238,8 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
     def calculate(self):
         """Calculate scoring info and record to self."""
 
-        context = Context.current()
-
         # Get solution inputs
+        context = Context.current()
         inputs = self._get_inputs()
 
         # Set initial values of scoring fields
@@ -250,7 +258,7 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
             input_key = input_.get_key()
 
             # Load outputs for current input with trial_id
-            for trial_index in range(self.trial_count):
+            for trial_index in range(int(self.trial_count)):
                 trial_id = str(trial_index)
 
                 # Create actual output for current input and trial_index
@@ -401,4 +409,3 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
             all_statistics.append(statistics)
 
         return all_statistics
-
