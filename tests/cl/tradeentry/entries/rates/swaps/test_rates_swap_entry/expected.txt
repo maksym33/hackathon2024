@@ -13,6 +13,6 @@ legs:
   _type: EntryKey
 - entry_id: 'Bank receives: USD fixed 3.45%, semi-annual, act/360 (AnyLeg, en-US)'
   _type: EntryKey
-max_retries: 2
+max_retries: 1
 _type: RatesSwapEntry
 

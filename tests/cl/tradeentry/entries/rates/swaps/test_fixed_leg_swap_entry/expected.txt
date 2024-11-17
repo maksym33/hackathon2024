@@ -9,7 +9,7 @@ pay_freq:
   entry_id: semi-annual (PayFreq, en-US)
   _type: EntryKey
 fixed_rate:
-  entry_id: 3.45% (FixedRate, en-US)
+  entry_id: fixed 3.45% (FixedRate, en-US)
   _type: EntryKey
 _type: FixedSwapLegEntry
 
