@@ -333,17 +333,12 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
 
         context = Context.current()
         scoring_items = context.load_all(HackathonScoreItem)
-        for item in scoring_items:
-            item.matched_fields = item.matched_fields if item.matched_fields is not None else []
-            item.mismatched_fields = item.mismatched_fields if item.mismatched_fields is not None else []
-            item.error_fields = item.error_fields if item.error_fields is not None else []
-
         filtered_scoring_items = [item for item in scoring_items if item.solution == self.get_key()]
         if len(filtered_scoring_items) == 0:
             return None
 
         first_item = filtered_scoring_items[0]
-        fields = first_item.matched_fields + first_item.mismatched_fields + first_item.error_fields
+        fields = (first_item.matched_fields or []) + (first_item.mismatched_fields or []) + (first_item.error_fields or [])
 
         # Get solution inputs
         inputs = self.get_inputs()
