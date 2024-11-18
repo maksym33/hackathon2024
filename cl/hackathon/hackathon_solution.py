@@ -118,6 +118,11 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
         """Return the list of outputs (each with its score)."""
         return self.get_outputs()
 
+    def view_statistics(self) -> List[HackathonScoringStatistics]:
+        """Return the list of inputs specified by the trade list."""
+        self.calculate_statistics()
+        return self.statistics
+
     def view_retrievals(self) -> List[AnnotatingRetrieval]:
         """Return the list of used annotating retrievals."""
 
@@ -486,7 +491,7 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
                 expected_field_value = getattr(expected_output, field_name, None)
 
                 # Generate statistics summary for the field
-                field_statistics = f"{expected_field_value} (exp)\n" + "\n".join(map(
+                field_statistics = f"{expected_field_value} =\n" + "\n".join(map(
                     lambda x: f"{x[0]} ({x[1]}/{self.trial_count})", Counter(actual_field_values).items()
                 ))
 
