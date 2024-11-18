@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import pytest
+from typing_extensions import Self
 from cl.runtime import RecordMixin
 from cl.runtime.db.protocols import TKey
 from cl.runtime.testing.regression_guard import RegressionGuard
@@ -25,25 +26,34 @@ class _Base(RecordMixin[StubDataclassRecord]):
     def get_key(self) -> TKey:
         raise NotImplementedError()
 
-    def init(self) -> None:
-        """Same as __init__ but can be used when field values are set both during and after construction."""
+    def init(self) -> Self:
+        """Similar to __init__ but can use fields set after construction, return self to enable method chaining."""
         RegressionGuard().write("> _Base.init")
+
+        # Return self to enable method chaining
+        return self
 
 
 class _Derived(_Base):
     """Test class."""
 
-    def init(self) -> None:
-        """Same as __init__ but can be used when field values are set both during and after construction."""
+    def init(self) -> Self:
+        """Similar to __init__ but can use fields set after construction, return self to enable method chaining."""
         RegressionGuard().write(">> _Derived.init")
+
+        # Return self to enable method chaining
+        return self
 
 
 class _DerivedFromDerivedWithInit(_Derived):
     """Test class."""
 
-    def init(self) -> None:
-        """Same as __init__ but can be used when field values are set both during and after construction."""
+    def init(self) -> Self:
+        """Similar to __init__ but can use fields set after construction, return self to enable method chaining."""
         RegressionGuard().write(">>> _DerivedFromDerivedWithInit.init")
+
+        # Return self to enable method chaining
+        return self
 
 
 class _DerivedFromDerivedWithoutInit(_Derived):
@@ -62,7 +72,7 @@ def test_init_all():
     _DerivedFromDerivedWithInit().init_all()
     guard.write("Testing _DerivedFromDerivedWithoutInit:")
     _DerivedFromDerivedWithoutInit().init_all()
-    RegressionGuard.verify_all()
+    RegressionGuard().verify_all()
 
 
 if __name__ == "__main__":

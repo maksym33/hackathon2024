@@ -16,6 +16,7 @@ import inspect
 from dataclasses import dataclass
 from typing import Any
 from typing import Callable
+from typing import List
 from typing_extensions import Self
 from cl.runtime import ClassInfo
 from cl.runtime.context.context import Context
@@ -46,6 +47,9 @@ class InstanceMethodTask(CallableTask):
     method_name: str = missing()
     """The name of instance method in snake_case or PascalCase format, do not use for @classmethod or @staticmethod."""
 
+    method_params: List[str] | None = None
+    """Optional list of method parameters."""
+
     def _execute(self) -> None:
         """Invoke the specified instance method."""
 
@@ -66,7 +70,10 @@ class InstanceMethodTask(CallableTask):
         method = getattr(record, method_name)
 
         # Invoke the callable
-        method()
+        if self.method_params:
+            method(*self.method_params)
+        else:
+            method()
 
     @classmethod
     def create(

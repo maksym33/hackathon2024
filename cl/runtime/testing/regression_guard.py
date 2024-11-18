@@ -29,7 +29,7 @@ from cl.runtime.schema.field_decl import primitive_types
 from cl.runtime.serialization.dict_serializer import DictSerializer
 from cl.runtime.serialization.string_serializer import StringSerializer
 
-_supported_extensions = ["txt"]
+_supported_extensions = ["txt", "yaml"]
 """The list of supported output file extensions (formats)."""
 
 key_serializer = StringSerializer()
@@ -37,6 +37,15 @@ key_serializer = StringSerializer()
 
 data_serializer = DictSerializer()
 """Serializer for records."""
+
+
+# Custom Dumper to ensure proper block style for multi-line strings
+class NoExtraLineBreakDumper(yaml.Dumper):
+    def represent_scalar(self, tag, value, style=None):
+        """Use block style (|) for multiline strings."""
+        if "\n" in value:
+            style = "|"
+        return super().represent_scalar(tag, value, style)
 
 
 def _error_extension_not_supported(ext: str) -> Any:
@@ -60,11 +69,14 @@ class RegressionGuard:
         - File extension 'ext' is determined based on the verify method(s) called
     """
 
-    __guard_dict: ClassVar[Dict[str, Self]] = {}  # TODO: Set using ContextVars
-    """Dictionary of existing guards indexed by the combination of output_dir and ext."""
+    base_path: str
+    """Base path for the text excluding the channel, 'verify_all' method applies to all subdirs or this dir."""
 
-    __delegate_to: Self | None
-    """Delegate all function calls to this regression guard if set."""
+    output_path: str
+    """Output path for the test and channel, 'verify' method applies to this dir only."""
+
+    ext: str
+    """Output file extension (format), defaults to '.txt'"""
 
     __verified: bool
     """Verify method sets this flag to true, after which further writes raise an error."""
@@ -72,11 +84,11 @@ class RegressionGuard:
     __exception_text: str | None
     """Exception text from an earlier verification is reused instead of comparing the files again."""
 
-    output_path: str
-    """Output path including directory and channel."""
+    __delegate_to: Self | None
+    """Delegate all function calls to this regression guard if set (instance vars are not initialized in this case)."""
 
-    ext: str
-    """Output file extension (format), defaults to '.txt'"""
+    __guard_dict: ClassVar[Dict[str, Dict[str, Self]]] = {}  # TODO: Set using ContextVars
+    """Dictionary of existing guards indexed by base_path (outer dict) and channel/ext (inner dict)."""
 
     def __init__(
         self,
@@ -112,19 +124,23 @@ class RegressionGuard:
             # Use txt if not specified
             ext = "txt"
 
-        # Check if regression guard already exists for the same combination of output_path and ext
-        dict_key = f"{output_path}.{ext}"
-        if (existing_dict := self.__guard_dict.get(dict_key, None)) is not None:
+        # Get inner dictionary using base path
+        inner_dict = self.__guard_dict.setdefault(base_path, dict())
+
+        # Check if regression guard already exists in inner dictionary for the same combination of channel and ext
+        inner_key = f"{channel}::{ext}"
+        if (existing_dict := inner_dict.get(inner_key, None)) is not None:
             # Delegate to the existing guard if found, do not initialize other fields
             self.__delegate_to = existing_dict
         else:
             # Otherwise add self to dictionary
-            self.__guard_dict[dict_key] = self
+            inner_dict[inner_key] = self
 
             # Initialize fields
             self.__delegate_to = None
             self.__verified = False
             self.__exception_text = None
+            self.base_path = base_path
             self.output_path = output_path
             self.ext = ext
 
@@ -161,7 +177,7 @@ class RegressionGuard:
             # Create the directory if does not exist
             os.makedirs(received_dir)
 
-        if self.ext == "txt":
+        if self.ext == "txt" or self.ext == "yaml":
             with open(received_path, "a") as file:
                 file.write(self._format_txt(value))
                 # Flush immediately to ensure all of the output is on disk in the event of test exception
@@ -170,36 +186,50 @@ class RegressionGuard:
             # Should not be reached here because of a previous check in __init__
             _error_extension_not_supported(self.ext)
 
-    @classmethod
-    def verify_all(cls, *, silent: bool = False) -> None:
+    def verify_all(self, *, silent: bool = False) -> bool:
         """
-        For each created guard, verify that 'channel.received.ext' is the same as 'channel.expected.ext'.
-        Defaults to silent=False (raises exception) for calling at the end of the test.
+        Verify for all guards in this test that 'channel.received.ext' is the same as 'channel.expected.ext'.
+        Defaults to silent=True (no exception) to permit other tests to proceed.
 
         Notes:
             - If 'channel.expected.ext' does not exist, create from 'channel.received.ext'
             - If files are the same, delete 'channel.received.ext' and 'channel.diff.ext'
-            - If files differ, write 'channel.diff.ext' and optionally raise exception
+            - If files differ, write 'channel.diff.ext' and raise exception unless silent=True
+
+        Returns:
+            bool: True if verification succeeds and false otherwise
 
         Args:
-            silent: If true, write the diff file but do not raise exception
+            silent: If true, do not raise exception and only write the 'channel.diff.ext' file
         """
+
+        # Delegate to a previously created guard with the same combination of output_path and ext if exists
+        if self.__delegate_to is not None:
+            return self.__delegate_to.verify_all(silent=silent)
+
+        # Get inner dictionary using base path
+        inner_dict = self.__guard_dict[self.base_path]
+
+        # Skip the delegated guards
+        inner_dict = {k: v for k, v in inner_dict.items() if v.__delegate_to is None}
 
         # Call verify for all guards silently and check if all are true
         # Because 'all' is used, the comparison will not stop early
-        errors_found = not all(guard.verify(silent=True) for guard in cls.__guard_dict.values())
+        errors_found = not all(guard.verify(silent=True) for guard in inner_dict.values())
 
         if errors_found and not silent:
             # Collect exception text from guards where it is present
             exc_text_blocks = [
                 exception_text
-                for guard in cls.__guard_dict.values()
+                for guard in inner_dict.values()
                 if (exception_text := guard._get_exception_text()) is not None
             ]
 
             # Merge the collected exception text blocks and raise an error
             exc_text_merged = "\n".join(exc_text_blocks)
             raise RuntimeError(exc_text_merged)
+
+        return not errors_found
 
     def verify(self, *, silent: bool = False) -> bool:
         """
@@ -220,7 +250,7 @@ class RegressionGuard:
 
         # Delegate to a previously created guard with the same combination of output_path and ext if exists
         if self.__delegate_to is not None:
-            return self.verify(silent=silent)
+            return self.__delegate_to.verify(silent=silent)
 
         if self.__verified:
             # Already verified
@@ -230,23 +260,27 @@ class RegressionGuard:
             else:
                 # Otherwise return True if exception text is None (it is set on verification failure)
                 return self.__exception_text is None
-        else:
-            # Otherwise set 'verified' flag and continue
-            self.__verified = True
 
         received_path = self._get_file_path("received")
         expected_path = self._get_file_path("expected")
         diff_path = self._get_file_path("diff")
 
+        # If received file does not yet exist, return True
         if not os.path.exists(received_path):
-            raise RuntimeError(
-                f"Regression guard error, cannot verify because " f"received file {received_path} does not yet exist."
-            )
+            # Do not set the __verified flag so that verification can be performed again at a later time
+            return True
 
         if os.path.exists(expected_path):
-            # Expected file exists, compare
-            if self.__cmp_files(received_path, expected_path):
-                # Received and expected match, delete the received file and diff file
+
+            # Read both files
+            with open(received_path, "r") as received_file:
+                received_lines = list(received_file.readlines())
+            with open(expected_path, "r") as expected_file:
+                expected_lines = list(expected_file.readlines())
+
+            # Expected file exists, ensure all lines match
+            if all(x == y for x, y in zip(received_lines, expected_lines)):
+                # All received and expected lines match, delete the received file and diff file
                 os.remove(received_path)
                 if os.path.exists(diff_path):
                     os.remove(diff_path)
@@ -254,13 +288,8 @@ class RegressionGuard:
                 # Return True to indicate verification has been successful
                 return True
             else:
-                # Receive an expected do not match, generate unified diff
+                # Some of the lines do not match, generate unified diff
                 # TODO: Handle diff for binary output
-                with open(received_path, "r") as received_file:
-                    received_lines = received_file.readlines()
-                with open(expected_path, "r") as expected_file:
-                    expected_lines = expected_file.readlines()
-
                 # Convert to list first because the returned object is a generator but
                 # we will need to iterate over the lines more than once
                 diff = list(
@@ -295,6 +324,10 @@ class RegressionGuard:
                 # Record into the object even if silent
                 self.__exception_text = exception_text
 
+                # Set the __verified flag so that verification returns the same result if attempted again
+                # This will prevent further writes to this channel and extension
+                self.__verified = True
+
                 if not silent:
                     # Raise exception only when not silent
                     raise RuntimeError(exception_text)
@@ -310,21 +343,39 @@ class RegressionGuard:
             if os.path.exists(diff_path):
                 os.remove(diff_path)
 
+            # Set the __verified flag so that verification returns the same result if attempted again
+            # This will prevent further writes to this channel and extension
+            self.__verified = True
+
             # Verification is considered successful if expected file has been created
+            self.__verified = True
             return True
 
     def _format_txt(self, value: Any) -> str:
         """Format text for regression testing."""
+
+        # Convert to one of the supported output types
+        if is_record(value):
+            value = data_serializer.serialize_data(value)
+        elif is_key(value):
+            value = key_serializer.serialize_key(value)
+
         value_type = type(value)
         if value_type in primitive_types:
             # TODO: Use specialized conversion for primitive types
             return str(value) + "\n"
         elif value_type == dict:
-            return yaml.dump(value, default_flow_style=False, sort_keys=False) + "\n"
-        elif is_record(value_type):
-            return data_serializer.serialize_data(value)
-        elif is_key(value_type):
-            return key_serializer.serialize_key(value)
+            return (
+                yaml.dump(
+                    value,
+                    Dumper=NoExtraLineBreakDumper,
+                    default_flow_style=False,
+                    sort_keys=False,
+                    allow_unicode=True,  # Ensure Unicode characters are displayed as is
+                    width=float("inf"),  # Prevent line wrapping
+                )
+                + "\n"
+            )
         elif issubclass(value_type, Enum):
             return str(value)
         elif hasattr(value_type, "__iter__"):
@@ -348,15 +399,3 @@ class RegressionGuard:
         """The diff between received and expected is written to 'channel.diff.ext' located next to the unit test."""
         result = f"{self.output_path}{file_type}.{self.ext}"
         return result
-
-    def __cmp_files(self, file_path_a: str, file_path_b: str) -> bool:
-        """Compare two files ignoring line endings."""
-        with open(file_path_a, "r") as file_a, open(file_path_b, "r") as file_b:
-            for line_a, line_b in zip(file_a, file_b):
-                # Strip line endings before comparing
-                if line_a.rstrip("\r\n") != line_b.rstrip("\r\n"):
-                    return False
-            # Check if there are any remaining lines in either file
-            if file_a.readline() or file_b.readline():
-                return False
-        return True

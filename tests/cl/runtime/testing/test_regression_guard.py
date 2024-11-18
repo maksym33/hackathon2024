@@ -60,10 +60,10 @@ def perform_testing(base_path: str, full: bool = False):
         RegressionGuard(channel="dict_txt").write(test_dict)
 
         # Verify all guards
-        RegressionGuard.verify_all()
+        RegressionGuard().verify_all()
 
         # Verify again, should have no effect
-        RegressionGuard.verify_all()
+        RegressionGuard().verify_all()
 
 
 def test_function():
@@ -83,6 +83,24 @@ class TestClass:
         # Test calling regression guard from a method
         expected_path = os.path.join(module_path, "test_class", "test_method")
         perform_testing(expected_path, full=True)
+
+
+def test_multiple_extensions():
+    """Test regression guards for the same channel with more than one extension."""
+
+    root_guard_txt = RegressionGuard()
+    root_guard_txt.write("abc")
+    root_guard_txt.verify()
+    root_guard_yaml = RegressionGuard(ext="yaml")
+    root_guard_yaml.write("abc")
+    root_guard_yaml.verify()
+
+    channel_guard_txt = RegressionGuard(channel="channel")
+    channel_guard_txt.write("abc")
+    channel_guard_txt.verify()
+    channel_guard_yaml = RegressionGuard(channel="channel", ext="yaml")
+    channel_guard_yaml.write("abc")
+    channel_guard_yaml.verify()
 
 
 if __name__ == "__main__":

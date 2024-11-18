@@ -14,6 +14,7 @@
 
 from dataclasses import dataclass
 from typing import List
+from typing_extensions import Self
 from cl.runtime.settings.settings import Settings
 
 
@@ -42,8 +43,20 @@ class ContextSettings(Settings):
     db_uri: str | None = None
     """Optional database URI to connect to the database. Required for basic mongo db data source."""
 
-    def init(self) -> None:
-        """Same as __init__ but can be used when field values are set both during and after construction."""
+    experiment: str | None = None
+    """String identifier of the running experiment."""
+
+    trial: str | None = None
+    """String identifier of the running trial."""
+
+    full_llm: str | None = None
+    """String identifier of the default full LLM."""
+
+    mini_llm: str | None = None
+    """String identifier of the default mini LLM."""
+
+    def init(self) -> Self:
+        """Similar to __init__ but can use fields set after construction, return self to enable method chaining."""
 
         if self.context_id is not None and not isinstance(self.context_id, str):
             raise RuntimeError(f"{type(self).__name__} field 'context_id' must be None or a string.")
@@ -68,6 +81,9 @@ class ContextSettings(Settings):
             raise RuntimeError(
                 f"{type(self).__name__} field 'db_class' must be a string " f"in module.ClassName format."
             )
+
+        # Return self to enable method chaining
+        return self
 
     @classmethod
     def get_prefix(cls) -> str:

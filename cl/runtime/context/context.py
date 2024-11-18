@@ -20,16 +20,18 @@ from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Type
+from cl.convince.llms.llm_key import LlmKey
 from cl.runtime.backend.core.user_key import UserKey
 from cl.runtime.context.context_key import ContextKey
 from cl.runtime.db.db_key import DbKey
 from cl.runtime.db.protocols import TKey
 from cl.runtime.db.protocols import TRecord
+from cl.runtime.experiments.experiment_key import ExperimentKey
+from cl.runtime.experiments.trial_key import TrialKey
 from cl.runtime.log.exceptions.user_error import UserError
-from cl.runtime.log.log_entry import LogEntry
-from cl.runtime.log.log_entry_level_enum import LogEntryLevelEnum
 from cl.runtime.log.log_key import LogKey
-from cl.runtime.log.user_log_entry import UserLogEntry
+from cl.runtime.log.log_message import LogMessage
+from cl.runtime.primitive.string_util import StringUtil
 from cl.runtime.records.dataclasses_extensions import missing
 from cl.runtime.records.protocols import KeyProtocol
 from cl.runtime.records.protocols import RecordProtocol
@@ -69,6 +71,18 @@ class Context(ContextKey, RecordMixin[ContextKey]):
     secrets: Dict[str, str] | None = None
     """Context-specific secrets take precedence over those defined via Dynaconf."""
 
+    experiment: ExperimentKey | None = None
+    """Key of the running experiment."""
+
+    trial: TrialKey | None = None
+    """Key of the running trial."""
+
+    full_llm: LlmKey | None = None
+    """Key of the default full LLM."""
+
+    mini_llm: LlmKey | None = None
+    """Key of the default mini LLM."""
+
     is_deserialized: bool = False
     """Use this flag to determine if this context instance has been deserialized from data."""
 
@@ -77,19 +91,34 @@ class Context(ContextKey, RecordMixin[ContextKey]):
 
         # Do not execute this code on deserialized context instances (e.g. when they are passed to a task queue)
         if not self.is_deserialized:
-            # Set fields that are not specified to their values from 'Context.current()'
+            # Set fields that are not specified as __init__ param to their values from 'Context.current()'
+
+            # Required fields, error message if the field is not set in the root context
             if self.user is None:
-                self._root_context_field_not_set_error("user")
+                self._current_context_field_not_set_error("user")
                 self.user = Context.current().user
             if self.log is None:
-                self._root_context_field_not_set_error("log")
+                self._current_context_field_not_set_error("log")
                 self.log = Context.current().log
             if self.db is None:
-                self._root_context_field_not_set_error("db")
+                self._current_context_field_not_set_error("db")
                 self.db = Context.current().db
             if self.dataset is None:
-                self._root_context_field_not_set_error("dataset")
+                self._current_context_field_not_set_error("dataset")
                 self.dataset = Context.current().dataset
+
+            # Optional fields, set to None if not set in the root context
+            # The root context uses ContextSettings values of these fields
+            if self.secrets is None:
+                self.secrets = Context.current().secrets
+            if self.experiment is None:
+                self.experiment = Context.current().experiment
+            if self.trial is None:
+                self.trial = Context.current().trial
+            if self.full_llm is None:
+                self.full_llm = Context.current().full_llm
+            if self.mini_llm is None:
+                self.mini_llm = Context.current().mini_llm
 
         # Replace fields that are set as keys by records from storage
         # First, load 'db' field of this context using 'Context.current()'
@@ -140,23 +169,21 @@ class Context(ContextKey, RecordMixin[ContextKey]):
 
         if exc_val is not None:
             # Save log entry to the database
-            # Get log entry type and level
+
+            # TODO: Perform additional processing for UserError
             if isinstance(exc_val, UserError):
-                log_type = UserLogEntry
-                level = LogEntryLevelEnum.USER_ERROR
+                # TODO: Perform additional processing
+                pass
             else:
-                log_type = LogEntry
-                level = LogEntryLevelEnum.ERROR
+                # TODO: Perform additional processing
+                pass
 
             # Create log entry
-            log_entry = log_type(  # noqa
-                message=str(exc_val),
-                level=level,
-            )
-            log_entry.init()
+            log_message = LogMessage(message=str(exc_val))
+            log_message.init()
 
             # Save occurred error to self db
-            self.save_one(log_entry)
+            self.save_one(log_message)
 
         # Get context stack for the current asynchronous environment
         context_stack = context_stack_var.get()
@@ -380,9 +407,11 @@ class Context(ContextKey, RecordMixin[ContextKey]):
         self.error_if_not_temp_db(self.db.db_id)
         self.db.delete_all_and_drop_db()  # noqa
 
-    def _root_context_field_not_set_error(self, field_name: str) -> None:
+    def _current_context_field_not_set_error(self, field_name: str) -> None:
         """Error message about a Context field not set."""
-        if type(self) is not Context:
+        # Get context stack for the current asynchronous environment
+        context_stack = context_stack_var.get()
+        if not (context_stack and len(context_stack) > 0):
             raise RuntimeError(
                 f"""
 Field '{field_name}' of the context class '{type(self).__name__}' is not set.
@@ -390,7 +419,6 @@ The context in the outermost 'with' clause (root context) must set all fields
 of the Context class. Inside the 'with' clause, these fields will be populated
 from the current context.
 """
-                + root_context_types_str
             )
 
     @classmethod

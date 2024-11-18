@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from dataclasses import dataclass
+from typing_extensions import Self
 from cl.runtime.experiments.experiment_key import ExperimentKey
 from cl.runtime.experiments.trial_key import TrialKey
 from cl.runtime.records.dataclasses_extensions import missing
@@ -23,15 +24,5 @@ from cl.runtime.records.record_mixin import RecordMixin
 class Trial(TrialKey, RecordMixin[TrialKey]):
     """Run and store the result of a single trial for the specified experiment."""
 
-    experiment: ExperimentKey = missing()
-    """Experiment for which the trial is performed."""
-
-    trial_label: str = missing()
-    """Identifier of the trial is unique within the experiment."""
-
     def get_key(self) -> TrialKey:
         return TrialKey(trial_id=self.trial_id)
-
-    def init(self) -> None:
-        """Generate trial_id in 'ExperimentId: TrialLabel' format."""
-        self.trial_id = self.get_trial_id(self.experiment, self.trial_label)
