@@ -1,45 +1,36 @@
 # Default environment
 default:
 
-  # Documented in LogSettings class
+  # Default log level (documented in LogSettings class)
   runtime_log_level: info
+
+  # Default log filename prefix (documented in LogSettings class)
   runtime_log_filename_prefix: main
 
-  # Documented in ContextSettings class
+  # Packages to load (documented in ContextSettings class)
   runtime_context_packages:
     - cl.runtime
     - cl.convince
     - cl.tradeentry
+    - cl.hackathon
     - stubs.cl.runtime
     - stubs.cl.convince
     - stubs.cl.tradeentry
+    - stubs.cl.hackathon
+
+  # Database settings (documented in ContextSettings class)
   runtime_context_db_class: cl.runtime.db.sql.sqlite_db.SqliteDb
 
-  # Documented in ApiSettings class
-  #   - Default CORSMiddleware settings are only applied on localhost
-  #   - If this group of settings is omitted, the app will run on localhost:7008
+  # REST API hostname and port (documented in ApiSettings class)
   runtime_api_hostname: localhost
   runtime_api_port: 7008
 
-  # CORSMiddleware settings in ApiSettings class, uncomment and modify if not running in localhost
-  # runtime_api_allow_origins:
-  #   - 127.0.0.1
-  # runtime_api_allow_origin_regex: null
-  # runtime_api_allow_credentials: True
-  # runtime_api_allow_methods:
-  #   - "*"
-  # runtime_api_allow_headers:
-  #   - "*"
-  # runtime_api_expose_headers: null
-  # runtime_api_max_age: null
-
-  # Documented in PreloadSettings class
+  # Preload directories to include (documented in PreloadSettings class)
   runtime_preload_dirs:
-    - preloads/cl
-    - preloads/stubs
+    - cl
 
 # Test environment
 test:
 
-  # Documented in LogSettings class
+  # Test log filename prefix (documented in LogSettings class)
   runtime_log_filename_prefix: tests

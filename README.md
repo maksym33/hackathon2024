@@ -1,39 +1,44 @@
-# Trade Entry AI
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/compatibl/tradeentry/python-package.yml)
-![GitHub](https://img.shields.io/github/license/compatibl/tradeentry)
-![PyPI - Downloads](https://img.shields.io/pypi/dm/tradeentry)
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/tradeentry)
-![PyPI](https://img.shields.io/pypi/v/tradeentry)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/compatibl/tradeentry/pulls)
-## Trade entry from natural language for the capital markets using LLMs
+# 2024 QuantMinds-CompatibL TradeEntry Hackathon
 
-Experiment results and completions from the workshop and presentation
-by Alexander Sokol at the WBS Quantitative Finance Conference (2024)
-can be examined at:
+# Overview
 
-`tests/cl/tradeentry/experiments`
+- **Date**: Monday, November 18
+- **Format**: In person at the QuantMinds venue and online
+- **Topic**: Trade entry for what-if analysis
+- **Trades**: Non-callable interest rate swaps
+- **Streams**: Non-coding and coding
+- **Models**: GPT-4o and LLAMA3 70b
+- **Awards**:
+  - Certificates for the top three spots in each stream and model combination
+  - A free QuantMinds 2025 pass for the Grand Prize winner (one individual pass per team)
+- **Stay Updated**:
+  - Due to restrictions on bulk email, announcements and updates will be on LinkedIn at [https://www.linkedin.com/company/tradeentry](https://www.linkedin.com/company/tradeentry)
+  - Follow the page to receive notifications
 
-To run the experiments, follow these steps:
+# Rules
 
-### Setting up LLM keys and models
+- Non-coding participants will submit their entry via the online playground at [https://hackathon.tradeentry.ai](https://hackathon.tradeentry.ai)
+- Coding participants will submit their entry via GitHub
+- Limit of 50 model API calls per trade for each model
+- Scoring will be done using OpenAI.com for gpt-4o and Fireworks.ai for LLAMA3-70b. Development can be done using any provider or in-house GPUs.
+- Participants will be able to specify temperature for scoring. All other model parameters will use the default values from OpenAI and Fireworks.
 
-1. Copy the file called `sample_secrets.yaml` in project root to `.secrets.yaml` (note the dot in front)
-   and replace placeholders for each LLM key with your own key, which can be obtained from the LLM providers.
-   Alternatively, they can be set up using .env or envvars (running without the key will print instructions)
-2. Edit the list of models in stub_llms.py if you prefer to run with a different set
+# Scoring
 
-### Running the experiments
+- 20 real-life examples of non-callable swap descriptions for what-if analysis will be sourced from trader messages and anonymized
+- At the hackathon start, 10 of these examples will be randomly drawn and posted to LinkedIn at [https://www.linkedin.com/company/tradeentry](https://www.linkedin.com/company/tradeentry)
+- The online playground and GitHub repository will be updated with these examples
+- At the end of the hackathon, the remaining 10 examples will be used for scoring
+- The score will be calculated as the fraction of correctly extracted fields from 10 scoring runs on each of the 10 examples
 
-1. IMPORTANT: Delete files `*.completions.*` and `*.expected.*` stored in subdirectories
-   of the test location before running the tests
-2. Run tests in `tests/cl/tradeentry/experiments` under pytest to generate new results.
+# Score Calculation
 
-### Examining the results
-
-1. The tests will generate new completions and expected test results using your LLM keys and you
-   will be able to examine them using git diff.
-2. Both completions and expected results will change compared to the saved results due to inherent 
-   variability of LLM response, however their statistics should remain the same
+- Each individual or team will submit one entry in either the non-coding or coding category
+- All submissions will be scored on gpt-4o and LLAMA3 70b models to produce the leaderboard for each stream/model combination
+- The maximum score from these four combinations wins the Grand Prize
+- The score will be calculated as the number of correctly extracted fields from 10 scoring runs on each of the 10 examples
+- Empty values for which the correct value is not empty (and vice versa) will be counted as zero
+- The score will be expressed in percentage points
 
 ## Copyright
 

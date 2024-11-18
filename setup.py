@@ -3,31 +3,33 @@ import setuptools
 with open('./README.md', 'r') as readme_file:
     readme = readme_file.read()
 
-# Gather package requirements from all packages in monorepo
-package_requirements = []
-with open('./tools/cl/runtime/package_requirements.txt') as runtime_package_requirements:
-    package_requirements.extend(line.strip() for line in runtime_package_requirements.readlines())
-with open('./tools/cl/convince/package_requirements.txt') as convince_package_requirements:
-    package_requirements.extend(line.strip() for line in convince_package_requirements.readlines())
-with open('./tools/cl/tradeentry/package_requirements.txt') as tradeentry_package_requirements:
-    package_requirements.extend(line.strip() for line in tradeentry_package_requirements.readlines())
+# Internal requirements (exclude when building from monorepo)
+install_requires = [
+    "runtime>=2.0.5",
+    "convince>=0.0.3",
+    "tradeentry>=0.0.1"
+]
+
+# Third-party requirements
+with open('./tools/cl/hackathon/package_requirements.txt') as hackathon_package_requirements:
+    install_requires.extend(line.strip() for line in hackathon_package_requirements.readlines())
 
 setuptools.setup(
-    name='tradeentry',
+    name='hackathon',
     version='0.0.1',
     author='The Project Contributors',
-    description='Trade entry from natural language for capital markets using LLMs',
+    description='2024 QuantMinds-CompatibL TradeEntry Hackathon',
     license='Apache Software License',
     long_description=readme,
     long_description_content_type='text/markdown',
-    install_requires=package_requirements,
-    url='https://github.com/compatibl/tradeentry',
+    install_requires=install_requires,
+    url='https://github.com/compatibl/hackathon',
     project_urls={
-        'Source Code': 'https://github.com/compatibl/tradeentry',
+        'Source Code': 'https://github.com/compatibl/hackathon',
     },
     packages=setuptools.find_namespace_packages(
         where='.',
-        include=['cl.tradeentry', 'cl.tradeentry.*'],
+        include=['cl.hackathon', 'cl.hackathon.*'],
         exclude=['tests', 'tests.*']
     ),
     package_dir={'': '.'},
