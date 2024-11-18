@@ -31,7 +31,7 @@ from cl.tradeentry.entries.pay_freq_months_entry import PayFreqMonthsEntry
 from cl.tradeentry.trades.currency_key import CurrencyKey
 from cl.hackathon.hackathon_output import HackathonOutput
 from cl.hackathon.hackathon_solution import HackathonSolution
-from cl.hackathon.shared_utils import get_non_empty_features
+from cl.hackathon.shared_utils import get_non_empty_features, get_all_features
 from cl.hackathon.shared_utils import manage_results
 
 FEATURE_TO_RERUN_SELECTOR = get_non_empty_features  #  get_all_features/  get_non_empty_features
@@ -440,27 +440,32 @@ class AnnotationSolution(HackathonSolution):
             pay_leg_trials.append(pay_leg_parameters)
             receive_leg_trials.append(rec_leg_parameters)
 
+            trial_n = 0
             while retriever.calls_remaining > 0:
 
-                n_params, params_to_rerun = FEATURE_TO_RERUN_SELECTOR(params_trials)
-                n_pays, pay_params_to_rerun = FEATURE_TO_RERUN_SELECTOR(pay_leg_trials)
-                n_recs, rec_params_to_rerun = FEATURE_TO_RERUN_SELECTOR(receive_leg_trials)
+                trial_n += 1
 
-                if (n_params or 2) + (n_pays or 7) + (n_recs or 7) > retriever.calls_remaining:
-                    # not enough budget to run all # could do a partial rerun with the credit I have
-                    break
+                with Context(full_llm=self.llm, trial=TrialKey(trial_id=str(output_.trial_id)+str(trial_n))) as context:
 
-                trade_parameters = self._retrieve_trade_parameters(retriever, output_.entry_text, params_to_rerun)
-                pay_leg_parameters = self._leg_entry_to_dict(
-                    retriever, output_.entry_text, "Pay leg", pay_params_to_rerun
-                )
-                rec_leg_parameters = self._leg_entry_to_dict(
-                    retriever, output_.entry_text, "Receive leg", rec_params_to_rerun
-                )
+                    n_params, params_to_rerun = FEATURE_TO_RERUN_SELECTOR(params_trials)
+                    n_pays, pay_params_to_rerun = FEATURE_TO_RERUN_SELECTOR(pay_leg_trials)
+                    n_recs, rec_params_to_rerun = FEATURE_TO_RERUN_SELECTOR(receive_leg_trials)
 
-                params_trials.append(trade_parameters)
-                pay_leg_trials.append(pay_leg_parameters)
-                receive_leg_trials.append(rec_leg_parameters)
+                    if (n_params or 2) + (n_pays or 7) + (n_recs or 7) > retriever.calls_remaining:
+                        # not enough budget to run all # could do a partial rerun with the credit I have
+                        break
+
+                    trade_parameters = self._retrieve_trade_parameters(retriever, output_.entry_text, params_to_rerun)
+                    pay_leg_parameters = self._leg_entry_to_dict(
+                        retriever, output_.entry_text, "Pay leg", pay_params_to_rerun
+                    )
+                    rec_leg_parameters = self._leg_entry_to_dict(
+                        retriever, output_.entry_text, "Receive leg", rec_params_to_rerun
+                    )
+
+                    params_trials.append(trade_parameters)
+                    pay_leg_trials.append(pay_leg_parameters)
+                    receive_leg_trials.append(rec_leg_parameters)
 
             trade_parameters = manage_results(params_trials)
             pay_leg_parameters = manage_results(pay_leg_trials)
