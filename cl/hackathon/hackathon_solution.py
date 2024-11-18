@@ -333,6 +333,10 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
     def view_heatmap(self) -> View | None:
         """Heatmap with average scores for each field and trade."""
 
+        if "." not in self.solution_id:
+            raise RuntimeError("The heatmap is only available for scored solutions. "
+                               "These solutions have identifiers that end with a timestamp.")
+
         context = Context.current()
         scoring_items = context.load_all(HackathonScoreItem)
         filtered_scoring_items = [item for item in scoring_items if item.solution == self.get_key()]
