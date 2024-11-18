@@ -46,7 +46,7 @@ class Completion(CompletionKey, RecordMixin[CompletionKey], ABC):
     Globally unique UUIDv7 (RFC-9562) timestamp in time-ordered dash-delimited string format with additional
     strict time ordering guarantees within the same process, thread and context.
     """
- 
+
     trial: TrialKey | None = None
     """Trial for which the completion is recorded."""
 

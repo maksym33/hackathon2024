@@ -15,7 +15,6 @@
 import collections
 import os
 from typing import Iterable
-
 from cl.runtime import Context
 from cl.runtime.primitive.string_util import StringUtil
 
