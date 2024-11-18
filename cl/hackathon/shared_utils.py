@@ -4,6 +4,19 @@ import pandas as pd
 
 AGREEMENT_THRESHOLD = 0.5
 
+def try_str_to_float(x: str) -> str:
+    """
+    Converts to int (if str is an integer) or float (if number is not an integer) then back to str; else returns original str
+    """
+    try:
+        if int(x) == float(x):
+            return str(int(x))
+    except ValueError:
+        pass
+    try:
+        return str(float(x))
+    except ValueError:
+        return x
 
 def manage_results(results_list: list[dict[str, Any]]) -> dict[str, Any]:
     """
@@ -11,6 +24,11 @@ def manage_results(results_list: list[dict[str, Any]]) -> dict[str, Any]:
     :param results_list: a list of results of multiple runs (e.g. list of json outputs)
     :return: a single json_output
     """
+    # cast types to float if possible
+    for i in range(len(results_list)):
+        for key in results_list[i]:
+            results_list[i][key] = try_str_to_float(results_list[i][key])
+
     df = pd.DataFrame(results_list)
     print("\n" + df.to_string())
 
@@ -24,6 +42,10 @@ def manage_results(results_list: list[dict[str, Any]]) -> dict[str, Any]:
             modal_results[key] = np.nan
 
     modal_results.dropna(inplace=True)
+
+    # cast types to str
+    modal_results = modal_results.astype("str")
+
     json_output = modal_results.to_dict()
     return json_output
 
@@ -46,11 +68,11 @@ def get_non_empty_features(params_list):
 
 if __name__ == "__main__":
     dummy_list = [
-        {"label_a": "a", "label_b": 2, "label_c": 1, "label_d": 10, "label_e": 1},
-        {"label_a": "a", "label_b": 1, "label_c": 2},
-        {"label_a": "a", "label_b": 1, "label_c": 3, "label_d": 10},
-        {"label_a": "a", "label_b": 1, "label_c": 4},
-        {"label_a": "b", "label_b": 1, "label_c": 5, "label_d": 10},
+        {"label_a": "a", "label_b": "2", "label_c": "1", "label_d": "10", "label_e": "1", "label_f": "0.2"},
+        {"label_a": "a", "label_b": "1", "label_c": "2", "label_f": "0.20"},
+        {"label_a": "a", "label_b": "1", "label_c": "3", "label_d": "10","label_f": "0.20"},
+        {"label_a": "a", "label_b": "1", "label_c": "4", },
+        {"label_a": "b", "label_b": "1", "label_c": "5", "label_d": "10"},
     ]
     res = manage_results(dummy_list)
     print(res)
