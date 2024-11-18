@@ -3,16 +3,16 @@ import setuptools
 with open('./README.md', 'r') as readme_file:
     readme = readme_file.read()
 
-# Internal requirements (exclude when building from monorepo)
-install_requires = [
-    "runtime>=2.0.5",
-    "convince>=0.0.3",
-    "tradeentry>=0.0.1"
-]
-
-# Third-party requirements
+# Gather package requirements from all packages in monorepo
+package_requirements = []
+with open('./tools/cl/runtime/package_requirements.txt') as runtime_package_requirements:
+    package_requirements.extend(line.strip() for line in runtime_package_requirements.readlines())
+with open('./tools/cl/convince/package_requirements.txt') as convince_package_requirements:
+    package_requirements.extend(line.strip() for line in convince_package_requirements.readlines())
+with open('./tools/cl/tradeentry/package_requirements.txt') as tradeentry_package_requirements:
+    package_requirements.extend(line.strip() for line in tradeentry_package_requirements.readlines())
 with open('./tools/cl/hackathon/package_requirements.txt') as hackathon_package_requirements:
-    install_requires.extend(line.strip() for line in hackathon_package_requirements.readlines())
+    package_requirements.extend(line.strip() for line in hackathon_package_requirements.readlines())
 
 setuptools.setup(
     name='hackathon',
@@ -22,7 +22,7 @@ setuptools.setup(
     license='Apache Software License',
     long_description=readme,
     long_description_content_type='text/markdown',
-    install_requires=install_requires,
+    install_requires=package_requirements,
     url='https://github.com/compatibl/hackathon',
     project_urls={
         'Source Code': 'https://github.com/compatibl/hackathon2024',
