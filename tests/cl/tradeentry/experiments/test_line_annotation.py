@@ -15,7 +15,6 @@
 import pytest
 from typing import Dict
 from matplotlib import pyplot as plt
-
 from cl.runtime import Context
 from cl.runtime.context.env_util import EnvUtil
 from cl.runtime.context.testing_context import TestingContext
@@ -108,7 +107,9 @@ def _testing_formatted_string(trade_description: str, run_count: int) -> plt.Fig
 
                 guard_checker = RegressionGuard(channel=f"{llm.llm_id}-checker")
                 if isinstance(json_result, Dict):
-                    json_checker_output = StubFormattedStringChecker(trade_description, FIELDS).check_answer(json_result)
+                    json_checker_output = StubFormattedStringChecker(trade_description, FIELDS).check_answer(
+                        json_result
+                    )
                     for field in field_names:
                         if json_checker_output[field]["status"] == "OK":
                             results[field] += 1

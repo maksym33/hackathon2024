@@ -14,9 +14,7 @@
 
 from dataclasses import dataclass
 from typing import Type
-
 from typing_extensions import Self
-
 from cl.runtime import Context
 from cl.runtime.experiments.trial_key import TrialKey
 from cl.runtime.log.exceptions.user_error import UserError
@@ -100,7 +98,9 @@ class AnyLegEntry(Entry):
                             raise UserError(f"Undefined leg type: {leg_type}")
 
                     else:
-                        raise UserError(f"Could not extract JSON from the LLM response. " f"LLM response:\n{completion}\n")
+                        raise UserError(
+                            f"Could not extract JSON from the LLM response. " f"LLM response:\n{completion}\n"
+                        )
 
                     return leg_type
 

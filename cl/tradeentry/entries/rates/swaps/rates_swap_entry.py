@@ -15,19 +15,17 @@
 import re
 from dataclasses import dataclass
 from typing import List
-
 from typing_extensions import Self
-
 from cl.runtime import Context
 from cl.runtime.experiments.trial_key import TrialKey
 from cl.runtime.log.exceptions.user_error import UserError
 from cl.runtime.primitive.string_util import StringUtil
+from cl.runtime.records.dataclasses_extensions import missing
 from cl.convince.entries.entry_key import EntryKey
 from cl.convince.llms.gpt.gpt_llm import GptLlm
 from cl.convince.llms.llm import Llm
 from cl.convince.retrievers import retrieval
 from cl.convince.retrievers.annotating_retriever import AnnotatingRetriever
-from cl.runtime.records.dataclasses_extensions import missing
 from cl.tradeentry.entries.rates.swaps.any_leg_entry import AnyLegEntry
 from cl.tradeentry.entries.trade_entry import TradeEntry
 
