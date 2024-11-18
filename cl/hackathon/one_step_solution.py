@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from dataclasses import dataclass
-
 from cl.convince.llms.llm import Llm
 from cl.convince.retrievers.retriever_util import RetrieverUtil
 from cl.hackathon.hackathon_output import HackathonOutput
@@ -30,7 +29,7 @@ from cl.tradeentry.entries.number_entry import NumberEntry
 @dataclass(slots=True, kw_only=True)
 class OneStepSolution(HackathonSolution):
     """Solution based on extracting values in one step."""
-    NUM_REPEATS = 11
+    NUM_REPEATS = 15
     prompt: str = missing()
     """One step prompt to parse trade."""
 
@@ -42,7 +41,16 @@ class OneStepSolution(HackathonSolution):
         if Context.current().trial is not None:
             raise UserError("Cannot override TrialId that is already set, exiting.")  # TODO: Append?
 
-        json_outputs: list[dict] = []
+        with Context(full_llm=self.llm, trial=TrialKey(trial_id=f"{output_.trial_id}")) as context:
+            # Load the full LLM specified by the context
+            llm = context.load_one(Llm, context.full_llm)
+            query = self.prompt.format(input_text=output_.entry_text)
+            output = llm.completion(query)
+            json_output = RetrieverUtil.extract_json(output)
+
+        # self._parse_json_output(output_, json_output)  # update output once (We did this since sometimes there was a random timeout where nothing was in the output at all)
+        json_outputs = [json_output]
+
         for i in range(self.NUM_REPEATS):
             with Context(full_llm=self.llm, trial=TrialKey(trial_id=f"{output_.trial_id}_{i}")) as context:
                 # Load the full LLM specified by the context
@@ -52,9 +60,10 @@ class OneStepSolution(HackathonSolution):
                 json_output = RetrieverUtil.extract_json(output)
                 json_outputs.append(json_output)
         json_output = manage_results(json_outputs)
+
         print("\n" + str(json_output))
         if json_output:
-            self._parse_json_output(output_, json_output)
+            self._parse_json_output(output_, json_output)  # update output with average
 
     @staticmethod
     def _parse_json_output(output_: HackathonOutput, json_output: dict) -> None:

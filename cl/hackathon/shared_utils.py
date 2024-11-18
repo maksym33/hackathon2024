@@ -2,7 +2,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-AGREEMENT_THRESHOLD = 0.5
+AGREEMENT_THRESHOLD = 0.20  # we want the top value to come up at least 20% of the time to avoid hallucinations
 
 def try_str_to_float(x: str) -> str:
     """
@@ -33,12 +33,13 @@ def manage_results(results_list: list[dict[str, Any]]) -> dict[str, Any]:
     print("\n" + df.to_string())
 
     # get most common results
-    modal_results = df.mode(dropna=False).iloc[0].dropna()
+    modal_results = df.mode().iloc[0].dropna()
 
     # make sure each results has agreement above AGREEMENT_THRESHOLD
     for key, val in modal_results.items():
         count = sum(df[key] == val)
         if count / len(df) < AGREEMENT_THRESHOLD:
+            print(key, count, len(df))
             modal_results[key] = np.nan
 
     modal_results.dropna(inplace=True)
