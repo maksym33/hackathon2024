@@ -50,6 +50,9 @@ ERROR_KEYWORDS: Final[Tuple] = ("error", "escalation", "?")
 class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey], ABC):
     """Define parameters to convert trade entry text to the trade and perform scoring."""
 
+    score_pct: str | None = None
+    """Score in percentage points."""
+
     llm: LlmKey = missing()
     """LLM that will be used to generate the output."""
 
@@ -77,14 +80,32 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
     max_score: str | None = None
     """Maximum possible score for solution."""
 
-    scoring_statistics: List[HackathonScoringStatistics] | None = None
+    statistics: List[HackathonScoringStatistics] | None = None
     """Detailed scoring statistics for each trade across all trials."""
+    
+    inputs: List[HackathonInput] | None = None
+    """The list of inputs according to the trade list."""
+    
+    outputs: List[HackathonOutput] | None = None
+    """The list of calculated outputs."""
+    
+    retrievals: List[AnnotatingRetrieval] | None = None
+    """The list of retrievals."""
 
     def get_key(self) -> HackathonSolutionKey:
         return HackathonSolutionKey(solution_id=self.solution_id)
 
     def init(self) -> Self:
         """Similar to __init__ but can use fields set after construction, return self to enable method chaining."""
+
+        if "." in self.solution_id:
+            self.inputs = self.get_inputs()
+            self.outputs = self.get_outputs()
+            try:
+                self.retrievals = self.view_retrievals()
+            except Exception as e:
+                # Continue even if retrievals are not available
+                pass
 
         # Return self to enable method chaining
         return self
@@ -194,8 +215,7 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
 
     def run_cancel_scoring(self) -> None:
         """Cancel the ongoing scoring."""
-        self.score = "Scoring cancelled"
-        self.max_score = "Scoring cancelled"
+        self.status = "Cancelled"
         Context.current().save_one(self)
 
     def _run_score(self, trial_count: int) -> None:
@@ -210,13 +230,12 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
         scored_solution.solution_id = f"{base_solution_id}.{timestamp}"
 
         """Reset the score."""
-        scored_solution.score = "Scoring in progress"
-        scored_solution.max_score = "Scoring in progress"
+        scored_solution.status = "Running"
         scored_solution.trial_count = str(trial_count)
         Context.current().save_one(scored_solution)
 
         # Run processing trial_count times
-        scored_solution.status = "Generating output for the trades"
+        scored_solution.status = "Analyzing"
         context.save_one(self)
         for trial_index in range(trial_count):
             scored_solution.process_all_inputs(trial_id=str(trial_index))
@@ -330,11 +349,11 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
         # Update self with calculated values
         self.score = str(score)
         self.max_score = str(max_score)
+        if max_score > 0.5:
+            self.score_pct = f"{round(score / max_score, 1)}"
 
         # Calculate scoring statistics
-        self.status = "Calculating scoring statistics"
-        context.save_one(self)
-        self.calculate_scoring_statistics()
+        self.calculate_statistics()
         self.status = "Completed"
         context.save_one(self)
 
@@ -422,7 +441,7 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
 
         return heat_map_plot.get_view()
 
-    def calculate_scoring_statistics(self) -> None:
+    def calculate_statistics(self) -> None:
         """Generate scoring statistics for a hackathon solution."""
 
         # Get solution inputs
@@ -478,4 +497,4 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
             context.save_one(statistics)
             all_statistics.append(statistics)
 
-        self.scoring_statistics = all_statistics
+        self.statistics = all_statistics
