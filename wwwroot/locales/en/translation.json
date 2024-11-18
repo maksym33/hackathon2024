@@ -19,13 +19,31 @@
       "accessLevel": "Access level",
       "build": "Build",
       "versions": "Versions",
-      "userMode": "User mode"
+      "compactMode": "Dashboard Mode",
+      "privacyPolicy": "Privacy Policy",
+      "cookiesNotice": "Cookies Notice",
+      "secrets": {
+        "title": "My Keys",
+        "name": "Name",
+        "value": "Value",
+        "encrypted": "Encrypted",
+        "addKey": "ADD KEY",
+        "keyAdded": "Key Added",
+        "keyDeleted": "Key Deleted",
+        "deletingKey": "Deleting Key",
+        "deleteModalContent": "You are about to delete “{{keyName}}” key. This action cannot be undone.",
+        "point1": "Your encrypted keys are stored in the browser only",
+        "point2": "The server does not cache or store them",
+        "point3": "The keys are always encrypted in transit and at rest",
+        "point4": "You can delete the keys any time",
+        "point5": "They will be deleted automatically after {{expire}} days"
+      }
     },
     "theme": {
       "dark": "Dark",
       "light": "Light",
       "demo": "Demo",
-      "blue": "Blue",
+      "blue": "Light",
       "time": "Time"
     },
     "environmentModal": {
@@ -50,7 +68,8 @@
     "yes": "Yes",
     "no": "No",
     "open": "Open",
-    "somethingWentWrong": "Please Reload the Page",
+    "pleaseReloadPage": "Please Reload the Page",
+    "somethingWentWrong": "Something went wrong",
     "notSupported": "Not supported",
     "success": "Success",
     "reloadPage": "Reload page",
@@ -84,15 +103,16 @@
     "copyEntity": "Create copy from existing record",
     "openJSONEditor": "JSON Editor",
     "entitySavedSuccessfully": "Entity saved successfully",
+    "readonlyHint": "This field cannot be edited",
     "tabs": {
       "editor": "Editor",
       "newEntity": "New entity",
-      "copyEntity": "Copy entity",
+      "copyEntity": "Duplicate Record",
       "history": "History",
       "selectType": "Select Type",
       "dag": "Directed Acyclic Graph",
-      "prevRecord": "Prev record",
-      "nextRecord": "Next record"
+      "prevRecord": "PREV",
+      "nextRecord": "NEXT"
     },
     "listToolbar": {
       "add": "Add array element",
@@ -122,8 +142,8 @@
     "excel": "Excel",
     "history": "Show history",
     "refresh": "Refresh",
-    "addNewEntity": "Add New Entity",
-    "copyEntity": "Copy Entity",
+    "addNewEntity": "New Record",
+    "copyEntity": "Duplicate Record",
     "duplicateFocucedEntity": "Duplicate Focused Entity",
     "deleteSelectedEntity": "Delete Selected Entity",
     "deleteSelectedEntities": "Delete {{numberOfItems}}Selected Entities",
@@ -204,7 +224,7 @@
     "purpose": "Purpose",
     "textareaPlaceholder": "Please describe what you were doing when the error occurred.",
     "subject": "Subject",
-    "initialSubjectValue": "{{applicationName}} Application Feedback (Build = {{frontendVersion}})"
+    "initialSubjectValue": "{{applicationName}} (Build = {{frontendVersion}})"
   },
   "scroll": {
     "scrollDownAutomatically": "Scroll down automatically"
@@ -255,7 +275,10 @@
       "error": "The username or password is incorrect"
     },
     "multiLogin": {
-      "title": "Please Select an Authentication Type"
+      "title": "Select Authentication Type",
+      "tradeEntryHackathonPlayground": "2024 TradeEntry Hackathon Playground",
+      "registerToParticipateAt": "To obtain login credentials, register at",
+      "orByEmail": "or by email "
     },
     "signOut": "Sign Out",
     "error": "Something went wrong, please contact the administrator",
@@ -304,7 +327,14 @@
   },
   "maximizeButton": {
     "fullScreen": "Full screen mode",
-    "exitFullScreen": "Exit full screen mode"
+    "exitFullScreen": "Exit full screen mode",
+    "defaultView": "Default view",
+    "editorFullScreen": "Full screen record",
+    "gridFullScreen": "Full screen grid"
+  },
+  "layoutDirectionButton": {
+    "verticalLayout": "Vertical view",
+    "horizontalLayout": "Horizontal view"
   },
   "confirmationModal": {
     "deleteRecords": {
