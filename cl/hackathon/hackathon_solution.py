@@ -21,6 +21,7 @@ from typing import List, Final, Tuple
 from typing_extensions import Self
 
 from cl.convince.llms.llm_key import LlmKey
+from cl.convince.retrievers.annotating_retrieval import AnnotatingRetrieval
 from cl.hackathon.hackathon_input_key import HackathonInputKey
 from cl.hackathon.hackathon_output_key import HackathonOutputKey
 from cl.hackathon.hackathon_score_item import HackathonScoreItem
@@ -95,6 +96,29 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
     def view_outputs(self) -> List[HackathonOutput]:
         """Return the list of outputs (each with its score)."""
         return self.get_outputs()
+
+    def view_retrievals(self) -> List[AnnotatingRetrieval]:
+        """Return the list of used annotating retrievals."""
+
+        if type(self).__name__ == "AnnotationSolution":  # TODO: Refactor
+            context = Context.current()
+
+            filtered_retrievals = []
+            for output in self.get_outputs():
+                current_retriever_id = (
+                    f"{self.solution_id}::{self.trade_group}::{output.trade_id}::{output.trial_id}"
+                )
+                retrievals = context.load_all(AnnotatingRetrieval)
+                filtered_retrievals.extend([
+                    retrieval for retrieval in retrievals if retrieval.retriever.retriever_id == current_retriever_id
+                ])
+
+            if filtered_retrievals:
+                return filtered_retrievals
+            else:
+                raise RuntimeError("No retrievals were generated during the scoring of this solutions.")
+        else:
+            raise RuntimeError("The retrievals view is only available for AnnotationSolution.")
 
     def get_trade_ids_list(self) -> List[int]:
         """Return the list of trade ids from the trade_ids string."""

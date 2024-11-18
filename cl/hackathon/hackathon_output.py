@@ -87,16 +87,3 @@ class HackathonOutput(HackathonOutputKey, RecordMixin[HackathonOutputKey]):
             trial_id=self.trial_id,
         )
 
-    def view_detailed_information(self) -> List[AnnotatingRetrieval]:
-        """Return the list of used annotating retrievals."""
-        context = Context.current()
-
-        current_retriever_id = (
-            f"{self.solution.solution_id}::{self.trade_group}::{self.trade_id}::{self.trial_id}"
-        )
-        retrievals = context.load_all(AnnotatingRetrieval)
-        filtered_retrievals = [
-            retrieval for retrieval in retrievals if retrieval.retriever.retriever_id == current_retriever_id
-        ]
-
-        return filtered_retrievals
