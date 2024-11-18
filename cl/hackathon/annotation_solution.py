@@ -13,15 +13,19 @@
 # limitations under the License.
 
 from dataclasses import dataclass
+from logging import getLogger
 from typing import Dict
-from cl.runtime import Context
+
+from cl.convince.prompts.formatted_prompt import FormattedPrompt
+from cl.convince.retrievers.annotating_retriever import AnnotatingRetriever
+from cl.convince.retrievers.retrieval import Retrieval
+from cl.hackathon.hackathon_output import HackathonOutput
+from cl.hackathon.hackathon_solution import HackathonSolution
+from cl.runtime.context.context import Context
 from cl.runtime.experiments.trial_key import TrialKey
 from cl.runtime.log.exceptions.user_error import UserError
 from cl.runtime.primitive.float_util import FloatUtil
 from cl.runtime.records.dataclasses_extensions import missing
-from cl.convince.prompts.formatted_prompt import FormattedPrompt
-from cl.convince.retrievers.annotating_retriever import AnnotatingRetriever
-from cl.convince.retrievers.retrieval import Retrieval
 from cl.tradeentry.entries.amount_entry import AmountEntry
 from cl.tradeentry.entries.currency_entry import CurrencyEntry
 from cl.tradeentry.entries.date_entry import DateEntry
@@ -34,8 +38,10 @@ from cl.hackathon.hackathon_output import HackathonOutput
 from cl.hackathon.hackathon_solution import HackathonSolution
 from cl.hackathon.our_gpt_client import GPTClient
 
+_logger = getLogger(__name__)
 
-BUDGET = 0
+
+FEATURE_TO_RERUN_SELECTOR = get_non_empty_features #  get_all_features/  get_non_empty_features
 
 
 FEATURES ={
@@ -360,15 +366,18 @@ class AnnotationSolution(HackathonSolution):
 
         return trade_parameters
 
-    def score_output(self, output_: HackathonOutput) -> None:
-
+    def generate_output(self, output_: HackathonOutput) -> None:
+        """
+        Queries LLM and updates output_ inplace with results
+        :param output_: object to update with results
+        """
         if Context.current().trial is not None:
             raise UserError("Cannot override TrialId that is already set, exiting.")  # TODO: Append?
 
         with Context(full_llm=self.llm, trial=TrialKey(trial_id=str(output_.trial_id))) as context:
-
+            retriever_id = f"{self.solution_id}::{self.trade_group}::{output_.trade_id}::{output_.trial_id}"
             retriever = AnnotatingRetriever(
-                retriever_id=f"{self.solution_id}::{self.trade_group}::{output_.trade_id}::{output_.trial_id}",
+                retriever_id=retriever_id,
                 prompt=FormattedPrompt(
                     prompt_id="AnnotatingRetriever",
                     params_type=Retrieval.__name__,
@@ -390,36 +399,31 @@ class AnnotationSolution(HackathonSolution):
             pay_leg_trials.append(pay_leg_parameters)
             receive_leg_trials.append(rec_leg_parameters)
 
-            while BUDGET > 0:
+            while retriever.calls_remaining > 0:
 
-                n_params, params_to_rerun = get_params_to_rerun()
-                n_pays, pay_params_to_rerun = get_params_to_rerun()
-                n_recs, rec_params_to_rerun = get_params_to_rerun()
+                n_params, params_to_rerun = FEATURE_TO_RERUN_SELECTOR(params_trials)
+                n_pays, pay_params_to_rerun = FEATURE_TO_RERUN_SELECTOR(pay_leg_trials)
+                n_recs, rec_params_to_rerun = FEATURE_TO_RERUN_SELECTOR(receive_leg_trials)
 
-                if (n_params or 3) + (n_pays or 8) + (n_recs or 8) < BUDGET:
+                if (n_params or 2) + (n_pays or 7) + (n_recs or 7) > retriever.calls_remaining:
+                    # not enough budget to run all # could do a partial rerun with the credit I have
                     break
 
                 trade_parameters = self._retrieve_trade_parameters(retriever, output_.entry_text, params_to_rerun)
                 pay_leg_parameters = self._leg_entry_to_dict(retriever, output_.entry_text, "Pay leg", pay_params_to_rerun)
-                receive_leg_trials = self._leg_entry_to_dict(retriever, output_.entry_text, "Receive leg", rec_params_to_rerun)
+                rec_leg_parameters = self._leg_entry_to_dict(retriever, output_.entry_text, "Receive leg", rec_params_to_rerun)
 
                 params_trials.append(trade_parameters)
                 pay_leg_trials.append(pay_leg_parameters)
-                receive_leg_trials.append(receive_leg_trials)
+                receive_leg_trials.append(rec_leg_parameters)
 
-            trade_parameters = manage_conflicts(params_trials)
-            pay_leg_parameters = manage_conflicts(pay_leg_trials)
-            rec_leg_parameters = manage_conflicts(receive_leg_trials)
+            trade_parameters = manage_results(params_trials)
+            pay_leg_parameters = manage_results(pay_leg_trials)
+            rec_leg_parameters = manage_results(receive_leg_trials)
 
             output_ = _update_output_object(output_, trade_parameters, pay_leg_parameters, rec_leg_parameters)
-
-
-def get_params_to_rerun(*args):
-    return None, None
-
-
-def manage_conflicts(output_list):
-    return output_list[0]
+            msg = f"({retriever_id}) Used {retriever.call_count} retriever calls; {retriever.calls_remaining} unused calls."
+            print(msg)
 
 
 def _update_output_object(output_, trade_parameters, pay_leg_parameters, rec_leg_parameters):

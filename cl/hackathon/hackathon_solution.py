@@ -223,8 +223,11 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
         return [x for x in outputs if x.solution.solution_id == self.solution_id]
 
     @abstractmethod
-    def score_output(self, output_: HackathonOutput) -> None:
-        """Run scoring on the output."""
+    def generate_output(self, output_: HackathonOutput) -> None:
+        """
+        Queries LLM and updates output_ inplace with results
+        :param output_: object to update with results
+        """
 
     def save_trial_output(self, *, trade_id: str, trial_id: str, entry_text: str) -> None:
         """Save trial output."""
@@ -268,7 +271,7 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
         Context.current().save_one(output_)
 
         # Run scoring
-        self.score_output(output_)
+        self.generate_output(output_)
 
         # Mark as completed
         output_.status = "Completed"
@@ -347,8 +350,8 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
                 scored_solution.submit_trial_output(trade_id=input_.trade_id, trial_id=str(trial_index))
 
         # Compare solution outputs with expected outputs and save HackathonScoreItems for each pair
-        #scored_solution.status = "Analyzing"
-        #Context.current().save_one(scored_solution)
+        # scored_solution.status = "Analyzing"
+        # Context.current().save_one(scored_solution)
         # scored_solution.calculate()
 
         # Save scoring object with total score
@@ -456,9 +459,9 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
                 )
 
                 actual_output = context.load_one(HackathonOutput, actual_output_key)
-                #while actual_output.status != "Completed":
+                # while actual_output.status != "Completed":
                 #    time.sleep(1)
-                 #   actual_output = context.load_one(HackathonOutput, actual_output_key)
+                #   actual_output = context.load_one(HackathonOutput, actual_output_key)
 
                 # Create a scoring item by comparing actual and expected outputs
                 score_item = self.get_score_item(input_key, actual_output, expected_output)
