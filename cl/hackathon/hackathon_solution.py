@@ -53,6 +53,9 @@ ERROR_KEYWORDS: Final[Tuple] = ("error", "escalation", "?")
 class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey], ABC):
     """Define parameters to convert trade entry text to the trade and perform scoring."""
 
+    status: str | None = None
+    """Current status."""
+
     score_pct: str | None = None
     """Score in percentage points."""
 
@@ -70,9 +73,6 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
         All trades in the group will scored if not specified
         Example: for '1-3, 5' only trades with id 1, 2, 3, 5 will be scored
     """
-
-    status: str | None = None
-    """Current status."""
 
     trial_count: str | None = None
     """Number of trials per each input used for this scoring."""
@@ -112,6 +112,15 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
             except Exception as e:
                 # Continue even if retrievals are not available
                 pass
+
+        output_count = len(self.outputs) if self.outputs else None
+        if output_count:
+            completed_output_count = len([x for x in self.outputs if x.status == "Completed"])
+            if output_count == completed_output_count:
+                self.status = "Completed"
+            else:
+                pct_done = int(round(completed_output_count / output_count  * 100, 0))
+                self.status = f"{pct_done}% Done"
 
         # Return self to enable method chaining
         return self
@@ -244,14 +253,14 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
 
         # Mark as running
         output_.status = "Running"
-        Context.current().save_one(self)
+        Context.current().save_one(output_)
 
         # Run scoring
         self.score_output(output_)
 
         # Mark as completed
         output_.status = "Completed"
-        Context.current().save_one(self)
+        Context.current().save_one(output_)
 
     def submit_trial_output(self, *, trade_id: str, trial_id: str) -> None:
 
