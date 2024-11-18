@@ -57,16 +57,14 @@ class VanillaSwapEntry(TradeEntry):
 
     def run_generate(self) -> None:
         """Retrieve parameters from this entry and save the resulting entries."""
-        if self.verified:
-            raise UserError(
-                f"Entry {self.entry_id} is marked as verified, run Unmark Verified before running Propose."
-                f"This is a safety feature to prevent overwriting verified entries. "
-            )
+
+        # Reset before regenerating to prevent stale field values
+        self.run_reset()
+
         # Get retriever
         # TODO: Make configurable
         retriever = AnnotatingRetriever(
             retriever_id="test_annotating_retriever",
-            llm=GptLlm(llm_id="gpt-4o"),
         )
         retriever.init_all()
 
@@ -75,48 +73,44 @@ class VanillaSwapEntry(TradeEntry):
         input_text = self.get_text()
 
         # Pay or receive fixed flag is described side
-        pay_receive_fixed = PayReceiveFixedEntry(
-            description=retriever.retrieve(
-                input_text=input_text,
-                param_description=_SIDE,
-                is_required=False,
-            )
-        )
-        context.save_one(pay_receive_fixed)
-        self.pay_receive_fixed = pay_receive_fixed.get_key()
+        if pay_receive_fixed_description := retriever.retrieve(
+            input_text=input_text,
+            param_description=_SIDE,
+            is_required=False,
+        ):
+            pay_receive_fixed = PayReceiveFixedEntry(text=pay_receive_fixed_description)
+            context.save_one(pay_receive_fixed)
+            self.pay_receive_fixed = pay_receive_fixed.get_key()
 
         # Tenor
-        maturity = DateOrTenorEntry(
-            description=retriever.retrieve(
-                input_text=input_text,
-                param_description=_MATURITY,
-                is_required=False,
-            )
-        )
-        context.save_one(maturity)
-        self.maturity = maturity.get_key()
+        if maturity_description := retriever.retrieve(
+            input_text=input_text,
+            param_description=_MATURITY,
+            is_required=False,
+        ):
+            maturity = DateOrTenorEntry(text=maturity_description)
+            context.save_one(maturity)
+            self.maturity = maturity.get_key()
 
         # Floating rate index
-        float_index = RatesIndexEntry(
-            description=retriever.retrieve(
-                input_text=input_text,
-                param_description=_FLOAT_INDEX,
-                is_required=False,
-            )
-        )
-        context.save_one(float_index)
-        self.float_index = float_index.get_key()
+        if float_index_description := retriever.retrieve(
+            input_text=input_text,
+            param_description=_FLOAT_INDEX,
+            is_required=False,
+        ):
+            float_index = RatesIndexEntry(text=float_index_description)
+            context.save_one(float_index)
+            self.float_index = float_index.get_key()
 
         # Fixed Rate
-        fixed_rate = FixedRateEntry(
-            description=retriever.retrieve(
-                input_text=input_text,
-                param_description=_FIXED_RATE,
-                is_required=False,
-            )
-        )
-        context.save_one(fixed_rate)
-        self.fixed_rate = fixed_rate.get_key()
+        if fixed_rate_description := retriever.retrieve(
+            input_text=input_text,
+            param_description=_FIXED_RATE,
+            is_required=False,
+        ):
+            fixed_rate = FixedRateEntry(text=fixed_rate_description)
+            context.save_one(fixed_rate)
+            self.fixed_rate = fixed_rate.get_key()
 
         # Save self to DB
         Context.current().save_one(self)

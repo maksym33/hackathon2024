@@ -18,15 +18,14 @@ from cl.runtime.records.dataclasses_extensions import missing
 from cl.convince.entries.entry_key import EntryKey
 from cl.convince.llms.gpt.gpt_llm import GptLlm
 from cl.convince.retrievers.annotating_retriever import AnnotatingRetriever
-from cl.tradeentry.entries.date_entry import DateEntry
-from cl.tradeentry.entries.date_or_tenor_entry import DateOrTenorEntry
 from cl.tradeentry.entries.fixed_rate_entry import FixedRateEntry
 from cl.tradeentry.entries.pay_freq_entry import PayFreqEntry
 from cl.tradeentry.entries.pay_receive_fixed_entry import PayReceiveFixedEntry
 from cl.tradeentry.entries.rates.swaps.rates_swap_leg_entry import RatesSwapLegEntry
-from cl.tradeentry.trades.rates.rates_leg_key import RatesLegKey
 
-_SIDE = "The words Buy or Sell, or the words Pay or Receive"
+_SIDE = """The words Buy or Sell, or the words Pay or Receive, or an indication who pays or receives such as
+'Bank pays', 'Bank receives', 'We pay', 'We receive', 'Client pays', 'Client receives', etc.
+"""
 _FIXED_RATE = "Fixed rate"
 _PAY_FREQ = "Payment frequency"
 
@@ -35,17 +34,19 @@ _PAY_FREQ = "Payment frequency"
 class FixedSwapLegEntry(RatesSwapLegEntry):
     """A series of interest rate payments with fixed coupon."""
 
-    fixed_rate: EntryKey = missing()
+    fixed_rate: EntryKey | None = None
     """Fixed rate entry."""
 
     def run_generate(self) -> None:
         """Retrieve parameters from this entry and save the resulting entries."""
 
+        # Reset before regenerating to prevent stale field values
+        self.run_reset()
+
         # Get retriever
         # TODO: Make configurable
         retriever = AnnotatingRetriever(
             retriever_id="test_annotating_retriever",
-            llm=GptLlm(llm_id="gpt-4o"),
         )
         retriever.init_all()
 
@@ -57,7 +58,7 @@ class FixedSwapLegEntry(RatesSwapLegEntry):
         if pay_receive_description := retriever.retrieve(
             input_text=input_text, param_description=_SIDE, is_required=False
         ):
-            pay_receive = PayReceiveFixedEntry(description=pay_receive_description)
+            pay_receive = PayReceiveFixedEntry(text=pay_receive_description)
             context.save_one(pay_receive)
             self.pay_receive = pay_receive.get_key()
 
@@ -65,7 +66,7 @@ class FixedSwapLegEntry(RatesSwapLegEntry):
         if fixed_rate_description := retriever.retrieve(
             input_text=input_text, param_description=_FIXED_RATE, is_required=False
         ):
-            fixed_rate = FixedRateEntry(description=fixed_rate_description)
+            fixed_rate = FixedRateEntry(text=fixed_rate_description)
             context.save_one(fixed_rate)
             self.fixed_rate = fixed_rate.get_key()
 
@@ -73,7 +74,7 @@ class FixedSwapLegEntry(RatesSwapLegEntry):
         if pay_freq_description := retriever.retrieve(
             input_text=input_text, param_description=_PAY_FREQ, is_required=False
         ):
-            pay_freq = PayFreqEntry(description=pay_freq_description)
+            pay_freq = PayFreqEntry(text=pay_freq_description)
             context.save_one(pay_freq)
             self.pay_freq = pay_freq.get_key()
 

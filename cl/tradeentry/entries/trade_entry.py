@@ -14,9 +14,13 @@
 
 from abc import ABC
 from dataclasses import dataclass
+from typing import Type
 from cl.convince.entries.entry import Entry
 
 
 @dataclass(slots=True, kw_only=True)
 class TradeEntry(Entry, ABC):
     """Capture trade from user input."""
+
+    def get_base_type(self) -> Type:
+        return TradeEntry

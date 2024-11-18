@@ -15,9 +15,11 @@
 import pytest
 from typing import Dict
 from matplotlib import pyplot as plt
+from cl.runtime import Context
 from cl.runtime.context.env_util import EnvUtil
 from cl.runtime.context.testing_context import TestingContext
 from cl.runtime.experiments.experiment import Experiment
+from cl.runtime.experiments.trial_key import TrialKey
 from cl.runtime.plots.group_bar_plot import GroupBarPlot
 from cl.runtime.testing.regression_guard import RegressionGuard
 from cl.convince.retrievers.retriever_util import RetrieverUtil
@@ -92,25 +94,28 @@ def _testing_formatted_string(trade_description: str, run_count: int) -> plt.Fig
     plot_values = []
     for llm in stub_full_llms:
         results = {field: 0 for field in field_names}
-        for trial_id in range(run_count):
-            result = llm.completion(prompt, trial_id=trial_id)
+        for trial_index in range(run_count):
+            with Context(trial=TrialKey(trial_id=str(trial_index))) as context:
+                result = llm.completion(prompt)
 
-            json_result = RetrieverUtil.extract_json(result)
-            guard = RegressionGuard(channel=llm.llm_id)
-            if json_result is not None:
-                guard.write(str(json_result))
-            else:
-                guard.write("ERROR: can not extract json")
+                json_result = RetrieverUtil.extract_json(result)
+                guard = RegressionGuard(channel=llm.llm_id)
+                if json_result is not None:
+                    guard.write(json_result)
+                else:
+                    guard.write("ERROR: can not extract json")
 
-            guard_checker = RegressionGuard(channel=f"{llm.llm_id}-checker")
-            if isinstance(json_result, Dict):
-                json_checker_output = StubFormattedStringChecker(trade_description, FIELDS).check_answer(json_result)
-                for field in field_names:
-                    if json_checker_output[field]["status"] == "OK":
-                        results[field] += 1
-                guard_checker.write(json_checker_output)
-            else:
-                guard_checker.write("ERROR: No input to check")
+                guard_checker = RegressionGuard(channel=f"{llm.llm_id}-checker")
+                if isinstance(json_result, Dict):
+                    json_checker_output = StubFormattedStringChecker(trade_description, FIELDS).check_answer(
+                        json_result
+                    )
+                    for field in field_names:
+                        if json_checker_output[field]["status"] == "OK":
+                            results[field] += 1
+                    guard_checker.write(json_checker_output)
+                else:
+                    guard_checker.write("ERROR: No input to check")
 
         plot_bar_labels.extend([llm.llm_id] * len(results))
         plot_group_labels.extend([field["short_name"] for field in FIELDS])
@@ -132,21 +137,21 @@ def test_vanilla_swap():
     with TestingContext():
         numbered_vanilla_swap = add_line_numbers(stub_vanilla_swap_entry)
         _testing_formatted_string(numbered_vanilla_swap, run_count=50)
-        RegressionGuard.verify_all()
+        RegressionGuard().verify_all()
 
 
 def test_floored_swap():
     with TestingContext():
         numbered_floored_swap = add_line_numbers(stub_floored_swap_entry)
         _testing_formatted_string(numbered_floored_swap, run_count=50)
-        RegressionGuard.verify_all()
+        RegressionGuard().verify_all()
 
 
 def test_amortizing_swap():
     with TestingContext():
         numbered_amortizing_swap = add_line_numbers(stub_amortizing_swap_entry)
         _testing_formatted_string(numbered_amortizing_swap, run_count=50)
-        RegressionGuard.verify_all()
+        RegressionGuard().verify_all()
 
 
 if __name__ == "__main__":

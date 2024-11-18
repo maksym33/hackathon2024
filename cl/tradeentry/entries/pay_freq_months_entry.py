@@ -16,29 +16,26 @@ from dataclasses import dataclass
 from typing import Type
 from cl.runtime import Context
 from cl.runtime.log.exceptions.user_error import UserError
-from cl.runtime.records.dataclasses_extensions import missing
 from cl.convince.entries.entry import Entry
 from cl.convince.llms.gpt.gpt_llm import GptLlm
 from cl.convince.retrievers.multiple_choice_retriever import MultipleChoiceRetriever
-from cl.tradeentry.trades.pay_receive_key import PayReceiveKey
+from cl.tradeentry.entries.number_entry import NumberEntry
 
-_SIDE = (
-    "The words Buy or Sell, or the words Pay Fixed (which for this trade type means Buy) "
-    "or Receive Fixed (which for this trade type means Sell)."
-)
+_PAY_FREQ = "Payment frequency in months, for example 3 for quarterly."
 
 
 @dataclass(slots=True, kw_only=True)
-class PayReceiveEntry(Entry):
-    """User input to determine if we pay or receive payments or periodic coupons for a trade or leg."""
+class PayFreqMonthsEntry(Entry):
+    """Maps payment frequency string specified by the user to number of months."""
 
-    pay_receive: PayReceiveKey = missing()
-    """Determines if we pay or receive payments or periodic coupons for a trade or leg."""
+    pay_freq_months: int | None = None
+    """Payment frequency."""
 
     def get_base_type(self) -> Type:
-        return PayReceiveEntry
+        return PayFreqMonthsEntry
 
     def run_generate(self) -> None:
+        """Retrieve parameters from this entry and save the resulting entries."""
 
         # Reset before regenerating to prevent stale field values
         self.run_reset()
@@ -50,19 +47,19 @@ class PayReceiveEntry(Entry):
         )
         retriever.init_all()
 
-        # Get the list of valid options
-        context = Context.current()
-        options = context.load_all(PayReceiveKey)
-        sides = [option.pay_receive_id for option in options]
+        # List of valid options
+        options = ["1", "3", "6", "12"]
 
         input_text = self.get_text()
         retrieval = retriever.retrieve(
             input_text=input_text,
-            param_description=_SIDE,
-            valid_choices=sides,
+            param_description=_PAY_FREQ,
+            valid_choices=options,
         )
 
-        self.pay_receive = PayReceiveKey(pay_receive_id=retrieval.param_value)
+        pay_freq_months = NumberEntry(text=retrieval.param_value)
+        pay_freq_months.run_generate()
+        self.pay_freq_months = int(pay_freq_months.value)
 
         # Save self to DB
         Context.current().save_one(self)

@@ -14,23 +14,23 @@
 
 from dataclasses import dataclass
 from typing import Type
-import dateparser
 from cl.runtime import Context
-from cl.runtime.exceptions.error_util import ErrorUtil
 from cl.runtime.log.exceptions.user_error import UserError
-from cl.runtime.records.dataclasses_extensions import missing
 from cl.convince.entries.entry import Entry
+from cl.convince.llms.gpt.gpt_llm import GptLlm
+from cl.convince.retrievers.multiple_choice_retriever import MultipleChoiceRetriever
+
+_BASIS = "Day count basis"
 
 
 @dataclass(slots=True, kw_only=True)
-class DateEntry(Entry):
+class DayCountBasisEntry(Entry):
     """Maps a date string specified by the user to a calendar date."""
 
-    date: str | None = None
-    """Date specified by the entry in ISO-8601 yyyy-mm-dd string format."""
+    basis: str | None = None
 
     def get_base_type(self) -> Type:
-        return DateEntry
+        return DayCountBasisEntry
 
     def run_generate(self) -> None:
         """Retrieve parameters from this entry and save the resulting entries."""
@@ -38,17 +38,25 @@ class DateEntry(Entry):
         # Reset before regenerating to prevent stale field values
         self.run_reset()
 
-        # TODO: Check if the entry already exists in DB
+        # Get retriever
+        # TODO: Make configurable
+        retriever = MultipleChoiceRetriever(
+            retriever_id="MultipleChoiceRetriever",
+        )
+        retriever.init_all()
 
-        # Parse date
-        if date := dateparser.parse(self.text):
-            self.date = date.strftime("%Y-%m-%d")
-            Context.current().save_one(self)
-        else:
-            raise ErrorUtil.value_error(
-                self.text,
-                details=f"Date '{self.text}' can't be parsed.",
-                value_name="date",
-                method_name="run_generate",
-                data_type=DateEntry.__name__,
-            )
+        # List of valid options
+        # TODO: Not fixed list
+        options = ["30/360", "30/365", "actual/360", "actual/365", "actual/actual"]
+
+        input_text = self.get_text()
+        retrieval = retriever.retrieve(
+            input_text=input_text,
+            param_description=_BASIS,
+            valid_choices=options,
+        )
+
+        self.basis = retrieval.param_value
+
+        # Save self to DB
+        Context.current().save_one(self)

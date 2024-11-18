@@ -1,4 +1,4 @@
-description,lang
+text,locale
 10m,
 ten million,
 $10m,
@@ -7,4 +7,4 @@ USD 10m,
 ten million dollars,
 €10m,
 ten million euro,
-dix millions d'euros,fr
+dix millions d'euros,fr-FR

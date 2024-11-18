@@ -96,10 +96,8 @@ FloatLegIndex:
   error_messages:
   - message: 'ERROR: the rows are not the same'
     input_row: '2: Party A pays: 6M USD Term SOFR (floating), semi-annual, act/360'
-    extracted_row: '2: Party A pays: 6M {FloatLegCurrency} USD Term SOFR (floating),
-      semi-annual, act/360'
-    formatted_row: '2: Party A pays: 6M {FloatLegCurrency} {FloatLegIndex} (floating),
-      semi-annual, act/360'
+    extracted_row: '2: Party A pays: 6M {FloatLegCurrency} USD Term SOFR (floating), semi-annual, act/360'
+    formatted_row: '2: Party A pays: 6M {FloatLegCurrency} {FloatLegIndex} (floating), semi-annual, act/360'
   status: BAD
 FloatLegSpread:
   status: OK

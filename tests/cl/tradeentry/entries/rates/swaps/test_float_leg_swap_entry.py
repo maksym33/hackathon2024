@@ -16,19 +16,21 @@ import pytest
 from cl.runtime.context.testing_context import TestingContext
 from cl.runtime.testing.regression_guard import RegressionGuard
 from cl.tradeentry.entries.rates.swaps.float_swap_leg_entry import FloatSwapLegEntry
+from stubs.cl.convince.experiments.stub_llms import get_stub_full_llm
 
 
 def test_float_leg_swap_entry():
-    with TestingContext():
+    with TestingContext(full_llm=get_stub_full_llm()):
         guard = RegressionGuard()
 
         float_swap_leg_entry = FloatSwapLegEntry(
-            description="Effective date - 10 November 2009, Tenor - 12 months, Client pays 3M Term SOFR + 70bps act/360, quarterly"
-        )
+            text="Effective date - 10 November 2009, Tenor - 12 months, "
+            "Client pays 3M Term SOFR + 70bps act/360, quarterly"
+        ).init()
         float_swap_leg_entry.run_generate()
-        guard.write(str(float_swap_leg_entry))
+        guard.write(float_swap_leg_entry)
 
-        RegressionGuard.verify_all()
+        RegressionGuard().verify_all()
 
 
 if __name__ == "__main__":

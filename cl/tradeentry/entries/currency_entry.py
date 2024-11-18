@@ -14,6 +14,7 @@
 
 import re
 from dataclasses import dataclass
+from typing import Type
 from cl.runtime import Context
 from cl.runtime.exceptions.error_util import ErrorUtil
 from cl.runtime.log.exceptions.user_error import UserError
@@ -38,18 +39,19 @@ class CurrencyEntry(Entry):
     currency: CurrencyKey | None = missing()
     """Currency (output)."""
 
+    def get_base_type(self) -> Type:
+        return CurrencyEntry
+
     def run_generate(self) -> None:
         """Retrieve parameters from this entry and save the resulting entries."""
-        if self.verified:
-            raise UserError(
-                f"Entry {self.entry_id} is marked as verified, run Unmark Verified before running Propose."
-                f"This is a safety feature to prevent overwriting verified entries. "
-            )
+
+        # Reset before regenerating to prevent stale field values
+        self.run_reset()
+
         # Get retriever
         # TODO: Make configurable
         retriever = MultipleChoiceRetriever(
             retriever_id="MultipleChoiceRetriever",
-            llm=GptLlm(llm_id="gpt-4o"),
         )
         retriever.init_all()
 

@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from dataclasses import dataclass
+from typing import Type
 from cl.runtime import Context
 from cl.runtime.exceptions.error_util import ErrorUtil
 from cl.runtime.log.exceptions.user_error import UserError
@@ -23,7 +24,6 @@ from cl.convince.llms.gpt.gpt_llm import GptLlm
 from cl.convince.retrievers.annotating_retriever import AnnotatingRetriever
 from cl.tradeentry.entries.currency_entry import CurrencyEntry
 from cl.tradeentry.entries.number_entry import NumberEntry
-from cl.tradeentry.trades.currency import Currency
 
 _AMOUNT = """Numerical value of the amount (including possible space, commas and other
 decimal point and thousands separators between digits) or its text representation (e.g. 'ten') 
@@ -60,20 +60,19 @@ class AmountEntry(Entry):
     currency: EntryKey | None = None
     """Optional entry for the currency if specified along with the amount (e.g. '$' for '$10m')."""
 
+    def get_base_type(self) -> Type:
+        return AmountEntry
+
     def run_generate(self) -> None:
         """Retrieve parameters from this entry and save the resulting entries."""
 
-        if self.verified:
-            raise UserError(
-                f"Entry {self.entry_id} is marked as verified, run Unmark Verified before running Generate."
-                f"This is a safety feature to prevent overwriting verified entries. "
-            )
+        # Reset before regenerating to prevent stale field values
+        self.run_reset()
 
         # Get retriever
         context = Context.current()
         retriever = AnnotatingRetriever(
             retriever_id="AnnotatingRetriever",
-            llm=GptLlm(llm_id="gpt-4o"),
         )
         retriever.init_all()
 
@@ -99,11 +98,12 @@ class AmountEntry(Entry):
         )
         if currency_description is not None:
             # Try to load an existing entry using reverse lookup
-            self.currency = CurrencyEntry.get_entry_key(currency_description)
-            if (loaded := context.load_one(CurrencyEntry, self.currency, is_record_optional=True)) is None:
+            currency = CurrencyEntry(text=currency_description, locale=self.locale)
+            currency.init()
+            if (loaded := context.load_one(CurrencyEntry, currency.get_key(), is_record_optional=True)) is None:
                 # Save only if does not exist
-                currency = CurrencyEntry(description=currency_description, lang=self.lang)
                 context.save_one(currency)
+                self.currency = currency.get_key()
             else:
                 # Otherwise update the verified status
                 verified = verified and loaded.verified
@@ -116,10 +116,12 @@ class AmountEntry(Entry):
         )
         if amount_description is not None:
             # Try to load an existing entry using reverse lookup
-            self.amount = NumberEntry.get_entry_key(amount_description)
-            if (loaded := context.load_one(NumberEntry, self.amount, is_record_optional=True)) is None:
+            amount = NumberEntry(text=amount_description, locale=self.locale)
+            amount.init()
+            amount.run_generate()
+            self.amount = amount
+            if (loaded := context.load_one(NumberEntry, amount.get_key(), is_record_optional=True)) is None:
                 # Save only if does not exist
-                amount = NumberEntry(description=amount_description, lang=self.lang)
                 context.save_one(amount)
             else:
                 # Otherwise update the verified status

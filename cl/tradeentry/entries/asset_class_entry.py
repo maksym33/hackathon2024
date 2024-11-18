@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from dataclasses import dataclass
+from typing import Type
 from typing_extensions import Self
 from cl.runtime import Context
 from cl.convince.entries.entry import Entry
@@ -30,3 +31,6 @@ class AssetClassEntry(Entry):
 
     asset_class_entry: EntryKey | None = None
     """Asset-class-specific entry using the same title, body and data."""
+
+    def get_base_type(self) -> Type:
+        return AssetClassEntry

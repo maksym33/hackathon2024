@@ -13,13 +13,17 @@
 # limitations under the License.
 
 import pytest
+from cl.runtime import Context
 from cl.runtime.context.testing_context import TestingContext
+from cl.runtime.experiments.trial_key import TrialKey
 from cl.runtime.plots.group_bar_plot import GroupBarPlot
 from cl.runtime.testing.regression_guard import RegressionGuard
 from stubs.cl.convince.experiments.stub_llms import get_stub_full_llms
 
 
-def _test_extraction() -> None:
+def _test_extraction(
+    run_count: int,
+) -> None:
     # Create Llm objects for test
     stub_full_llms = get_stub_full_llms()
 
@@ -30,8 +34,9 @@ def _test_extraction() -> None:
     for llm in stub_full_llms:
         success_count = 0
         label = "Label"
-        for trial_id in range(trial_count):
-            raise NotImplementedError()
+        for trial_index in range(run_count):
+            with Context(trial=TrialKey(trial_id=str(trial_index))) as context:
+                raise NotImplementedError()
         success_fraction = min(max(round(success_count / trial_count * 100, 2), 0), 100)
 
         plot_bar_labels.append(llm.llm_id)
@@ -46,13 +51,14 @@ def _test_extraction() -> None:
         value_ticks=list(range(0, 101, 10)),
     )
     plot.save_png()
-    RegressionGuard.verify_all()
+    RegressionGuard().verify_all()
 
 
 @pytest.mark.skip("Refactoring.")
 def test_end_to_end():
+    run_count = 2
     with TestingContext():
-        _test_extraction()
+        _test_extraction(run_count)
 
 
 if __name__ == "__main__":

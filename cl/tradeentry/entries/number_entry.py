@@ -14,6 +14,7 @@
 
 import re
 from dataclasses import dataclass
+from typing import Type
 from text_to_num import text2num
 from cl.runtime import Context
 from cl.runtime.exceptions.error_util import ErrorUtil
@@ -22,6 +23,7 @@ from cl.runtime.records.dataclasses_extensions import missing
 from cl.convince.entries.entry import Entry
 from cl.convince.llms.gpt.gpt_llm import GptLlm
 from cl.convince.retrievers.multiple_choice_retriever import MultipleChoiceRetriever
+from cl.convince.settings.convince_settings import ConvinceSettings
 from cl.tradeentry.trades.currency import Currency
 from cl.tradeentry.trades.currency_key import CurrencyKey
 
@@ -29,7 +31,7 @@ _CURRENCY_ISO_CODE = "Currency code in strict ISO-4217 format of three uppercase
 """Parameter description for the currency ISO-4217 code."""
 
 _NUMBER_WITH_SUFFIX_RE = re.compile(
-    r"(\d+(\.\d+)?)([kmb]|mm|bb|bn|thousand|thousands|mil|million|millions|billion|billions)?"
+    r"(\d+(\.\d+)?)([kmb]|mm|bb|bn|thousand|thousands|mil|million|millions|billion|billions)?\b"
 )
 """Matches a number with decimal point separator and suffixes."""
 
@@ -41,23 +43,25 @@ class NumberEntry(Entry):
     value: float | None = missing()
     """Numerical value (output)."""
 
+    def get_base_type(self) -> Type:
+        return NumberEntry
+
     def run_generate(self) -> None:
         """Retrieve parameters from this entry and save the resulting entries."""
-        if self.verified:
-            raise UserError(
-                f"Entry {self.entry_id} is marked as verified, run Unmark Verified before running Propose."
-                f"This is a safety feature to prevent overwriting verified entries. "
-            )
+
+        # Reset before regenerating to prevent stale field values
+        self.run_reset()
+
         # First non-AI text2num library to parse a number with suffix
-        if (value := self._parse_number_with_suffix(self.description)) is not None:
+        if (value := self._parse_number_with_suffix(self.text)) is not None:
             # Use parsed value
             try:
                 self.value = float(value)
             except Exception as e:  # noqa
                 raise ErrorUtil.value_error(
-                    self.description,
+                    self.text,
                     details=f"Numerical description of a number with suffix could not be parsed "
-                    f"using language code {self.lang}.",
+                    f"using language code {self.locale}.",
                     value_name="number",
                     method_name="run_generate",
                     data_type=NumberEntry.__name__,
@@ -65,12 +69,13 @@ class NumberEntry(Entry):
         else:
             # Try to parse a word description
             try:
-                value = text2num(self.description, self.lang)
+                language, region = ConvinceSettings.parse_locale(self.locale)
+                value = text2num(self.text, language)
                 self.value = float(value)
             except Exception as e:  # noqa
                 raise ErrorUtil.value_error(
-                    self.description,
-                    details=f"Text description of a number could not be parsed using language code {self.lang}.",
+                    self.text,
+                    details=f"Text description of a number could not be parsed using language code {self.locale}.",
                     value_name="number",
                     method_name="run_generate",
                     data_type=NumberEntry.__name__,
@@ -97,7 +102,7 @@ class NumberEntry(Entry):
                 number = float(number)
             except Exception as e:  # noqa
                 raise ErrorUtil.value_error(
-                    self.description,
+                    self.text,
                     details=f"Text description of a number could not be parsed using language code {self.lang}.",
                     value_name="number",
                     method_name="run_generate",
@@ -116,7 +121,7 @@ class NumberEntry(Entry):
                 return number * 1_000_000_000  # Billions (single 'b' or 'bn')
             else:
                 raise ErrorUtil.value_error(
-                    self.description,
+                    self.text,
                     details=f"Unknown number scale units '{scale_unit}'.",
                     value_name="scale_unit",
                     method_name="run_generate",

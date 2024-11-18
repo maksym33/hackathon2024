@@ -1,6 +1,5 @@
 RequestID,Query,Completion
-2024-11-06-15-54-04-253-7a50b801792b84cdd68c,"TrialID: 0
-You will be provided with an input text and a description of a parameter.
+2024-11-17-17-39-33-556-73f2a491a8c563ebc2b4,"You will be provided with an input text and a description of a parameter.
 Your goal is to surround each piece of information about this parameter you find in the input text by curly braces.
 Use multiple non-nested pairs of opening and closing curly braces if you find more than one piece of information.
 
@@ -13,15 +12,16 @@ The JSON must have the following keys:
     ""justification"": ""<Justification for your annotations in case of success or the reason why you were not able to find the parameter in case of failure.>""
 }
 Input text: ```Bank pays - USD fixed 3.45%, semi-annual, act/360, Effective date - 10 November 2009, Tenor - 12 months```
-Parameter description: ```The words Buy or Sell, or the words Pay or Receive```","```json
+Parameter description: ```The words Buy or Sell, or the words Pay or Receive, or an indication who pays or receives such as
+'Bank pays', 'Bank receives', 'We pay', 'We receive', 'Client pays', 'Client receives', etc.
+```","```json
 {
     ""success"": ""Y"",
-    ""annotated_text"": ""Bank {pays} - USD fixed 3.45%, semi-annual, act/360, Effective date - 10 November 2009, Tenor - 12 months"",
-    ""justification"": ""The input text contains the word 'pays', which relates to the parameter description 'The words Buy or Sell, or the words Pay or Receive'.""
+    ""annotated_text"": ""```{Bank pays} - USD fixed 3.45%, semi-annual, act/360, Effective date - 10 November 2009, Tenor - 12 months```"",
+    ""justification"": ""The input text contains the phrase 'Bank pays', which is an indication of who pays, matching the parameter description provided.""
 }
 ```"
-2024-11-06-15-54-06-145-721297a63332f7b9d4a1,"TrialID: 0
-You will be provided with an input text and a description of a parameter.
+2024-11-17-17-39-35-104-7f13b971353195722ae1,"You will be provided with an input text and a description of a parameter.
 Your goal is to surround each piece of information about this parameter you find in the input text by curly braces.
 Use multiple non-nested pairs of opening and closing curly braces if you find more than one piece of information.
 
@@ -37,12 +37,11 @@ Input text: ```Bank pays - USD fixed 3.45%, semi-annual, act/360, Effective date
 Parameter description: ```Fixed rate```","```json
 {
     ""success"": ""Y"",
-    ""annotated_text"": ""Bank pays - USD fixed {3.45%}, semi-annual, act/360, Effective date - 10 November 2009, Tenor - 12 months"",
-    ""justification"": ""The input text specifies 'USD fixed 3.45%' which clearly indicates the fixed rate of 3.45% associated with the USD payments. Therefore, the rate '3.45%' is surrounded by curly braces.""
+    ""annotated_text"": ""Bank pays - USD {fixed 3.45%}, semi-annual, act/360, Effective date - 10 November 2009, Tenor - 12 months"",
+    ""justification"": ""The input text contains the fixed interest rate mentioned as 'fixed 3.45%', which matches the parameter description 'Fixed rate'.""
 }
 ```"
-2024-11-06-15-54-08-722-72b2a4f089a01ea941f7,"TrialID: 0
-You will be provided with an input text and a description of a parameter.
+2024-11-17-17-39-36-348-77239c55fbded6a0088d,"You will be provided with an input text and a description of a parameter.
 Your goal is to surround each piece of information about this parameter you find in the input text by curly braces.
 Use multiple non-nested pairs of opening and closing curly braces if you find more than one piece of information.
 
@@ -59,6 +58,6 @@ Parameter description: ```Payment frequency```","```json
 {
     ""success"": ""Y"",
     ""annotated_text"": ""Bank pays - USD fixed 3.45%, {semi-annual}, act/360, Effective date - 10 November 2009, Tenor - 12 months"",
-    ""justification"": ""The input text mentions 'semi-annual' as part of the details regarding the payment on a fixed rate. This term indicates the frequency with which payments are made, thus providing information about the 'Payment frequency' parameter.""
+    ""justification"": ""The term 'semi-annual' in the input text refers to the frequency of the payments, indicating that payments are made twice a year. Thus, it is directly related to the 'Payment frequency' parameter.""
 }
 ```"

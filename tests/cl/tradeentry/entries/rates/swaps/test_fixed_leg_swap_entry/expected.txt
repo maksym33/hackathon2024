@@ -1,1 +1,15 @@
-FixedSwapLegEntry(entry_id='FixedSwapLegEntry: Bank pays - USD fixed 3.45%, semi-annual, act/360, Effective date - 10 November 2009, Tenor - 12 months', description='Bank pays - USD fixed 3.45%, semi-annual, act/360, Effective date - 10 November 2009, Tenor - 12 months', body=None, data=None, lang='en', verified=None, leg=None, pay_receive=EntryKey(entry_id='PayReceiveFixedEntry: pays'), effective_date=None, maturity_date=None, pay_freq=EntryKey(entry_id='PayFreqEntry: semi-annual'), fixed_rate=EntryKey(entry_id='FixedRateEntry: 3.45%'))
+entry_id: Bank pays - USD fixed 3.45%, semi-annual, act/360, Effective date - 10 November (RatesLeg, en-US, a40303026d4fbe50144cca03b0228c14)
+entry_type: RatesLeg
+text: Bank pays - USD fixed 3.45%, semi-annual, act/360, Effective date - 10 November 2009, Tenor - 12 months
+locale: en-US
+pay_receive:
+  entry_id: Bank pays (PayReceiveFixed, en-US)
+  _type: EntryKey
+pay_freq:
+  entry_id: semi-annual (PayFreq, en-US)
+  _type: EntryKey
+fixed_rate:
+  entry_id: fixed 3.45% (FixedRate, en-US)
+  _type: EntryKey
+_type: FixedSwapLegEntry
+

@@ -35,11 +35,26 @@ class TradeEntryConfig(Config):
                 opened_tabs=[
                     TabInfo(
                         type=BaseTypeInfo(
-                            name="Entry",
-                            module="Entry",
-                            label="Entry",
+                            name="HackathonSolution",
+                            module="HackathonSolution",
+                            label="HackathonSolution",
+                        ),
+                    ),
+                    TabInfo(
+                        type=BaseTypeInfo(
+                            name="HackathonInput",
+                            module="HackathonInput",
+                            label="HackathonInput",
+                        ),
+                    ),
+                    TabInfo(
+                        type=BaseTypeInfo(
+                            name="HackathonOutput",
+                            module="HackathonOutput",
+                            label="HackathonOutput",
                         ),
                     ),
                 ],
+                user_secret_identifiers=["ANTHROPIC-API-KEY", "FIREWORKS-API-KEY", "GOOGLE-API-KEY", "OPENAI-API-KEY"],
             ),
         )

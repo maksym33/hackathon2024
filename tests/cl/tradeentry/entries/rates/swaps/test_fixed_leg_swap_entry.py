@@ -16,19 +16,21 @@ import pytest
 from cl.runtime.context.testing_context import TestingContext
 from cl.runtime.testing.regression_guard import RegressionGuard
 from cl.tradeentry.entries.rates.swaps.fixed_swap_leg_entry import FixedSwapLegEntry
+from stubs.cl.convince.experiments.stub_llms import get_stub_full_llm
 
 
 def test_fixed_leg_swap_entry():
-    with TestingContext():
+    with TestingContext(full_llm=get_stub_full_llm()) as context:
         guard = RegressionGuard()
 
         fixed_swap_leg_entry = FixedSwapLegEntry(
-            description="Bank pays - USD fixed 3.45%, semi-annual, act/360, Effective date - 10 November 2009, Tenor - 12 months"
-        )
+            text="Bank pays - USD fixed 3.45%, semi-annual, act/360, "
+            "Effective date - 10 November 2009, Tenor - 12 months"
+        ).init()
         fixed_swap_leg_entry.run_generate()
-        guard.write(str(fixed_swap_leg_entry))
+        guard.write(fixed_swap_leg_entry)
 
-        RegressionGuard.verify_all()
+        RegressionGuard().verify_all()
 
 
 if __name__ == "__main__":

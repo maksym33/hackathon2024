@@ -14,9 +14,11 @@
 
 import pytest
 from typing import List
+from cl.runtime import Context
 from cl.runtime.context.env_util import EnvUtil
 from cl.runtime.context.testing_context import TestingContext
 from cl.runtime.experiments.experiment import Experiment
+from cl.runtime.experiments.trial_key import TrialKey
 from cl.runtime.plots.group_bar_plot import GroupBarPlot
 from cl.runtime.testing.regression_guard import RegressionGuard
 from cl.convince.llms.llm import Llm
@@ -58,10 +60,11 @@ def _testing_swap_leg_type(
 
     results = []
     guard = RegressionGuard(channel=llm.llm_id)
-    for trial_id in range(run_count):
-        result = llm.completion(prompt, trial_id=trial_id)
-        guard.write(result)
-        results.append(result)
+    for trial_index in range(run_count):
+        with Context(trial=TrialKey(trial_id=str(trial_index))) as context:
+            result = llm.completion(prompt)
+            guard.write(result)
+            results.append(result)
     return results
 
 
@@ -109,7 +112,7 @@ def test_swap_leg_type():
             value_ticks=list(range(0, 101, 10)),
         )
         plot.save_png()
-        RegressionGuard.verify_all()
+        RegressionGuard().verify_all()
 
 
 if __name__ == "__main__":

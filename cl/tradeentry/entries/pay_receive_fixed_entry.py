@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-from cl.runtime.records.dataclasses_extensions import missing
+from typing import Type
 from cl.convince.entries.entry import Entry
 from cl.tradeentry.trades.pay_receive_fixed_key import PayReceiveFixedKey
 
@@ -24,3 +24,6 @@ class PayReceiveFixedEntry(Entry):
 
     pay_receive_fixed: PayReceiveFixedKey | None = None
     """Determines if we pay or receive fixed leg coupons in a fixed-for-floating swap."""
+
+    def get_base_type(self) -> Type:
+        return PayReceiveFixedEntry

@@ -12,18 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from abc import ABC
 from dataclasses import dataclass
 from typing import Type
 from cl.convince.entries.entry import Entry
-from cl.tradeentry.trades.rates.rates_trade_type_key import RatesTradeTypeKey
 
 
 @dataclass(slots=True, kw_only=True)
-class RatesTradeTypeEntry(Entry):
-    """Capture interest rate trade type from user input for the entire trade."""
+class EscalationEntry(Entry):
+    """Contains a message outlining the reason for escalation."""
 
-    rates_trade_type: RatesTradeTypeKey | None = None
-    """Interest rate trade type captured from the entry (populated during processing)."""
+    message: str | None = None
+    """A message outlining the reason for escalation."""
 
     def get_base_type(self) -> Type:
-        return RatesTradeTypeEntry
+        return EscalationEntry
