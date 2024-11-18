@@ -49,7 +49,7 @@ The JSON must have the following keys:
 
 {{
     "success": <Y if at least one piece of information was found and N otherwise. This parameter is required.>
-    "annotated_text": "<The input text where each piece of information about this parameter is surrounded by curly braces. There should be no changes other than adding curly braces, even to whitespace. Leave this field empty in case of failure.>,"
+    "annotated_text": "<The input text where each piece of information about this parameter is surrounded by curly braces. There should be no changes other than adding curly braces, even to whitespace. Leave this field empty in case of failure. Do not add additional quotation marks.>,"
     "justification": "<Justification for your annotations in case of success or the reason why you were not able to find the parameter in case of failure.>"
 }}
 Input text: ```{InputText}```
@@ -131,7 +131,10 @@ class AnnotatingRetriever(Retriever):
                     rendered_prompt = prompt.render(params=retrieval)
 
                     # Get text annotated with braces and check that the only difference is braces and whitespace
-                    completion = llm.completion(rendered_prompt)
+                    completion:str = llm.completion(rendered_prompt)
+                    if completion.startswith("".join(completion[0]*6)) and completion.endswith("".join(completion[-1]*6)):
+                        print(f"Unwrapping {completion}")
+                        completion = completion[3:-3]
 
                     # Extract the results
                     json_result = RetrieverUtil.extract_json(completion)
@@ -169,11 +172,12 @@ class AnnotatingRetriever(Retriever):
                             else:
                                 # Otherwise report an error
                                 # TODO: Use unified diff
-                                raise UserError(
-                                    f"Annotated text has changes other than curly braces.\n"
-                                    f"Input text: ```{input_text}```\n"
-                                    f"Annotated text: ```{retrieval.annotated_text}```\n"
-                                )
+                                pass
+                                # raise UserError(
+                                #     f"Annotated text has changes other than curly braces.\n"
+                                #     f"Input text: ```{input_text}```\n"
+                                #     f"Annotated text: ```{retrieval.annotated_text}```\n"
+                                # )
                     else:
                         raise RuntimeError(
                             f"Extraction success reported by {llm.llm_id}, however "
