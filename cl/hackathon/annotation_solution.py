@@ -388,7 +388,7 @@ class AnnotationSolution(HackathonSolution):
 
             params_trials.append(trade_parameters)
             pay_leg_trials.append(pay_leg_parameters)
-            receive_leg_trials.append(receive_leg_trials)
+            receive_leg_trials.append(rec_leg_parameters)
 
             while BUDGET > 0:
 
