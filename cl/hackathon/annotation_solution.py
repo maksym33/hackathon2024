@@ -388,7 +388,7 @@ class AnnotationSolution(HackathonSolution):
 
             params_trials.append(trade_parameters)
             pay_leg_trials.append(pay_leg_parameters)
-            receive_leg_trials.append(receive_leg_trials)
+            receive_leg_trials.append(rec_leg_parameters)
 
             while BUDGET > 0:
 
@@ -401,12 +401,15 @@ class AnnotationSolution(HackathonSolution):
 
                 trade_parameters = self._retrieve_trade_parameters(retriever, output_.entry_text, params_to_rerun)
                 pay_leg_parameters = self._leg_entry_to_dict(retriever, output_.entry_text, "Pay leg", pay_params_to_rerun)
-                rec_leg_parameters = self._leg_entry_to_dict(retriever, output_.entry_text, "Receive leg", rec_params_to_rerun)
+                receive_leg_trials = self._leg_entry_to_dict(retriever, output_.entry_text, "Receive leg", rec_params_to_rerun)
 
                 params_trials.append(trade_parameters)
                 pay_leg_trials.append(pay_leg_parameters)
                 receive_leg_trials.append(receive_leg_trials)
 
+            trade_parameters = manage_conflicts(params_trials)
+            pay_leg_parameters = manage_conflicts(pay_leg_trials)
+            rec_leg_parameters = manage_conflicts(receive_leg_trials)
 
             output_ = _update_output_object(output_, trade_parameters, pay_leg_parameters, rec_leg_parameters)
 
