@@ -33,11 +33,12 @@ from cl.tradeentry.entries.date_or_tenor_entry import DateOrTenorEntry
 from cl.tradeentry.entries.number_entry import NumberEntry
 from cl.tradeentry.entries.pay_freq_months_entry import PayFreqMonthsEntry
 from cl.tradeentry.trades.currency_key import CurrencyKey
+from cl.hackathon.shared_utils import get_all_features, get_non_empty_features, manage_results
 
 _logger = getLogger(__name__)
 
 
-BUDGET = 0
+FEATURE_TO_RERUN_SELECTOR = get_non_empty_features #  get_all_features/  get_non_empty_features
 
 
 FEATURES ={
@@ -395,37 +396,31 @@ class AnnotationSolution(HackathonSolution):
             pay_leg_trials.append(pay_leg_parameters)
             receive_leg_trials.append(rec_leg_parameters)
 
-            while BUDGET > 0:
+            while retriever.calls_remaining > 0:
 
-                n_params, params_to_rerun = get_params_to_rerun()
-                n_pays, pay_params_to_rerun = get_params_to_rerun()
-                n_recs, rec_params_to_rerun = get_params_to_rerun()
+                n_params, params_to_rerun = FEATURE_TO_RERUN_SELECTOR(params_trials)
+                n_pays, pay_params_to_rerun = FEATURE_TO_RERUN_SELECTOR(pay_leg_trials)
+                n_recs, rec_params_to_rerun = FEATURE_TO_RERUN_SELECTOR(receive_leg_trials)
 
-                if (n_params or 3) + (n_pays or 8) + (n_recs or 8) < BUDGET:
+                if (n_params or 2) + (n_pays or 7) + (n_recs or 7) > retriever.calls_remaining:
+                    # not enough budget to run all # could do a partial rerun with the credit I have
                     break
 
                 trade_parameters = self._retrieve_trade_parameters(retriever, output_.entry_text, params_to_rerun)
                 pay_leg_parameters = self._leg_entry_to_dict(retriever, output_.entry_text, "Pay leg", pay_params_to_rerun)
-                receive_leg_trials = self._leg_entry_to_dict(retriever, output_.entry_text, "Receive leg", rec_params_to_rerun)
+                rec_leg_parameters = self._leg_entry_to_dict(retriever, output_.entry_text, "Receive leg", rec_params_to_rerun)
 
                 params_trials.append(trade_parameters)
                 pay_leg_trials.append(pay_leg_parameters)
-                receive_leg_trials.append(receive_leg_trials)
+                receive_leg_trials.append(rec_leg_parameters)
 
-            trade_parameters = manage_conflicts(params_trials)
-            pay_leg_parameters = manage_conflicts(pay_leg_trials)
-            rec_leg_parameters = manage_conflicts(receive_leg_trials)
+            trade_parameters = manage_results(params_trials)
+            pay_leg_parameters = manage_results(pay_leg_trials)
+            rec_leg_parameters = manage_results(receive_leg_trials)
 
             output_ = _update_output_object(output_, trade_parameters, pay_leg_parameters, rec_leg_parameters)
             msg = f"({retriever_id}) Used {retriever.call_count} retriever calls; {retriever.calls_remaining} unused calls."
             print(msg)
-
-def get_params_to_rerun(*args):
-    return None, None
-
-
-def manage_conflicts(output_list):
-    return output_list[0]
 
 
 def _update_output_object(output_, trade_parameters, pay_leg_parameters, rec_leg_parameters):
@@ -454,3 +449,6 @@ def _update_output_object(output_, trade_parameters, pay_leg_parameters, rec_leg
         output_.rec_leg_ccy = rec_leg_parameters.get("currency")
 
         return output_
+
+
+

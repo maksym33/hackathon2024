@@ -27,6 +27,22 @@ def manage_results(results_list: list[dict[str, Any]]) -> dict[str, Any]:
     return json_output
 
 
+# use to select which features to rerun - all
+def get_all_features(*args):
+    return None, None
+
+
+# use to select which features to rerun - non-empty ones
+def get_non_empty_features(params_list):
+
+    if not params_list:
+        return None, None
+
+    features = pd.DataFrame(params_list).columns.to_list()
+
+    return len(features), features
+
+
 if __name__ == "__main__":
     dummy_list = [
         {"label_a": "a", "label_b": 2, "label_c": 1, "label_d": 10, "label_e": 1},
