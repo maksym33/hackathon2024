@@ -25,7 +25,7 @@ setuptools.setup(
     install_requires=install_requires,
     url='https://github.com/compatibl/hackathon',
     project_urls={
-        'Source Code': 'https://github.com/compatibl/hackathon',
+        'Source Code': 'https://github.com/compatibl/hackathon2024',
     },
     packages=setuptools.find_namespace_packages(
         where='.',
