@@ -98,7 +98,10 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
     def init(self) -> Self:
         """Similar to __init__ but can use fields set after construction, return self to enable method chaining."""
 
-        if "." in self.solution_id:
+        if "." not in self.solution_id:
+            if self.trial_count is None:
+                self.trial_count = str(10)
+        else:
             self.inputs = self.get_inputs()
             self.outputs = self.get_outputs()
             try:
@@ -206,27 +209,26 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
 
         Context.current().save_one(self)
 
-    def run_debug(self) -> None:
-        """Run sequentially for debugging purposes."""
-        # Process all inputs assigning trial_id of 0
-        self.process_all_inputs(trial_id="0")
-
-    def run_score_one_trial(self) -> None:
+    def run_score_one(self) -> None:
         """Perform scoring."""
         self._run_score(1)
 
-    def run_score_three_trials(self) -> None:
+    def run_score_all(self) -> None:
         """Perform scoring."""
-        self._run_score(3)
-
-    def run_score_ten_trials(self) -> None:
-        """Perform scoring."""
-        self._run_score(10)
+        self._run_score(int(self.trial_count))
 
     def run_cancel_scoring(self) -> None:
         """Cancel the ongoing scoring."""
-        self.status = "Cancelled"
-        Context.current().save_one(self)
+        if "." in self.solution_id:
+            self.status = "Cancelled"
+            Context.current().save_one(self)
+
+    @classmethod
+    def is_cancelled(cls, solution_id: str) -> bool:
+        """Check if scoring has been cancelled."""
+        solution = Context.current().load_one(HackathonSolution, HackathonSolutionKey(solution_id=solution_id))
+        result = solution.status == "Cancelled"
+        return result
 
     def _run_score(self, trial_count: int) -> None:
         """Perform scoring."""
