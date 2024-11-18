@@ -29,7 +29,7 @@ from cl.tradeentry.entries.number_entry import NumberEntry
 @dataclass(slots=True, kw_only=True)
 class OneStepSolution(HackathonSolution):
     """Solution based on extracting values in one step."""
-    NUM_REPEATS = 49
+    NUM_REPEATS = 17
     prompt: str = missing()
     """One step prompt to parse trade."""
 
