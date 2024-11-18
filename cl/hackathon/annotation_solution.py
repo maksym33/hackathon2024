@@ -13,15 +13,19 @@
 # limitations under the License.
 
 from dataclasses import dataclass
+from logging import getLogger
 from typing import Dict
-from cl.runtime import Context
+
+from cl.convince.prompts.formatted_prompt import FormattedPrompt
+from cl.convince.retrievers.annotating_retriever import AnnotatingRetriever
+from cl.convince.retrievers.retrieval import Retrieval
+from cl.hackathon.hackathon_output import HackathonOutput
+from cl.hackathon.hackathon_solution import HackathonSolution
+from cl.runtime.context.context import Context
 from cl.runtime.experiments.trial_key import TrialKey
 from cl.runtime.log.exceptions.user_error import UserError
 from cl.runtime.primitive.float_util import FloatUtil
 from cl.runtime.records.dataclasses_extensions import missing
-from cl.convince.prompts.formatted_prompt import FormattedPrompt
-from cl.convince.retrievers.annotating_retriever import AnnotatingRetriever
-from cl.convince.retrievers.retrieval import Retrieval
 from cl.tradeentry.entries.amount_entry import AmountEntry
 from cl.tradeentry.entries.currency_entry import CurrencyEntry
 from cl.tradeentry.entries.date_entry import DateEntry
@@ -29,9 +33,8 @@ from cl.tradeentry.entries.date_or_tenor_entry import DateOrTenorEntry
 from cl.tradeentry.entries.number_entry import NumberEntry
 from cl.tradeentry.entries.pay_freq_months_entry import PayFreqMonthsEntry
 from cl.tradeentry.trades.currency_key import CurrencyKey
-from cl.hackathon.hackathon_input import HackathonInput
-from cl.hackathon.hackathon_output import HackathonOutput
-from cl.hackathon.hackathon_solution import HackathonSolution
+
+_logger = getLogger(__name__)
 
 
 @dataclass(slots=True, kw_only=True)
@@ -295,9 +298,9 @@ class AnnotationSolution(HackathonSolution):
             raise UserError("Cannot override TrialId that is already set, exiting.")  # TODO: Append?
 
         with Context(full_llm=self.llm, trial=TrialKey(trial_id=str(output_.trial_id))) as context:
-
+            retriever_id = f"{self.solution_id}::{self.trade_group}::{output_.trade_id}::{output_.trial_id}"
             retriever = AnnotatingRetriever(
-                retriever_id=f"{self.solution_id}::{self.trade_group}::{output_.trade_id}::{output_.trial_id}",
+                retriever_id=retriever_id,
                 prompt=FormattedPrompt(
                     prompt_id="AnnotatingRetriever",
                     params_type=Retrieval.__name__,
@@ -334,3 +337,6 @@ class AnnotationSolution(HackathonSolution):
             output_.rec_leg_float_spread_bp = rec_leg_parameters.get("float_spread")
             output_.rec_leg_fixed_rate_pct = rec_leg_parameters.get("fixed_rate")
             output_.rec_leg_ccy = rec_leg_parameters.get("currency")
+
+        msg = f"({retriever_id}) Used {retriever.call_count} retriever calls; {retriever.calls_remaining} unused calls."
+        print(msg)
