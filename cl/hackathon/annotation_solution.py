@@ -65,32 +65,71 @@ class AnnotationSolution(HackathonSolution):
     parameter_annotation_prompt: str = missing()
     """Prompt to surround the specified parameter in curly braces."""
 
-    maturity_description: str = "Either maturity date as a date, or tenor (length) as the number of years and/or months"
-    """Description of the maturity tenor or date to use with the parameter annotation prompt."""
+    maturity_description: str = "Either maturity date as a date, or tenor (length) as the number of years and/or months. Do not include the word 'tenor' in the solution."
+    """Description of the maturity tenor or date."""
 
-    effective_date_description: str = "Effective date as date"
-    """Description of the effective date to use with the parameter annotation prompt."""
+    effective_date_description: str = (
+        "The effective date is the start date of the swap agreement, marking the beginning of the contract's "
+        "terms and the first date from which interest payments will accrue. It is the date when the swap becomes "
+        "active, and the two parties officially start exchanging cash flows according to the agreed terms." +\
+        "Wrap only the date in, for example in YY/MM/DD format. If not possible/applicable, leave text as is."
+    )
+    """Description of the effective date."""
 
-    freq_months_description: str = "Payment frequency"
-    """Description of the payment frequency to use with the parameter annotation prompt."""
+    freq_months_description: str = (
+        "Payment frequency defines how often the interest payments are exchanged between the parties involved in "
+        "the swap. This frequency is commonly expressed in intervals such as monthly, quarterly, semi-annually, or annually. "
+        "The frequency determines the regularity of cash flows and is a key parameter in structuring the swap." + \
+        "Wrap your chosen answer as if an integer, without any suffixes or prefixes. If not possible/applicable, leave it empty."
 
-    float_index_description: str = "Name of the floating interest rate index"
-    """Description of the floating interest rate index to use with the parameter annotation prompt."""
+    )
+    """Description of the payment frequency."""
 
-    float_spread_description: str = "Spread over the interest rate index, number only"
-    """Description of the floating interest rate spread to use with the parameter annotation prompt."""
+    float_index_description: str = (
+        "The floating interest rate index is a reference benchmark rate used to determine the floating leg of the swap. "
+        "Common indices include LIBOR (London Interbank Offered Rate), SOFR (Secured Overnight Financing Rate), and EURIBOR "
+        "(Euro Interbank Offered Rate). This index serves as the foundation for calculating the variable payments in the swap." + \
+        "Wrap your answer like 'SOFR', 'EURIBOR' or even '6M Term SOFR' if possible. If not possible/applicable, leave it empty."
 
-    fixed_rate_description: str = "Fixed rate value"
-    """Description of the fixed rate value to use with the parameter annotation prompt."""
+    )
+    """Description of the floating interest rate index."""
+
+    float_spread_description: str = (
+        "The floating rate spread is an additional margin or percentage added to the floating interest rate index "
+        "to calculate the total floating rate payment. It is often agreed upon at the inception of the contract and reflects "
+        "factors such as credit risk or market conditions. The spread adjusts the base index rate to account for these variables." + \
+        "Wrap your answer as just a float/int, like 35.0 or 4, without the 'bs' suffix. If not possible/applicable, leave it empty."
+
+    )
+    """Description of the floating interest rate spread."""
+
+    fixed_rate_description: str = (
+        "The fixed rate is the predetermined and agreed-upon interest rate that applies to the fixed leg of the swap. "
+        "This rate remains constant throughout the duration of the swap and is used to calculate fixed interest payments. "
+        "It is typically based on prevailing market conditions at the time the swap is executed." + \
+        "Wrap your answer as just a float. If not possible/applicable, leave it empty."
+    )
+    """Description of the fixed rate value."""
 
     notional_description: str = "Trade notional"
-    """Description of the trade notional to use with the parameter annotation prompt."""
+    """Description of the trade notional."""
 
-    basis_description: str = "Day-count basis"
-    """Description of the day-count basis to use with the parameter annotation prompt."""
+    basis_description: str = (
+        "The day-count basis is the convention used to calculate accrued interest in the swap. Common conventions "
+        "include '30/360', which assumes 30 days in each month and 360 days in a year, 'Actual/360', which uses the actual "
+        "number of days in a month and divides by 360, and 'Actual/365', which accounts for the actual days in a year. "
+        "The day-count basis is critical for accurately determining the amount of interest owed during each payment period." + \
+        "Wrap your answer as a string. If not possible/applicable, leave it empty."
+    )
+    """Description of the day-count basis."""
 
-    currency_description: str = "Currency"
-    """Description of the currency to use with the parameter annotation prompt."""
+    currency_description: str = (
+        "The currency refers to the denomination in which the notional amount and interest payments are expressed. "
+        "Major currencies commonly used in swaps include the US Dollar (USD), Euro (EUR), and British Pound (GBP). "
+        "The choice of currency often depends on the parties' financial needs and market conditions." + \
+        "Wrap your answer as a string, like 'GBP', 'EUR' or 'USD'. If not possible/applicable, leave it empty."
+    )
+    """Description of the currency."""
 
     def _extract_notional(self, retriever: AnnotatingRetriever, input_description: str, leg_type: str) -> (float, str):
         notional_amount = None
