@@ -11,28 +11,26 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 from dataclasses import dataclass
+
+from cl.convince.llms.llm import Llm
+from cl.convince.retrievers.retriever_util import RetrieverUtil
+from cl.hackathon.hackathon_output import HackathonOutput
+from cl.hackathon.hackathon_solution import HackathonSolution
+from cl.hackathon.shared_utils import manage_results
 from cl.runtime import Context
 from cl.runtime.experiments.trial_key import TrialKey
 from cl.runtime.log.exceptions.user_error import UserError
 from cl.runtime.primitive.float_util import FloatUtil
 from cl.runtime.records.dataclasses_extensions import missing
-from cl.convince.llms.gpt.gpt_llm import GptLlm
-from cl.convince.llms.llm import Llm
-from cl.convince.llms.llm_key import LlmKey
-from cl.convince.retrievers.retriever_util import RetrieverUtil
 from cl.tradeentry.entries.date_entry import DateEntry
 from cl.tradeentry.entries.number_entry import NumberEntry
-from cl.hackathon.hackathon_input import HackathonInput
-from cl.hackathon.hackathon_output import HackathonOutput
-from cl.hackathon.hackathon_solution import HackathonSolution
 
 
 @dataclass(slots=True, kw_only=True)
 class OneStepSolution(HackathonSolution):
     """Solution based on extracting values in one step."""
-
+    NUM_REPEATS = 11
     prompt: str = missing()
     """One step prompt to parse trade."""
 
@@ -44,19 +42,22 @@ class OneStepSolution(HackathonSolution):
         if Context.current().trial is not None:
             raise UserError("Cannot override TrialId that is already set, exiting.")  # TODO: Append?
 
-        with Context(full_llm=self.llm, trial=TrialKey(trial_id=str(output_.trial_id))) as context:
-
-            # Load the full LLM specified by the context
-            llm = context.load_one(Llm, context.full_llm)
-            query = self.prompt.format(input_text=output_.entry_text)
-
-            output = llm.completion(query)
-            json_output = RetrieverUtil.extract_json(output)
-
+        json_outputs: list[dict] = []
+        for i in range(self.NUM_REPEATS):
+            with Context(full_llm=self.llm, trial=TrialKey(trial_id=f"{output_.trial_id}_{i}")) as context:
+                # Load the full LLM specified by the context
+                llm = context.load_one(Llm, context.full_llm)
+                query = self.prompt.format(input_text=output_.entry_text)
+                output = llm.completion(query)
+                json_output = RetrieverUtil.extract_json(output)
+                json_outputs.append(json_output)
+        json_output = manage_results(json_outputs)
+        print("\n" + str(json_output))
         if json_output:
             self._parse_json_output(output_, json_output)
 
-    def _parse_json_output(self, output_: HackathonOutput, json_output: dict) -> None:
+    @staticmethod
+    def _parse_json_output(output_: HackathonOutput, json_output: dict) -> None:
         """
         Read values from json_output if the key is present; update output_ in place.
         """

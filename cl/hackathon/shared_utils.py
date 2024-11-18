@@ -12,6 +12,7 @@ def manage_results(results_list: list[dict[str, Any]]) -> dict[str, Any]:
     :return: a single json_output
     """
     df = pd.DataFrame(results_list)
+    print("\n" + df.to_string())
 
     # get most common results
     modal_results = df.mode(dropna=False).iloc[0].dropna()
