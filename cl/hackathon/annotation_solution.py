@@ -286,8 +286,11 @@ class AnnotationSolution(HackathonSolution):
 
         return trade_parameters
 
-    def score_output(self, output_: HackathonOutput) -> None:
-
+    def generate_output(self, output_: HackathonOutput) -> None:
+        """
+        Queries LLM and updates output_ inplace with results
+        :param output_: object to update with results
+        """
         if Context.current().trial is not None:
             raise UserError("Cannot override TrialId that is already set, exiting.")  # TODO: Append?
 
