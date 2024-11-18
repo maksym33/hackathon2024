@@ -14,37 +14,49 @@
 
 import copy
 import dataclasses
-from abc import ABC, abstractmethod
-from collections import defaultdict, Counter
+from abc import ABC
+from abc import abstractmethod
+from collections import Counter
+from collections import defaultdict
 from dataclasses import dataclass
-from typing import List, Final, Tuple
+from typing import Final
+from typing import List
+from typing import Tuple
 from typing_extensions import Self
-
-from cl.convince.llms.llm_key import LlmKey
-from cl.convince.retrievers.annotating_retrieval import AnnotatingRetrieval
-from cl.hackathon.hackathon_input_key import HackathonInputKey
-from cl.hackathon.hackathon_output_key import HackathonOutputKey
-from cl.hackathon.hackathon_score_item import HackathonScoreItem
-from cl.hackathon.hackathon_scoring_statistics import HackathonScoringStatistics
-from cl.runtime import Context, View
+from cl.runtime import Context
 from cl.runtime import RecordMixin
+from cl.runtime import View
 from cl.runtime.log.exceptions.user_error import UserError
 from cl.runtime.log.log_message import LogMessage
 from cl.runtime.plots.heat_map_plot import HeatMapPlot
 from cl.runtime.primitive.case_util import CaseUtil
 from cl.runtime.primitive.timestamp import Timestamp
 from cl.runtime.records.dataclasses_extensions import missing
-from cl.hackathon.hackathon_input import HackathonInput
-from cl.hackathon.hackathon_output import HackathonOutput
-from cl.hackathon.hackathon_solution_key import HackathonSolutionKey
 from cl.runtime.routers.tasks.run_response_item import handler_queue
 from cl.runtime.tasks.instance_method_task import InstanceMethodTask
+from cl.convince.llms.llm_key import LlmKey
+from cl.convince.retrievers.annotating_retrieval import AnnotatingRetrieval
 from cl.tradeentry.entries.date_entry import DateEntry
 from cl.tradeentry.entries.number_entry import NumberEntry
+from cl.hackathon.hackathon_input import HackathonInput
+from cl.hackathon.hackathon_input_key import HackathonInputKey
+from cl.hackathon.hackathon_output import HackathonOutput
+from cl.hackathon.hackathon_output_key import HackathonOutputKey
+from cl.hackathon.hackathon_score_item import HackathonScoreItem
+from cl.hackathon.hackathon_scoring_statistics import HackathonScoringStatistics
+from cl.hackathon.hackathon_solution_key import HackathonSolutionKey
 
-COMPARE_AS_NUMBER_FIELDS: Final[Tuple] = ("tenor_years", "pay_leg_notional", "pay_leg_freq_months",
-                                          "pay_leg_float_spread_bp", "pay_leg_fixed_rate_pct", "rec_leg_notional",
-                                          "rec_leg_freq_months", "rec_leg_float_spread_bp", "rec_leg_fixed_rate_pct")
+COMPARE_AS_NUMBER_FIELDS: Final[Tuple] = (
+    "tenor_years",
+    "pay_leg_notional",
+    "pay_leg_freq_months",
+    "pay_leg_float_spread_bp",
+    "pay_leg_fixed_rate_pct",
+    "rec_leg_notional",
+    "rec_leg_freq_months",
+    "rec_leg_float_spread_bp",
+    "rec_leg_fixed_rate_pct",
+)
 
 ERROR_KEYWORDS: Final[Tuple] = ("error", "escalation", "?")
 
@@ -85,13 +97,13 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
 
     statistics: List[HackathonScoringStatistics] | None = None
     """Detailed scoring statistics for each trade across all trials."""
-    
+
     inputs: List[HackathonInput] | None = None
     """The list of inputs according to the trade list."""
-    
+
     outputs: List[HackathonOutput] | None = None
     """The list of calculated outputs."""
-    
+
     retrievals: List[AnnotatingRetrieval] | None = None
     """The list of retrievals."""
 
@@ -119,7 +131,7 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
             if output_count == completed_output_count:
                 self.status = "Completed"
             else:
-                pct_done = int(round(completed_output_count / output_count  * 100, 0))
+                pct_done = int(round(completed_output_count / output_count * 100, 0))
                 self.status = f"{pct_done}% Done"
 
         # Return self to enable method chaining
@@ -140,8 +152,10 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
             self.calculate_statistics()
             return self.statistics
         else:
-            raise UserError("The statistics view is only available for scored solutions. "
-                            "These solutions have identifiers that end with a timestamp.")
+            raise UserError(
+                "The statistics view is only available for scored solutions. "
+                "These solutions have identifiers that end with a timestamp."
+            )
 
     def view_retrievals(self) -> List[AnnotatingRetrieval]:
         """Return the list of used annotating retrievals."""
@@ -151,13 +165,11 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
 
             filtered_retrievals = []
             for output in self.get_outputs():
-                current_retriever_id = (
-                    f"{self.solution_id}::{self.trade_group}::{output.trade_id}::{output.trial_id}"
-                )
+                current_retriever_id = f"{self.solution_id}::{self.trade_group}::{output.trade_id}::{output.trial_id}"
                 retrievals = context.load_all(AnnotatingRetrieval)
-                filtered_retrievals.extend([
-                    retrieval for retrieval in retrievals if retrieval.retriever.retriever_id == current_retriever_id
-                ])
+                filtered_retrievals.extend(
+                    [retrieval for retrieval in retrievals if retrieval.retriever.retriever_id == current_retriever_id]
+                )
 
             if filtered_retrievals:
                 return filtered_retrievals
@@ -199,8 +211,7 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
         result = [
             x
             for x in inputs
-            if x.trade_group == self.trade_group
-            and ((trade_ids_list is None) or (int(x.trade_id) in trade_ids_list))
+            if x.trade_group == self.trade_group and ((trade_ids_list is None) or (int(x.trade_id) in trade_ids_list))
         ]
         return result
 
@@ -222,7 +233,7 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
             trade_id=trade_id,
             trial_id=trial_id,
             entry_text=entry_text,
-            status="Pending"
+            status="Pending",
         )
         Context.current().save_one(output_)
 
@@ -332,10 +343,7 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
         # Submit outputs
         for trial_index in range(trial_count):
             for input_ in self.get_inputs():
-                scored_solution.submit_trial_output(
-                    trade_id=input_.trade_id,
-                    trial_id=str(trial_index)
-                )
+                scored_solution.submit_trial_output(trade_id=input_.trade_id, trial_id=str(trial_index))
 
         # Compare solution outputs with expected outputs and save HackathonScoreItems for each pair
         scored_solution.status = "Analyzing"
@@ -359,7 +367,9 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
         error_fields = []
 
         # Iterate over expected output fields and compare values
-        for field_name in [f for f in expected_output_fields if f not in expected_output_key_fields and f != "entry_text"]:
+        for field_name in [
+            f for f in expected_output_fields if f not in expected_output_key_fields and f != "entry_text"
+        ]:
 
             expected_field_value = getattr(expected_output, field_name, None)
             actual_field_value = getattr(actual_output, field_name, None)
@@ -371,14 +381,14 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
 
             # Check equality for all fields
             if actual_field_value and expected_field_value:
-                if 'date' in field_name:
+                if "date" in field_name:
                     comparison_result = self._compare_as_dates(actual_field_value, expected_field_value)
                 elif field_name in COMPARE_AS_NUMBER_FIELDS:
                     comparison_result = self._compare_as_numbers(actual_field_value, expected_field_value)
                 else:
-                    comparison_result = (expected_field_value == actual_field_value)
+                    comparison_result = expected_field_value == actual_field_value
             else:
-                comparison_result = (expected_field_value == actual_field_value)
+                comparison_result = expected_field_value == actual_field_value
 
             if comparison_result:
                 matched_fields.append(field_name)
@@ -441,7 +451,9 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
                 # Sum up scores
                 score += len(score_item.matched_fields)
                 score += 0.5 * len(score_item.error_fields)
-                max_score += len(score_item.matched_fields) + len(score_item.mismatched_fields) + len(score_item.error_fields)
+                max_score += (
+                    len(score_item.matched_fields) + len(score_item.mismatched_fields) + len(score_item.error_fields)
+                )
 
                 details.append(score_item.get_key())
 
@@ -476,8 +488,10 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
         """Heatmap with average scores for each field and trade."""
 
         if "." not in self.solution_id:
-            raise UserError("The heatmap is only available for scored solutions. "
-                            "These solutions have identifiers that end with a timestamp.")
+            raise UserError(
+                "The heatmap is only available for scored solutions. "
+                "These solutions have identifiers that end with a timestamp."
+            )
 
         context = Context.current()
         scoring_items = context.load_all(HackathonScoreItem)
@@ -486,7 +500,9 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
             raise UserError("Heatmap will be generated when at least one trial is completed for all trades.")
 
         first_item = filtered_scoring_items[0]
-        fields = (first_item.matched_fields or []) + (first_item.mismatched_fields or []) + (first_item.error_fields or [])
+        fields = (
+            (first_item.matched_fields or []) + (first_item.mismatched_fields or []) + (first_item.error_fields or [])
+        )
 
         # Get solution inputs
         inputs = self.get_inputs()
@@ -554,8 +570,11 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
         first_output = all_outputs[0]
         expected_output_key_fields = first_output.get_key().__slots__
         expected_output_fields = first_output.__slots__
-        fields_to_compare = [f for f in expected_output_fields if
-                             f not in expected_output_key_fields and f not in ("entry_text", "status")]
+        fields_to_compare = [
+            f
+            for f in expected_output_fields
+            if f not in expected_output_key_fields and f not in ("entry_text", "status")
+        ]
 
         all_statistics = []
         for input_ in inputs:
@@ -564,14 +583,18 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
                 solution=self.get_key(),
                 trade_group=self.trade_group,
                 trade_id=input_.trade_id,
-                entry_text=input_.entry_text
+                entry_text=input_.entry_text,
             )
 
             # Filter outputs corresponding to the current input
             self_key = self.get_key()
-            filtered_outputs = [output for output in all_outputs
-                                if output.solution == self_key and output.trade_group == input_.trade_group
-                                and output.trade_id == input_.trade_id]
+            filtered_outputs = [
+                output
+                for output in all_outputs
+                if output.solution == self_key
+                and output.trade_group == input_.trade_group
+                and output.trade_id == input_.trade_id
+            ]
 
             # Get expected output key for current input
             expected_output = input_.get_expected_output()
@@ -579,15 +602,16 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
             for field_name in fields_to_compare:
                 # Gather values for the current field
                 actual_field_values = [getattr(output, field_name, None) for output in filtered_outputs]
-                actual_field_values = ["Error" if val and val.startswith("Error") else val
-                                       for val in actual_field_values]
+                actual_field_values = [
+                    "Error" if val and val.startswith("Error") else val for val in actual_field_values
+                ]
 
                 expected_field_value = getattr(expected_output, field_name, None)
 
                 # Generate statistics summary for the field
-                field_statistics = f"{expected_field_value} =\n" + "\n".join(map(
-                    lambda x: f"{x[0]} ({x[1]}/{self.trial_count})", Counter(actual_field_values).items()
-                ))
+                field_statistics = f"{expected_field_value} =\n" + "\n".join(
+                    map(lambda x: f"{x[0]} ({x[1]}/{self.trial_count})", Counter(actual_field_values).items())
+                )
 
                 # Assign the statistics to the corresponding field in the statistics object
                 setattr(statistics, field_name, field_statistics)

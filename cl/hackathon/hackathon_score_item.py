@@ -15,12 +15,11 @@
 from dataclasses import dataclass
 from dataclasses import field
 from typing import List
-
+from cl.runtime import RecordMixin
+from cl.runtime.records.dataclasses_extensions import missing
 from cl.hackathon.hackathon_input_key import HackathonInputKey
 from cl.hackathon.hackathon_output_key import HackathonOutputKey
-from cl.runtime import RecordMixin
 from cl.hackathon.hackathon_score_item_key import HackathonScoreItemKey
-from cl.runtime.records.dataclasses_extensions import missing
 
 
 @dataclass(slots=True, kw_only=True)

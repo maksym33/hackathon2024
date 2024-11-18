@@ -14,12 +14,11 @@
 
 from dataclasses import dataclass
 from typing_extensions import Self
-
+from cl.runtime.log.exceptions.user_error import UserError
 from cl.convince.llms.llm_key import LlmKey
 from cl.hackathon.hackathon_input import HackathonInput
 from cl.hackathon.hackathon_output import HackathonOutput
 from cl.hackathon.hackathon_solution import HackathonSolution
-from cl.runtime.log.exceptions.user_error import UserError
 
 
 @dataclass(slots=True, kw_only=True)
@@ -28,12 +27,14 @@ class ExpectedResults(HackathonSolution):
 
     def score_output(self, output_: HackathonOutput) -> None:
         """Run scoring on the output."""
-        raise UserError("Solution ExpectedResults is used only to hold the expected results for "
-                        "scoring other methods. It does not have a its own scoring method.")
+        raise UserError(
+            "Solution ExpectedResults is used only to hold the expected results for "
+            "scoring other methods. It does not have a its own scoring method."
+        )
 
     def init(self) -> Self:
         """Similar to __init__ but can use fields set after construction, return self to enable method chaining."""
         self.llm = LlmKey(llm_id="Not required")
-        
+
         # Return self to enable method chaining
         return self

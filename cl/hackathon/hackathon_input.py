@@ -14,14 +14,13 @@
 
 from dataclasses import dataclass
 from typing import Final
-
-from cl.hackathon.hackathon_output import HackathonOutput
-from cl.hackathon.hackathon_output_key import HackathonOutputKey
-from cl.hackathon.hackathon_solution_key import HackathonSolutionKey
 from cl.runtime import Context
 from cl.runtime import RecordMixin
 from cl.runtime.records.dataclasses_extensions import missing
 from cl.hackathon.hackathon_input_key import HackathonInputKey
+from cl.hackathon.hackathon_output import HackathonOutput
+from cl.hackathon.hackathon_output_key import HackathonOutputKey
+from cl.hackathon.hackathon_solution_key import HackathonSolutionKey
 
 EXPECTED_RESULTS_SOLUTION_ID: Final[str] = "ExpectedResults"
 

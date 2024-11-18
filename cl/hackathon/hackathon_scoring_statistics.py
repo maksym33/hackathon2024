@@ -13,10 +13,9 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-
-from cl.hackathon.hackathon_scoring_statistics_key import HackathonScoringStatisticsKey
 from cl.runtime import RecordMixin
 from cl.runtime.records.dataclasses_extensions import missing
+from cl.hackathon.hackathon_scoring_statistics_key import HackathonScoringStatisticsKey
 
 
 @dataclass(slots=True, kw_only=True)

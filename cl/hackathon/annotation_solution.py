@@ -14,7 +14,6 @@
 
 from dataclasses import dataclass
 from typing import Dict
-
 from cl.runtime import Context
 from cl.runtime.experiments.trial_key import TrialKey
 from cl.runtime.log.exceptions.user_error import UserError
@@ -225,8 +224,7 @@ class AnnotationSolution(HackathonSolution):
     def _retrieve_trade_parameters(self, retriever: AnnotatingRetriever, input_description: str) -> Dict:
 
         error_message_prefix = (
-            "Error trying to extract the field from the trade description\n"
-            f"Trade description: {input_description}\n"
+            "Error trying to extract the field from the trade description\n" f"Trade description: {input_description}\n"
         )
 
         entry_error_message_template = (
@@ -293,10 +291,7 @@ class AnnotationSolution(HackathonSolution):
         if Context.current().trial is not None:
             raise UserError("Cannot override TrialId that is already set, exiting.")  # TODO: Append?
 
-        with Context(
-                full_llm=self.llm,
-                trial=TrialKey(trial_id=str(output_.trial_id))
-        ) as context:
+        with Context(full_llm=self.llm, trial=TrialKey(trial_id=str(output_.trial_id))) as context:
 
             retriever = AnnotatingRetriever(
                 retriever_id=f"{self.solution_id}::{self.trade_group}::{output_.trade_id}::{output_.trial_id}",

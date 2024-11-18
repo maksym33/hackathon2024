@@ -13,8 +13,6 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-
-from cl.convince.llms.llm_key import LlmKey
 from cl.runtime import Context
 from cl.runtime.experiments.trial_key import TrialKey
 from cl.runtime.log.exceptions.user_error import UserError
@@ -22,6 +20,7 @@ from cl.runtime.primitive.float_util import FloatUtil
 from cl.runtime.records.dataclasses_extensions import missing
 from cl.convince.llms.gpt.gpt_llm import GptLlm
 from cl.convince.llms.llm import Llm
+from cl.convince.llms.llm_key import LlmKey
 from cl.convince.retrievers.retriever_util import RetrieverUtil
 from cl.tradeentry.entries.date_entry import DateEntry
 from cl.tradeentry.entries.number_entry import NumberEntry
@@ -42,10 +41,7 @@ class OneStepSolution(HackathonSolution):
         if Context.current().trial is not None:
             raise UserError("Cannot override TrialId that is already set, exiting.")  # TODO: Append?
 
-        with Context(
-                full_llm=self.llm,
-                trial=TrialKey(trial_id=str(output_.trial_id))
-        ) as context:
+        with Context(full_llm=self.llm, trial=TrialKey(trial_id=str(output_.trial_id))) as context:
 
             # Load the full LLM specified by the context
             llm = context.load_one(Llm, context.full_llm)
