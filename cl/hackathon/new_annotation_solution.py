@@ -59,7 +59,7 @@ FEATURES ={
 }
 
 @dataclass(slots=True, kw_only=True)
-class AnnotationSolution(HackathonSolution):
+class NewAnnotationSolution(HackathonSolution):
     """Solution based on brace annotation of the input."""
 
     parameter_annotation_prompt: str = missing()
