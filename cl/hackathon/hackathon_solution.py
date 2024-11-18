@@ -29,6 +29,7 @@ from cl.hackathon.hackathon_scoring_statistics import HackathonScoringStatistics
 from cl.runtime import Context, View
 from cl.runtime import RecordMixin
 from cl.runtime.log.exceptions.user_error import UserError
+from cl.runtime.log.log_message import LogMessage
 from cl.runtime.plots.heat_map_plot import HeatMapPlot
 from cl.runtime.primitive.case_util import CaseUtil
 from cl.runtime.primitive.timestamp import Timestamp
@@ -36,6 +37,8 @@ from cl.runtime.records.dataclasses_extensions import missing
 from cl.hackathon.hackathon_input import HackathonInput
 from cl.hackathon.hackathon_output import HackathonOutput
 from cl.hackathon.hackathon_solution_key import HackathonSolutionKey
+from cl.runtime.routers.tasks.run_response_item import handler_queue
+from cl.runtime.tasks.instance_method_task import InstanceMethodTask
 from cl.tradeentry.entries.date_entry import DateEntry
 from cl.tradeentry.entries.number_entry import NumberEntry
 
@@ -178,6 +181,8 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
 
     def get_inputs(self) -> List[HackathonInput]:
         """Return the list of inputs specified by the trade list."""
+
+        # Refactor with loading by filter
         inputs = Context.current().load_all(HackathonInput)
 
         # Filter inputs by trade_group and trade_ids
@@ -197,17 +202,77 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
         return [x for x in outputs if x.solution.solution_id == self.solution_id]
 
     @abstractmethod
-    def _process_input(self, input_: HackathonInput, *, trial_id: str) -> HackathonOutput:
-        """Process one input and return one output."""
+    def score_output(self, output_: HackathonOutput) -> None:
+        """Run scoring on the output."""
 
-    def process_all_inputs(self, *, trial_id: str) -> None:
-        # Process inputs
-        for input_ in self.get_inputs():
-            output_ = self._process_input(input_, trial_id=trial_id)
-            output_.trial_id = trial_id
-            Context.current().save_one(output_)
+    def save_trial_output(self, *, trade_id: str, trial_id: str, entry_text: str) -> None:
+        """Save trial output."""
+        output_ = HackathonOutput(
+            solution=self.get_key(),
+            trade_group=self.trade_group,
+            trade_id=trade_id,
+            trial_id=trial_id,
+            entry_text=entry_text,
+            status="Pending"
+        )
+        Context.current().save_one(output_)
 
+    def score_trial_output(self, trade_id: str, trial_id: str) -> None:
+
+        context = Context.current()
+        info_msg = f"Scoring trade_id={trade_id} trial_id={trial_id} for {self.solution_id}"
+        log_message = LogMessage(level="Info", message=info_msg)
+        context.save_one(log_message)
+
+        if self.is_cancelled(self.solution_id):
+            raise UserError(f"Scoring for the solution {self.solution_id} has been cancelled.")
+
+        output_key = HackathonOutputKey(
+            solution=self.get_key(),
+            trade_group=self.trade_group,
+            trade_id=trade_id,
+            trial_id=trial_id,
+        )
+        output_ = context.load_one(HackathonOutput, output_key)
+
+        if output_.status == "Cancelled":
+            raise UserError(f"Scoring for this output has been cancelled. Change status to Pending to rerun.")
+        elif output_.status == "Completed":
+            raise UserError(f"Scoring for this output has been completed. Change status to Pending to rerun.")
+        elif output_.status == "Running":
+            raise UserError(f"Scoring for this output is already running. Change status to Pending to rerun.")
+
+        # Mark as running
+        output_.status = "Running"
         Context.current().save_one(self)
+
+        # Run scoring
+        self.score_output(output_)
+
+        # Mark as completed
+        output_.status = "Completed"
+        Context.current().save_one(self)
+
+    def submit_trial_output(self, *, trade_id: str, trial_id: str) -> None:
+
+        # Get key type based on table in request
+        key_type = HackathonSolutionKey
+        key_type_str = f"{key_type.__module__}.{key_type.__name__}"
+        method_name = "score_trial_output"
+        method_name_pascal_case = CaseUtil.snake_to_pascal_case(method_name)
+        label = f"{key_type.__name__};{self.solution_id};{method_name_pascal_case}"
+        handler_task = InstanceMethodTask(
+            label=label,
+            queue=handler_queue.get_key(),
+            key_type_str=key_type_str,
+            key_str=self.solution_id,
+            method_name=method_name,
+            method_params=[trade_id, trial_id],
+        )
+
+        # Save and submit task
+        Context.current().save_one(handler_task)
+        handler_queue.submit_task(handler_task)
 
     def run_score_one(self) -> None:
         """Perform scoring."""
@@ -246,13 +311,26 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
         scored_solution.trial_count = str(trial_count)
         Context.current().save_one(scored_solution)
 
-        # Run processing trial_count times
-        scored_solution.status = "Analyzing"
-        context.save_one(self)
+        # Save outputs
         for trial_index in range(trial_count):
-            scored_solution.process_all_inputs(trial_id=str(trial_index))
+            for input_ in self.get_inputs():
+                scored_solution.save_trial_output(
+                    trade_id=input_.trade_id,
+                    trial_id=str(trial_index),
+                    entry_text=input_.entry_text,
+                )
+
+        # Submit outputs
+        for trial_index in range(trial_count):
+            for input_ in self.get_inputs():
+                scored_solution.submit_trial_output(
+                    trade_id=input_.trade_id,
+                    trial_id=str(trial_index)
+                )
 
         # Compare solution outputs with expected outputs and save HackathonScoreItems for each pair
+        scored_solution.status = "Analyzing"
+        Context.current().save_one(scored_solution)
         scored_solution.calculate()
 
         # Save scoring object with total score
@@ -468,7 +546,7 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
         expected_output_key_fields = first_output.get_key().__slots__
         expected_output_fields = first_output.__slots__
         fields_to_compare = [f for f in expected_output_fields if
-                             f not in expected_output_key_fields and f != "entry_text"]
+                             f not in expected_output_key_fields and f not in ("entry_text", "status")]
 
         all_statistics = []
         for input_ in inputs:

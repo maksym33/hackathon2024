@@ -288,26 +288,18 @@ class AnnotationSolution(HackathonSolution):
 
         return trade_parameters
 
-    def _process_input(self, input_: HackathonInput, *, trial_id: str) -> HackathonOutput:
-
-        output_ = HackathonOutput(
-            solution=self.get_key(),
-            trade_group=self.trade_group,
-            trade_id=input_.trade_id,
-            trial_id=trial_id,
-            entry_text=input_.entry_text,
-        )
+    def score_output(self, output_: HackathonOutput) -> None:
 
         if Context.current().trial is not None:
             raise UserError("Cannot override TrialId that is already set, exiting.")  # TODO: Append?
 
         with Context(
                 full_llm=self.llm,
-                trial=TrialKey(trial_id=str(trial_id))
+                trial=TrialKey(trial_id=str(output_.trial_id))
         ) as context:
 
             retriever = AnnotatingRetriever(
-                retriever_id=f"{self.solution_id}::{self.trade_group}::{input_.trade_id}::{trial_id}",
+                retriever_id=f"{self.solution_id}::{self.trade_group}::{output_.trade_id}::{output_.trial_id}",
                 prompt=FormattedPrompt(
                     prompt_id="AnnotatingRetriever",
                     params_type=Retrieval.__name__,
@@ -317,14 +309,14 @@ class AnnotationSolution(HackathonSolution):
             retriever.init_all()
             Context.current().save_one(retriever)
 
-            trade_parameters = self._retrieve_trade_parameters(retriever, input_.entry_text)
+            trade_parameters = self._retrieve_trade_parameters(retriever, output_.entry_text)
 
             output_.maturity_date = trade_parameters.get("maturity_date")
             output_.tenor_years = trade_parameters.get("tenor_years")
             output_.effective_date = trade_parameters.get("effective_date")
 
             # Populate pay leg
-            pay_leg_parameters = self._leg_entry_to_dict(retriever, input_.entry_text, "Pay leg")
+            pay_leg_parameters = self._leg_entry_to_dict(retriever, output_.entry_text, "Pay leg")
             output_.pay_leg_notional = pay_leg_parameters.get("notional_amount")
             output_.pay_leg_ccy = pay_leg_parameters.get("notional_currency")
             output_.pay_leg_basis = pay_leg_parameters.get("basis")
@@ -335,7 +327,7 @@ class AnnotationSolution(HackathonSolution):
             output_.pay_leg_ccy = pay_leg_parameters.get("currency")
 
             # Populate receive leg
-            rec_leg_parameters = self._leg_entry_to_dict(retriever, input_.entry_text, "Receive leg")
+            rec_leg_parameters = self._leg_entry_to_dict(retriever, output_.entry_text, "Receive leg")
             output_.rec_leg_notional = rec_leg_parameters.get("notional_amount")
             output_.rec_leg_ccy = rec_leg_parameters.get("notional_currency")
             output_.rec_leg_basis = rec_leg_parameters.get("basis")
@@ -344,5 +336,3 @@ class AnnotationSolution(HackathonSolution):
             output_.rec_leg_float_spread_bp = rec_leg_parameters.get("float_spread")
             output_.rec_leg_fixed_rate_pct = rec_leg_parameters.get("fixed_rate")
             output_.rec_leg_ccy = rec_leg_parameters.get("currency")
-
-        return output_

@@ -37,27 +37,19 @@ class OneStepSolution(HackathonSolution):
     prompt: str = missing()
     """One step prompt to parse trade."""
 
-    def _process_input(self, input_: HackathonInput, *, trial_id: str) -> HackathonOutput:
-
-        output_ = HackathonOutput(
-            solution=self.get_key(),
-            trade_group=self.trade_group,
-            trade_id=input_.trade_id,
-            trial_id=trial_id,
-            entry_text=input_.entry_text,
-        )
+    def score_output(self, output_: HackathonOutput) -> None:
 
         if Context.current().trial is not None:
             raise UserError("Cannot override TrialId that is already set, exiting.")  # TODO: Append?
 
         with Context(
                 full_llm=self.llm,
-                trial=TrialKey(trial_id=str(trial_id))
+                trial=TrialKey(trial_id=str(output_.trial_id))
         ) as context:
 
             # Load the full LLM specified by the context
             llm = context.load_one(Llm, context.full_llm)
-            query = self.prompt.format(input_text=input_.entry_text)
+            query = self.prompt.format(input_text=output_.entry_text)
 
             output = llm.completion(query)
             json_output = RetrieverUtil.extract_json(output)
@@ -234,5 +226,3 @@ class OneStepSolution(HackathonSolution):
                         output_.rec_leg_fixed_rate_pct = str(FloatUtil.to_int_or_float(rec_leg_fixed_rate_pct.value))
                 except Exception as e:
                     output_.rec_leg_fixed_rate_pct = str(e)
-
-        return output_

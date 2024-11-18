@@ -13,17 +13,19 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-from typing import List
 from cl.runtime import Context
 from cl.runtime import RecordMixin
+from cl.runtime.log.exceptions.user_error import UserError
 from cl.runtime.records.dataclasses_extensions import missing
-from cl.convince.retrievers.annotating_retrieval import AnnotatingRetrieval
 from cl.hackathon.hackathon_output_key import HackathonOutputKey
 
 
 @dataclass(slots=True, kw_only=True)
 class HackathonOutput(HackathonOutputKey, RecordMixin[HackathonOutputKey]):
     """Output fields for a single hackathon trade obtained using the specified solution."""
+
+    status: str | None = None
+    """Status of the output."""
 
     entry_text: str = missing()
     """Trade entry text for the specified trade."""
@@ -86,4 +88,3 @@ class HackathonOutput(HackathonOutputKey, RecordMixin[HackathonOutputKey]):
             trade_id=self.trade_id,
             trial_id=self.trial_id,
         )
-

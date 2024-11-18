@@ -19,16 +19,17 @@ from cl.convince.llms.llm_key import LlmKey
 from cl.hackathon.hackathon_input import HackathonInput
 from cl.hackathon.hackathon_output import HackathonOutput
 from cl.hackathon.hackathon_solution import HackathonSolution
+from cl.runtime.log.exceptions.user_error import UserError
 
 
 @dataclass(slots=True, kw_only=True)
 class ExpectedResults(HackathonSolution):
     """Solution key under which the expected (correct) outputs are recorded."""
 
-    def _process_input(self, input_: HackathonInput, *, trial_id: str) -> HackathonOutput:
-        """Process one input and return one output."""
-        raise RuntimeError("Solution ExpectedResults is used only to hold the expected results for "
-                           "scoring. It does not have a Generate method.")
+    def score_output(self, output_: HackathonOutput) -> None:
+        """Run scoring on the output."""
+        raise UserError("Solution ExpectedResults is used only to hold the expected results for "
+                        "scoring other methods. It does not have a its own scoring method.")
 
     def init(self) -> Self:
         """Similar to __init__ but can use fields set after construction, return self to enable method chaining."""
