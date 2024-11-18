@@ -15,6 +15,7 @@
 from dataclasses import dataclass
 from typing import ClassVar
 from openai import OpenAI
+from typing_extensions import Self
 from cl.runtime.context.context_util import ContextUtil
 from cl.runtime.log.exceptions.user_error import UserError
 from cl.runtime.primitive.float_util import FloatUtil
@@ -42,9 +43,8 @@ class GptLlm(Llm):
     _client: ClassVar[OpenAI] = None
     """OpenAI client instance."""
 
-    def init(self) -> None:
-        """Same as __init__ but can be used when field values are set both during and after construction."""
-
+    def init(self) -> Self:
+        """Similar to __init__ but can use fields set after construction, return self to enable method chaining."""
         if self.temperature is not None:
             if isinstance(self.temperature, float) or isinstance(self.temperature, int):
                 self.temperature = float(self.temperature)
@@ -58,6 +58,9 @@ class GptLlm(Llm):
                 self.temperature = min(max(self.temperature, 0.0), 1.0)
             else:
                 raise RuntimeError(f"{type(self).__name__} field 'api_base_url' must be None or a number from 0 to 1")
+
+        # Return self to enable method chaining
+        return self
 
     def uncached_completion(self, request_id: str, query: str) -> str:
         """Perform completion without CompletionCache lookup, call completion instead."""

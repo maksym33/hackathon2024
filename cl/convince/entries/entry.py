@@ -12,57 +12,90 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import re
 from abc import ABC
 from abc import abstractmethod
 from dataclasses import dataclass
+from typing import Type
+from typing_extensions import Self
 from cl.runtime import Context
-from cl.runtime.backend.core.user_key import UserKey
 from cl.runtime.log.exceptions.user_error import UserError
+from cl.runtime.primitive.bool_util import BoolUtil
 from cl.runtime.primitive.case_util import CaseUtil
+from cl.runtime.primitive.string_util import StringUtil
 from cl.runtime.records.dataclasses_extensions import missing
 from cl.runtime.records.record_mixin import RecordMixin
 from cl.convince.entries.entry_key import EntryKey
+from cl.convince.settings.convince_settings import ConvinceSettings
 
 
 @dataclass(slots=True, kw_only=True)
 class Entry(EntryKey, RecordMixin[EntryKey], ABC):
     """Contains description, body and supporting data of user entry along with the entry processing result."""
 
-    description: str = missing()
+    entry_type: str = missing()
+    """Entry type string is set in 'init' method of a descendant of this class."""
+
+    text: str = missing()
     """Description exactly as provided by the user (included in MD5 hash)."""
 
-    body: str | None = None
-    """Optional text following the description exactly as provided by the user (included in MD5 hash)."""
+    locale: str = missing()
+    """Locale in BCP 47 ll-CC where ll is language and CC is country (included in MD5 hash)."""
 
     data: str | None = None
     """Optional supporting data in YAML format (included in MD5 hash)."""
 
-    lang: str | None = "en"
-    """ISO 639-1 two-letter lowercase language code (defaults to 'en')."""
-
     verified: bool | None = None
-    """If True, use this entry as a few-shot sample."""
+    """Flag indicating the entry is verified."""
 
     def get_key(self) -> EntryKey:
         return EntryKey(entry_id=self.entry_id)
 
-    def init(self) -> None:
-        """Generate entry_id in 'type: description' format followed by an MD5 hash of body and data if present."""
+    def init(self) -> Self:
+        """Generate entry_id from text, locale and data fields."""
+
+        # Check text
+        if StringUtil.is_empty(self.text):
+            raise UserError(f"Empty 'text' field in {type(self).__name__}.")
+
+        # Check locale format or set based on the default in ConvinceSettings if not specified
+        if self.locale is not None:
+            # This performs validation
+            ConvinceSettings.parse_locale(self.locale)
+        else:
+            self.locale = ConvinceSettings.instance().locale
+
         # Convert field types if necessary
         if self.verified is not None and isinstance(self.verified, str):
-            self.verified = self.parse_optional_bool(self.verified, field_name="verified")
-        # Record type is part of the key
-        record_type = type(self).__name__
-        self.entry_id = self.get_entry_id(record_type, self.description, self.body, self.data)
+            self.verified = BoolUtil.parse_optional_bool(self.verified, field_name="verified")
+
+        # Base type resolves the ambiguity of different entry types with the same text
+        base_type = self.get_base_type()
+        self.entry_type = base_type.__name__.removesuffix("Entry")
+
+        # Generate digest if multiline or more than 80 characters
+        self.entry_id = StringUtil.digest(
+            self.text,
+            text_params=(
+                self.entry_type,
+                self.locale,
+            ),
+            hash_params=(self.data,),
+        )
+
+        # Return self to enable method chaining
+        return self
+
+    @abstractmethod
+    def get_base_type(self) -> Type:
+        """Lowest level of class hierarchy that resolves the ambiguity of different entry types with the same text."""
 
     def get_text(self) -> str:
         """Get the complete text of the entry."""
-        # TODO: Support body and data
-        if self.body is not None:
-            raise RuntimeError("Entry 'body' field is not yet supported.")
+        # TODO: Support data
         if self.data is not None:
             raise RuntimeError("Entry 'data' field is not yet supported.")
-        result = self.description
+        result = self.text
         return result
 
     # TODO: Restore abstract when implemented for all entries
@@ -71,19 +104,19 @@ class Entry(EntryKey, RecordMixin[EntryKey], ABC):
         raise UserError(f"Propose handler is not yet implemented for {type(self).__name__}.")
 
     def run_reset(self) -> None:
-        """Clear all output  fields and verification flag."""
+        """Clear all output fields and the verification flag."""
         if self.verified:
             raise UserError(
                 f"Entry {self.entry_id} is marked as verified, run Unmark Verified before running Reset."
                 f"This is a safety feature to prevent overwriting verified entries. "
             )
+
+        # Create a record of the same type but copy the base class fields except entry_type and verified
         record_type = type(self)
-        result = record_type(
-            description=self.description,
-            body=self.body,
-            data=self.data,
-            lang=self.lang,
-        )
+        result = record_type(text=self.text, locale=self.locale, data=self.data)  # noqa
+        result.init()
+
+        # Save to replace the current record
         Context.current().save_one(result)
 
     def run_mark_verified(self) -> None:
@@ -95,39 +128,3 @@ class Entry(EntryKey, RecordMixin[EntryKey], ABC):
         """Unmark verified."""
         self.verified = False
         Context.current().save_one(self)
-
-    @classmethod
-    def parse_required_bool(
-        cls, field_value: str | None, *, field_name: str | None = None
-    ) -> bool:  # TODO: Move to Util class
-        """Parse an optional boolean value."""
-        match field_value:
-            case None | "":
-                field_name = CaseUtil.snake_to_pascal_case(field_name)
-                for_field = f"for field {field_name}" if field_name is not None else " for a Y/N field"
-                raise UserError(f"The value {for_field} is empty. Valid values are Y or N.")
-            case "Y":
-                return True
-            case "N":
-                return False
-            case _:
-                field_name = CaseUtil.snake_to_pascal_case(field_name)
-                for_field = f" for field {field_name}" if field_name is not None else " for a Y/N field"
-                raise UserError(f"The value {for_field} must be Y, N or an empty string.\nField value: {field_value}")
-
-    @classmethod
-    def parse_optional_bool(
-        cls, field_value: str | None, *, field_name: str | None = None
-    ) -> bool | None:  # TODO: Move to Util class
-        """Parse an optional boolean value."""
-        match field_value:
-            case None | "":
-                return None
-            case "Y":
-                return True
-            case "N":
-                return False
-            case _:
-                field_name = CaseUtil.snake_to_pascal_case(field_name)
-                for_field = f" for field {field_name}" if field_name is not None else ""
-                raise UserError(f"The value{for_field} must be Y, N or an empty string.\nField value: {field_value}")

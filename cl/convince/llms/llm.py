@@ -18,6 +18,7 @@ from dataclasses import dataclass
 from cl.runtime.primitive.timestamp import Timestamp
 from cl.runtime.records.record_mixin import RecordMixin
 from cl.convince.llms.completion_cache import CompletionCache
+from cl.convince.llms.completion_util import CompletionUtil
 from cl.convince.llms.llm_key import LlmKey
 
 
@@ -31,32 +32,32 @@ class Llm(LlmKey, RecordMixin[LlmKey], ABC):
     def get_key(self) -> LlmKey:
         return LlmKey(llm_id=self.llm_id)
 
-    def completion(self, query: str, *, trial_id: str | int | None = None) -> str:
+    def completion(self, query: str) -> str:
         """Text-in, text-out single query completion without model-specific tags (uses response caching)."""
 
-        # Remove leading and trailing whitespace and normalize EOL in query
-        query = CompletionCache.normalize_value(query)
+        # Get cache key with trial_id, EOL normalization, and stripped leading and trailing whitespace
+        query_with_trial_id = CompletionUtil.format_query(query)
 
         # Create completion cache if does not exist
         if self._completion_cache is None:
             self._completion_cache = CompletionCache(channel=self.llm_id)
 
         # Try to find in completion cache by cache_key, make cloud provider call only if not found
-        if (result := self._completion_cache.get(query, trial_id=trial_id)) is None:
+        if (result := self._completion_cache.get(query_with_trial_id)) is None:
             # Request identifier is UUIDv7 timestamp in time-ordered dash-delimited format
             # is used to prevent LLM cloud provider caching and to identify LLM API calls
             # for audit log and error reporting purposes
             request_id = Timestamp.create()
 
             # Invoke LLM by calling the cloud provider API
-            result = self.uncached_completion(request_id, query)
+            result = self.uncached_completion(request_id, query_with_trial_id)
 
             # Save the result in cache before returning, request_id is recorded
             # but not taken into account during lookup
-            self._completion_cache.add(request_id, query, result, trial_id=trial_id)
+            self._completion_cache.add(request_id, query_with_trial_id, result)
 
         # Remove leading and trailing whitespace and normalize EOL in result
-        result = CompletionCache.normalize_value(result)
+        result = CompletionUtil.format_completion(result)
         return result
 
     @abstractmethod

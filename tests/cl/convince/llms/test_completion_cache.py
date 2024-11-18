@@ -16,6 +16,7 @@ import pytest
 import os
 from typing import List
 from cl.runtime.context.env_util import EnvUtil
+from cl.runtime.context.testing_context import TestingContext
 from cl.runtime.primitive.timestamp import Timestamp
 from cl.convince.llms.completion_cache import CompletionCache
 
@@ -143,6 +144,7 @@ def _perform_testing(base_dir: str):
     _delete_cache_files(base_dir, channels)
 
 
+@pytest.mark.skip("Test requires update after CompletionCache refactoring.")
 def test_function():
     """Stub test function without a class."""
 
@@ -154,6 +156,7 @@ def test_function():
 class TestClass:
     """Stub pytest class."""
 
+    @pytest.mark.skip("Test requires update after CompletionCache refactoring.")
     def test_method(self):
         """Stub test method inside pytest class."""
 

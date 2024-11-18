@@ -13,50 +13,60 @@
 # limitations under the License.
 
 import pytest
+from cl.tradeentry.entries.currency_entry import CurrencyEntry
 from cl.runtime.log.exceptions.user_error import UserError
 from cl.runtime.testing.regression_guard import RegressionGuard
-from cl.convince.entries.entry import Entry
 from cl.convince.entries.entry_key import EntryKey
-from cl.convince.entries.entry_type_key import EntryTypeKey
 
 
-def test_get_entry_id():
+def test_create_key():
     """Test EntryKey.create_key method."""
 
     guard = RegressionGuard()
 
     # Record type
-    record_type = "SampleEntryType"
+    locale = "en-GB"
 
     # Check with type and description only
-    guard.write(EntryKey.get_entry_id(record_type, "Sample Description"))
+    entry = CurrencyEntry(text="Sample Text", locale=locale)
+    entry.init()
+    guard.write(entry.entry_id)
 
     # Check with body
-    guard.write(EntryKey.get_entry_id(record_type, "Sample Description", body="Sample Body"))
+    entry = CurrencyEntry(text=" ".join(20 * ["Long Text"]), locale=locale)
+    entry.init()
+    guard.write(entry.entry_id)
 
     # Check with data
-    guard.write(EntryKey.get_entry_id(record_type, "Sample Description", data="Sample Data"))
+    entry = CurrencyEntry(text="Multiline\nText", locale=locale)
+    entry.init()
+    guard.write(entry.entry_id)
 
     # Check with both
-    guard.write(EntryKey.get_entry_id(record_type, "Sample Description", body="Sample Body", data="Sample Data"))
+    entry = CurrencyEntry(text="Sample Text", locale=locale, data="Sample Data")
+    entry.init()
+    guard.write(entry.entry_id)
 
     # Verify
     guard.verify_all()
 
 
 def test_check_entry_id():
-    """Test EntryKey.create_key method."""
+    """Test EntryKey.check_entry_id method."""
 
-    EntryKey.check_entry_id("SampleEntryType: Sample Description")
-    EntryKey.check_entry_id("SampleEntryType: Sample Description (MD5: 00000000000000000000000000000000)")
+    # Valid without hash
+    EntryKey(entry_id="text (type, en-US)").init()
+
+    # Valid with hash
+    EntryKey(entry_id="text (type, en-US, 00000000000000000000000000000000)").init()
+
+    # Not valid
     with pytest.raises(UserError):
-        EntryKey.check_entry_id("Sample Description")
+        EntryKey(entry_id="text").init()
     with pytest.raises(UserError):
-        EntryKey.check_entry_id("SampleEntryType: Sample Description (MD5: 00000000000000000000000000000000")
+        EntryKey(entry_id="text(").init()
     with pytest.raises(UserError):
-        EntryKey.check_entry_id("SampleEntryType: Sample Description (MD5: 000000000000000000000000000000000")
-    with pytest.raises(UserError):
-        EntryKey.check_entry_id("SampleEntryType: Sample Description (md5: 0000000000000000000000000000000")
+        EntryKey(entry_id="text)").init()
 
 
 if __name__ == "__main__":

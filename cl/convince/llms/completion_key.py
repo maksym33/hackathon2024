@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import re
+from __future__ import annotations
 from dataclasses import dataclass
 from typing import Type
 from typing_extensions import Self
@@ -21,31 +21,28 @@ from cl.runtime.records.dataclasses_extensions import missing
 from cl.runtime.records.key_mixin import KeyMixin
 from cl.runtime.records.protocols import is_key
 
-_MD5_HEX_RE = re.compile(r"^[0-9a-f]+$")
-"""Regex for MD5 hex."""
-
 
 @dataclass(slots=True, kw_only=True)
-class EntryKey(KeyMixin):
-    """Contains description, body and supporting data of user entry along with the entry processing result."""
+class CompletionKey(KeyMixin):
+    """Record of a previous LLM completion used to avoid making repeated LLM calls for the same query and trial."""
 
-    entry_id: str = missing()
-    """Based on record type, description and MD5 hash of body and data if present."""
+    completion_id: str = missing()
+    """Unique completion identifier is a hash of completion parameters."""
 
     @classmethod
     def get_key_type(cls) -> Type:
-        return EntryKey
+        return CompletionKey
 
     def init(self) -> Self:
         # Validate entry_id inside a key but not inside a record where it will be set automatically
         if is_key(self):
-            if "(" not in self.entry_id or ")" not in self.entry_id:
+            if "(" not in self.completion_id or ")" not in self.completion_id:
                 raise UserError(
                     f"""
-The field 'EntryId' does not conform to one of the valid formats:
-Format 1: digest (type, locale)
-Format 2: digest (type, locale, md5)
-EntryId: {self.entry_id}
+The field 'CompletionId' does not conform to one of the valid formats:
+Format 1: digest (llm, trial_id)
+Format 2: digest (llm, trial_id, md5)
+CompletionId: {self.completion_id}
 """
                 )
 

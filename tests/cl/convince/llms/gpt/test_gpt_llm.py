@@ -23,6 +23,7 @@ def test_smoke():
     with TestingContext():
         llms = [
             GptLlm(llm_id="gpt-4o-mini"),
+            GptLlm(llm_id="gpt-4o-mini-0.2", model_name="gpt-4o-mini", temperature=0.2),
         ]
         for llm in llms:
             assert "4" in llm.completion("2 times 2?")

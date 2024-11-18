@@ -34,3 +34,8 @@ def get_stub_full_llms() -> List[Llm]:
         FireworksLlamaLlm(llm_id="llama-v3-70b-instruct"),
         GptLlm(llm_id="gpt-4o"),
     ]
+
+
+def get_stub_full_llm() -> Llm:
+    """Full (but not extravagant) LLM for prompt design tests."""
+    return GptLlm(llm_id="gpt-4o")
