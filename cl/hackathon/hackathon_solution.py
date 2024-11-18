@@ -120,8 +120,13 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
 
     def view_statistics(self) -> List[HackathonScoringStatistics]:
         """Return the list of inputs specified by the trade list."""
-        self.calculate_statistics()
-        return self.statistics
+
+        if "." in self.solution_id:
+            self.calculate_statistics()
+            return self.statistics
+        else:
+            raise UserError("The statistics view is only available for scored solutions. "
+                            "These solutions have identifiers that end with a timestamp.")
 
     def view_retrievals(self) -> List[AnnotatingRetrieval]:
         """Return the list of used annotating retrievals."""
@@ -382,14 +387,14 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
         """Heatmap with average scores for each field and trade."""
 
         if "." not in self.solution_id:
-            raise RuntimeError("The heatmap is only available for scored solutions. "
-                               "These solutions have identifiers that end with a timestamp.")
+            raise UserError("The heatmap is only available for scored solutions. "
+                            "These solutions have identifiers that end with a timestamp.")
 
         context = Context.current()
         scoring_items = context.load_all(HackathonScoreItem)
         filtered_scoring_items = [item for item in scoring_items if item.solution == self.get_key()]
         if len(filtered_scoring_items) == 0:
-            raise RuntimeError("Heatmap will be generated when at least one trial is completed for all trades.")
+            raise UserError("Heatmap will be generated when at least one trial is completed for all trades.")
 
         first_item = filtered_scoring_items[0]
         fields = (first_item.matched_fields or []) + (first_item.mismatched_fields or []) + (first_item.error_fields or [])
