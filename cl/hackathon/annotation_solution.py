@@ -13,19 +13,15 @@
 # limitations under the License.
 
 from dataclasses import dataclass
-from logging import getLogger
 from typing import Dict
-
-from cl.convince.prompts.formatted_prompt import FormattedPrompt
-from cl.convince.retrievers.annotating_retriever import AnnotatingRetriever
-from cl.convince.retrievers.retrieval import Retrieval
-from cl.hackathon.hackathon_output import HackathonOutput
-from cl.hackathon.hackathon_solution import HackathonSolution
 from cl.runtime.context.context import Context
 from cl.runtime.experiments.trial_key import TrialKey
 from cl.runtime.log.exceptions.user_error import UserError
 from cl.runtime.primitive.float_util import FloatUtil
 from cl.runtime.records.dataclasses_extensions import missing
+from cl.convince.prompts.formatted_prompt import FormattedPrompt
+from cl.convince.retrievers.annotating_retriever import AnnotatingRetriever
+from cl.convince.retrievers.retrieval import Retrieval
 from cl.tradeentry.entries.amount_entry import AmountEntry
 from cl.tradeentry.entries.currency_entry import CurrencyEntry
 from cl.tradeentry.entries.date_entry import DateEntry
@@ -33,27 +29,21 @@ from cl.tradeentry.entries.date_or_tenor_entry import DateOrTenorEntry
 from cl.tradeentry.entries.number_entry import NumberEntry
 from cl.tradeentry.entries.pay_freq_months_entry import PayFreqMonthsEntry
 from cl.tradeentry.trades.currency_key import CurrencyKey
-from cl.hackathon.hackathon_input import HackathonInput
 from cl.hackathon.hackathon_output import HackathonOutput
 from cl.hackathon.hackathon_solution import HackathonSolution
-from cl.hackathon.our_gpt_client import GPTClient
-from cl.hackathon.shared_utils import get_all_features, get_non_empty_features, manage_results
+from cl.hackathon.shared_utils import get_non_empty_features
+from cl.hackathon.shared_utils import manage_results
 
-_logger = getLogger(__name__)
-
-
-FEATURE_TO_RERUN_SELECTOR = get_non_empty_features #  get_all_features/  get_non_empty_features
+FEATURE_TO_RERUN_SELECTOR = get_non_empty_features  #  get_all_features/  get_non_empty_features
 
 
-FEATURES ={
-    'params':
-    [
+FEATURES = {
+    "params": [
         "maturity_date",
         "tenor_years",
         "effective_date",
-        ],
-    'leg': # extracted twice for pay and receive leg
-        [
+    ],
+    "leg": [  # extracted twice for pay and receive leg
         "notional_amount",
         "notional_currency",
         "basis",
@@ -61,9 +51,10 @@ FEATURES ={
         "float_index",
         "float_spread",
         "fixed_rate",
-        "currency"
-    ]
+        "currency",
+    ],
 }
+
 
 @dataclass(slots=True, kw_only=True)
 class AnnotationSolution(HackathonSolution):
@@ -125,7 +116,9 @@ class AnnotationSolution(HackathonSolution):
 
         return notional_amount, notional_currency
 
-    def _leg_entry_to_dict(self, retriever: AnnotatingRetriever, trade_description: str, leg_type: str, required_fields=None) -> Dict:
+    def _leg_entry_to_dict(
+        self, retriever: AnnotatingRetriever, trade_description: str, leg_type: str, required_fields=None
+    ) -> Dict:
         retriever_error_message_prefix = (
             f"Error trying to extract the field from the trade description\nTrade description: {trade_description}\n"
         )
@@ -146,7 +139,8 @@ class AnnotationSolution(HackathonSolution):
             extracted_freq_months = None
             try:
                 extracted_freq_months = retriever.retrieve(
-                    input_text=trade_description, param_description=self.freq_months_description + param_description_suffix
+                    input_text=trade_description,
+                    param_description=self.freq_months_description + param_description_suffix,
                 )
             except Exception as e:
                 entry_dict["freq_months"] = retriever_error_message_prefix + str(e)
@@ -162,11 +156,13 @@ class AnnotationSolution(HackathonSolution):
                     entry_dict["freq_months"] = entry_error_message_template.format(
                         extracted_field=extracted_freq_months, exception_message=str(e)
                     )
+
         def extract_floating_rate():
             # Floating rate index
             try:
                 extracted_float_index = retriever.retrieve(
-                    input_text=trade_description, param_description=self.float_index_description + param_description_suffix
+                    input_text=trade_description,
+                    param_description=self.float_index_description + param_description_suffix,
                 )
                 entry_dict["float_index"] = extracted_float_index
             except Exception as e:
@@ -177,7 +173,8 @@ class AnnotationSolution(HackathonSolution):
             extracted_float_spread = None
             try:
                 extracted_float_spread = retriever.retrieve(
-                    input_text=trade_description, param_description=self.float_spread_description + param_description_suffix
+                    input_text=trade_description,
+                    param_description=self.float_spread_description + param_description_suffix,
                 )
             except Exception as e:
                 entry_dict["float_spread"] = retriever_error_message_prefix + str(e)
@@ -186,7 +183,9 @@ class AnnotationSolution(HackathonSolution):
                 try:
                     float_spread = NumberEntry(text=extracted_float_spread)
                     float_spread.run_generate()
-                    entry_dict["float_spread"] = str(FloatUtil.to_int_or_float(v)) if (v := float_spread.value) else None
+                    entry_dict["float_spread"] = (
+                        str(FloatUtil.to_int_or_float(v)) if (v := float_spread.value) else None
+                    )
                 except Exception as e:
                     entry_dict["float_spread"] = entry_error_message_template.format(
                         extracted_field=extracted_float_spread, exception_message=str(e)
@@ -241,7 +240,8 @@ class AnnotationSolution(HackathonSolution):
             extracted_fixed_rate = None
             try:
                 extracted_fixed_rate = retriever.retrieve(
-                    input_text=trade_description, param_description=self.fixed_rate_description + param_description_suffix
+                    input_text=trade_description,
+                    param_description=self.fixed_rate_description + param_description_suffix,
                 )
             except Exception as e:
                 entry_dict["fixed_rate"] = retriever_error_message_prefix + str(e)
@@ -289,7 +289,9 @@ class AnnotationSolution(HackathonSolution):
 
         return entry_dict
 
-    def _retrieve_trade_parameters(self, retriever: AnnotatingRetriever, input_description: str, required_fields=None) -> Dict:
+    def _retrieve_trade_parameters(
+        self, retriever: AnnotatingRetriever, input_description: str, required_fields=None
+    ) -> Dict:
 
         error_message_prefix = (
             "Error trying to extract the field from the trade description\n" f"Trade description: {input_description}\n"
@@ -303,7 +305,6 @@ class AnnotationSolution(HackathonSolution):
         )
 
         trade_parameters = {}
-
 
         def extract_maturity_or_tenor():
             # Maturity
@@ -411,8 +412,12 @@ class AnnotationSolution(HackathonSolution):
                     break
 
                 trade_parameters = self._retrieve_trade_parameters(retriever, output_.entry_text, params_to_rerun)
-                pay_leg_parameters = self._leg_entry_to_dict(retriever, output_.entry_text, "Pay leg", pay_params_to_rerun)
-                rec_leg_parameters = self._leg_entry_to_dict(retriever, output_.entry_text, "Receive leg", rec_params_to_rerun)
+                pay_leg_parameters = self._leg_entry_to_dict(
+                    retriever, output_.entry_text, "Pay leg", pay_params_to_rerun
+                )
+                rec_leg_parameters = self._leg_entry_to_dict(
+                    retriever, output_.entry_text, "Receive leg", rec_params_to_rerun
+                )
 
                 params_trials.append(trade_parameters)
                 pay_leg_trials.append(pay_leg_parameters)
@@ -428,29 +433,28 @@ class AnnotationSolution(HackathonSolution):
 
 
 def _update_output_object(output_, trade_parameters, pay_leg_parameters, rec_leg_parameters):
-        output_.maturity_date = trade_parameters.get("maturity_date")
-        output_.tenor_years = trade_parameters.get("tenor_years")
-        output_.effective_date = trade_parameters.get("effective_date")
+    output_.maturity_date = trade_parameters.get("maturity_date")
+    output_.tenor_years = trade_parameters.get("tenor_years")
+    output_.effective_date = trade_parameters.get("effective_date")
 
-        # Populate pay leg
-        output_.pay_leg_notional = pay_leg_parameters.get("notional_amount")
-        output_.pay_leg_ccy = pay_leg_parameters.get("notional_currency")
-        output_.pay_leg_basis = pay_leg_parameters.get("basis")
-        output_.pay_leg_freq_months = pay_leg_parameters.get("freq_months")
-        output_.pay_leg_float_index = pay_leg_parameters.get("float_index")
-        output_.pay_leg_float_spread_bp = pay_leg_parameters.get("float_spread")
-        output_.pay_leg_fixed_rate_pct = pay_leg_parameters.get("fixed_rate")
-        output_.pay_leg_ccy = pay_leg_parameters.get("currency")
+    # Populate pay leg
+    output_.pay_leg_notional = pay_leg_parameters.get("notional_amount")
+    output_.pay_leg_ccy = pay_leg_parameters.get("notional_currency")
+    output_.pay_leg_basis = pay_leg_parameters.get("basis")
+    output_.pay_leg_freq_months = pay_leg_parameters.get("freq_months")
+    output_.pay_leg_float_index = pay_leg_parameters.get("float_index")
+    output_.pay_leg_float_spread_bp = pay_leg_parameters.get("float_spread")
+    output_.pay_leg_fixed_rate_pct = pay_leg_parameters.get("fixed_rate")
+    output_.pay_leg_ccy = pay_leg_parameters.get("currency")
 
-        # Populate receive leg
-        output_.rec_leg_notional = rec_leg_parameters.get("notional_amount")
-        output_.rec_leg_ccy = rec_leg_parameters.get("notional_currency")
-        output_.rec_leg_basis = rec_leg_parameters.get("basis")
-        output_.rec_leg_freq_months = rec_leg_parameters.get("freq_months")
-        output_.rec_leg_float_index = rec_leg_parameters.get("float_index")
-        output_.rec_leg_float_spread_bp = rec_leg_parameters.get("float_spread")
-        output_.rec_leg_fixed_rate_pct = rec_leg_parameters.get("fixed_rate")
-        output_.rec_leg_ccy = rec_leg_parameters.get("currency")
+    # Populate receive leg
+    output_.rec_leg_notional = rec_leg_parameters.get("notional_amount")
+    output_.rec_leg_ccy = rec_leg_parameters.get("notional_currency")
+    output_.rec_leg_basis = rec_leg_parameters.get("basis")
+    output_.rec_leg_freq_months = rec_leg_parameters.get("freq_months")
+    output_.rec_leg_float_index = rec_leg_parameters.get("float_index")
+    output_.rec_leg_float_spread_bp = rec_leg_parameters.get("float_spread")
+    output_.rec_leg_fixed_rate_pct = rec_leg_parameters.get("fixed_rate")
+    output_.rec_leg_ccy = rec_leg_parameters.get("currency")
 
-        return output_
-
+    return output_
