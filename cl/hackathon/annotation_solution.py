@@ -37,6 +37,7 @@ from cl.hackathon.hackathon_input import HackathonInput
 from cl.hackathon.hackathon_output import HackathonOutput
 from cl.hackathon.hackathon_solution import HackathonSolution
 from cl.hackathon.our_gpt_client import GPTClient
+from cl.hackathon.shared_utils import get_all_features, get_non_empty_features, manage_results
 
 _logger = getLogger(__name__)
 
