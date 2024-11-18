@@ -114,23 +114,26 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
     def init(self) -> Self:
         """Similar to __init__ but can use fields set after construction, return self to enable method chaining."""
 
-        if "." not in self.solution_id:
+        is_resulting_solution = "." in self.solution_id
+        if not is_resulting_solution:
             if self.trial_count is None:
                 self.trial_count = str(10)
         else:
             self.inputs = self.get_inputs()
             self.outputs = self.get_outputs()
-            try:
-                self.retrievals = self.view_retrievals()
-            except Exception as e:
-                # Continue even if retrievals are not available
-                pass
 
         output_count = len(self.outputs) if self.outputs else None
         if output_count:
             completed_output_count = len([x for x in self.outputs if x.status == "Completed"])
             if output_count == completed_output_count:
                 self.status = "Completed"
+                # try:
+                #     if is_resulting_solution:
+                #         self.retrievals = self.view_retrievals()
+                # except Exception as e:
+                #     # Continue even if retrievals are not available
+                #     pass
+
             else:
                 pct_done = int(round(completed_output_count / output_count * 100, 0))
                 self.status = f"{pct_done}% Done"
@@ -214,17 +217,22 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
             for x in inputs
             if x.trade_group == self.trade_group and ((trade_ids_list is None) or (int(x.trade_id) in trade_ids_list))
         ]
+        result = sorted(result, key=lambda x: int(x.trade_id))
         return result
 
     def get_outputs(self) -> List[HackathonOutput]:
         """Return the list of outputs (each with its score)."""
         outputs = Context.current().load_all(HackathonOutput)
-
-        return [x for x in outputs if x.solution.solution_id == self.solution_id]
+        result = [x for x in outputs if x.solution.solution_id == self.solution_id]
+        result = sorted(result, key=lambda x: int(x.trade_id))
+        return result
 
     @abstractmethod
-    def score_output(self, output_: HackathonOutput) -> None:
-        """Run scoring on the output."""
+    def generate_output(self, output_: HackathonOutput) -> None:
+        """
+        Queries LLM and updates output_ inplace with results
+        :param output_: object to update with results
+        """
 
     def save_trial_output(self, *, trade_id: str, trial_id: str, entry_text: str) -> None:
         """Save trial output."""
@@ -268,7 +276,7 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
         Context.current().save_one(output_)
 
         # Run scoring
-        self.score_output(output_)
+        self.generate_output(output_)
 
         # Mark as completed
         output_.status = "Completed"
@@ -347,8 +355,8 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
                 scored_solution.submit_trial_output(trade_id=input_.trade_id, trial_id=str(trial_index))
 
         # Compare solution outputs with expected outputs and save HackathonScoreItems for each pair
-        #scored_solution.status = "Analyzing"
-        #Context.current().save_one(scored_solution)
+        # scored_solution.status = "Analyzing"
+        # Context.current().save_one(scored_solution)
         # scored_solution.calculate()
 
         # Save scoring object with total score
@@ -380,7 +388,7 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
 
         # Iterate over expected output fields and compare values
         for field_name in [
-            f for f in expected_output_fields if f not in expected_output_key_fields and f != "entry_text"
+            f for f in expected_output_fields if f not in expected_output_key_fields and f not in ("entry_text", "status")
         ]:
 
             expected_field_value = getattr(expected_output, field_name, None)
@@ -456,9 +464,9 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
                 )
 
                 actual_output = context.load_one(HackathonOutput, actual_output_key)
-                #while actual_output.status != "Completed":
+                # while actual_output.status != "Completed":
                 #    time.sleep(1)
-                 #   actual_output = context.load_one(HackathonOutput, actual_output_key)
+                #   actual_output = context.load_one(HackathonOutput, actual_output_key)
 
                 # Create a scoring item by comparing actual and expected outputs
                 score_item = self.get_score_item(input_key, actual_output, expected_output)
@@ -486,18 +494,44 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
 
     @staticmethod
     def _compare_as_dates(source_date_text: str, target_date_text: str) -> bool:
-        source_date_entry = DateEntry(text=source_date_text)
-        source_date_entry.run_generate()
-        target_date_entry = DateEntry(text=target_date_text)
-        target_date_entry.run_generate()
+        try:
+            if source_date_text.strip() == target_date_text.strip():
+                return True
+            source_date_entry = DateEntry(text=source_date_text, locale="en-US")
+            source_date_entry.run_generate()
+            target_date_entry = DateEntry(text=target_date_text, locale="en-US")
+            target_date_entry.run_generate()
+        except Exception as e:
+            Context.current().save_one(
+                LogMessage(
+                    level="Info",
+                    message=f"An error during {source_date_text} "
+                            f"vs. {target_date_text} date comparison in scoring.\n{str(e)}"
+                )
+            )
+            # False if cannot parse as a date
+            return False
         return source_date_entry.date == target_date_entry.date
 
     @staticmethod
     def _compare_as_numbers(source_number_text: str, target_number_text: str) -> bool:
-        source_number_entry = NumberEntry(text=source_number_text)
-        source_number_entry.run_generate()
-        target_number_entry = NumberEntry(text=target_number_text)
-        target_number_entry.run_generate()
+        try:
+            if source_number_text.strip() == target_number_text.strip():
+                return True
+            source_number_entry = NumberEntry(text=source_number_text, locale="en-US")
+            source_number_entry.run_generate()
+            target_number_entry = NumberEntry(text=target_number_text, locale="en-US")
+            target_number_entry.run_generate()
+        except Exception as e:
+            Context.current().save_one(
+                LogMessage(
+                    level="Info",
+                    message=f"An error during {source_number_text} "
+                            f"vs. {target_number_text} number comparison in scoring.\n{str(e)}"
+                )
+            )
+            # False if cannot parse as a date
+            return False
         return source_number_entry.value == target_number_entry.value
 
     def view_heatmap(self) -> View | None:
@@ -555,9 +589,8 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
         num_fields = len(fields)
 
         row_labels = []
-
-        for i in range(num_trades):
-            row_labels += [f"Trade {i + 1}"] * num_fields
+        for x in inputs:
+            row_labels += [f"Trade {x.trade_id}"] * num_fields
 
         fields_labels = [CaseUtil.snake_to_title_case(file_name).replace("Leg ", "") for file_name in fields]
         col_labels = fields_labels * num_trades
@@ -636,4 +669,5 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
             context.save_one(statistics)
             all_statistics.append(statistics)
 
+        all_statistics = sorted(all_statistics, key=lambda x: int(x.trade_id))
         self.statistics = all_statistics

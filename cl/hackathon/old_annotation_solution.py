@@ -286,7 +286,7 @@ class OldAnnotationSolution(HackathonSolution):
 
         return trade_parameters
 
-    def score_output(self, output_: HackathonOutput) -> None:
+    def generate_output(self, output_: HackathonOutput) -> None:
 
         if Context.current().trial is not None:
             raise UserError("Cannot override TrialId that is already set, exiting.")  # TODO: Append?
