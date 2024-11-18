@@ -362,7 +362,7 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
         self.score = str(score)
         self.max_score = str(max_score)
         if max_score > 0.5:
-            self.score_pct = f"{round(score / max_score, 1)}"
+            self.score_pct = f"{round(100 * score / max_score, 2)}"
 
         # Calculate scoring statistics
         self.calculate_statistics()
