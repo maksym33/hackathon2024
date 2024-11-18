@@ -337,7 +337,13 @@ class HackathonSolution(HackathonSolutionKey, RecordMixin[HackathonSolutionKey],
         scoring_items = context.load_all(HackathonScoreItem)
         filtered_scoring_items = [item for item in scoring_items if item.solution == self.get_key()]
         if len(filtered_scoring_items) == 0:
-            return None
+            return {  # TODO: Update type hints to permit this return type
+                "_t": "Script",
+                "Name": None,
+                "Language": "Markdown",
+                "Body": ["# Heatmap will be generated when at least one trial is completed for all trades."],
+                "WordWrap": True,
+            }
 
         first_item = filtered_scoring_items[0]
         fields = (first_item.matched_fields or []) + (first_item.mismatched_fields or []) + (first_item.error_fields or [])
