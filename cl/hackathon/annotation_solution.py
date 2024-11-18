@@ -33,6 +33,10 @@ from cl.tradeentry.entries.date_or_tenor_entry import DateOrTenorEntry
 from cl.tradeentry.entries.number_entry import NumberEntry
 from cl.tradeentry.entries.pay_freq_months_entry import PayFreqMonthsEntry
 from cl.tradeentry.trades.currency_key import CurrencyKey
+from cl.hackathon.hackathon_input import HackathonInput
+from cl.hackathon.hackathon_output import HackathonOutput
+from cl.hackathon.hackathon_solution import HackathonSolution
+from cl.hackathon.our_gpt_client import GPTClient
 from cl.hackathon.shared_utils import get_all_features, get_non_empty_features, manage_results
 
 _logger = getLogger(__name__)
@@ -449,6 +453,4 @@ def _update_output_object(output_, trade_parameters, pay_leg_parameters, rec_leg
         output_.rec_leg_ccy = rec_leg_parameters.get("currency")
 
         return output_
-
-
 
